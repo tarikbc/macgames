@@ -15,4 +15,4 @@ ditto "$SRC" "$STAGE/$NAME"
 (cd "$STAGE/$NAME" && find . -type f ! -name SHA256SUMS -print0 | sort -z | xargs -0 shasum -a 256 > SHA256SUMS)
 mkdir -p "$OUT"
 tar -C "$STAGE" --options xz:compression-level=9,xz:threads=0 -cJf "$OUT/macgames-pack-$NAME.tar.xz" "$NAME"
-shasum -a 256 "$OUT/macgames-pack-$NAME.tar.xz" | tee "$OUT/macgames-pack-$NAME.tar.xz.sha256"
+(cd "$OUT" && shasum -a 256 "macgames-pack-$NAME.tar.xz" | tee "macgames-pack-$NAME.tar.xz.sha256")

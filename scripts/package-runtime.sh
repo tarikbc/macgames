@@ -47,5 +47,5 @@ NOTE
 mkdir -p "$OUT"
 tar -C "$(dirname "$STAGE")" --options xz:compression-level=9 -cJf "$OUT/$NAME.tar.xz" "$NAME"
 rm -rf "$(dirname "$STAGE")"
-shasum -a 256 "$OUT/$NAME.tar.xz" | tee "$OUT/$NAME.tar.xz.sha256"
+(cd "$OUT" && shasum -a 256 "$NAME.tar.xz" | tee "$NAME.tar.xz.sha256")
 du -h "$OUT/$NAME.tar.xz"
