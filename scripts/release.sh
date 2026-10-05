@@ -93,6 +93,8 @@ ditto -c -k --keepParent "$APP" "$ZIP"
 SIGNATURE="$("$SPARKLE_BIN/sign_update" --account macgames "$ZIP")"
 [ "$(/usr/libexec/PlistBuddy -c 'Print CFBundleVersion' "$APP/Contents/Info.plist")" = "$BUILD_NUMBER" ] \
   || { echo "error: the built app's CFBundleVersion is not $BUILD_NUMBER." >&2; exit 1; }
+[ "$(/usr/libexec/PlistBuddy -c 'Print CFBundleShortVersionString' "$APP/Contents/Info.plist")" = "$VERSION" ] \
+  || { echo "error: the built app's CFBundleShortVersionString is not $VERSION." >&2; exit 1; }
 cat > "$BUILD/appcast.xml" <<XML
 <?xml version="1.0" encoding="utf-8"?>
 <rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle">

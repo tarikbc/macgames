@@ -63,6 +63,8 @@ targets:
       path: App/Info.plist
       properties:
         CFBundleDisplayName: MacGames
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         LSMinimumSystemVersion: "26.0"
         LSApplicationCategoryType: public.app-category.games
         NSMicrophoneUsageDescription: "Allow microphone access for in-game voice chat."
