@@ -1,0 +1,109 @@
+import Foundation
+
+/// The small Windows programs in `WindowsHelpers/` and when a game needs them.
+public enum WindowsHelper {
+    public struct Launch: Sendable, Equatable {
+        public let name: String
+        public let arguments: [String]
+    }
+
+    static let gtaAdvisoryTitle = "Minimum Recommended Hardware Check Failure"
+    /// GTA V's AMD driver check, which cannot pass under Apple's graphics layer.
+    static let gtaAdvisoryText = "Please update your graphics driver. Game requires version 24.12.1 or newer. "
+        + "Please visit AMD: https://www.amd.com/en/support/download/drivers.html for the latest graphics driver"
+
+    /// Watchers that run next to the game in its Steam session. They start before the game and exit after it.
+    public static func watchers(for profile: GameProfile, paths: GamePaths, context: LaunchContext) -> [Launch] {
+        switch profile.id {
+        case "aom-retold":
+            // The game checks its GPU in registry keys that Wine fills with the Mac's GPU.
+            var list = [Launch(name: "gpu-sync", arguments: ["--watch", profile.executableName, "--wait-seconds", "300"])]
+            if context.hasNotch, context.topInset > 0 {
+                list.append(Launch(name: "fit-window", arguments: [
+                    "--program", profile.executableName, "--width", String(context.width), "--height", String(context.height),
+                    "--inset", String(format: "%g", context.topInset), "--wait-seconds", "300",
+                ]))
+            }
+            return list
+        case "gta5-enhanced":
+            return [Launch(name: "dismiss-dialog", arguments: [
+                "--program", profile.executableName, "--title", gtaAdvisoryTitle, "--text", gtaAdvisoryText, "--wait-seconds", "600",
+            ])]
+        default:
+            return []
+        }
+    }
+
+    /// The "<width> <height>" line that display-mode prints, among Wine's own messages.
+    public static func displaySize(_ output: String) -> LaunchContext.Size? {
+        for line in output.split(whereSeparator: \.isNewline).reversed() {
+            let parts = line.trimmingCharacters(in: .whitespaces).split(separator: " ")
+            if parts.count == 2, let w = Int(parts[0]), let h = Int(parts[1]), w >= 640, h >= 480 {
+                return LaunchContext.Size(width: w, height: h)
+            }
+        }
+        return nil
+    }
+}
+
+extension GameRuntime {
+    func helper(_ name: String) -> URL { runtime.windowsHelpers.appendingPathComponent("\(name).exe") }
+
+    /// Starts the game's watchers. Steam starts first, in the background and with this game's
+    /// settings, so the game's launch does not restart Steam and end the watchers.
+    func startWatchers(_ watchers: [WindowsHelper.Launch]) throws {
+        let available = watchers.filter { fm.fileExists(atPath: helper($0.name).path) }
+        guard !available.isEmpty else { return }
+        try ensureSteamSession()
+        let env = try launchEnvironment()
+        for watcher in available {
+            try startDetached([try stage(helper(watcher.name))] + watcher.arguments, environment: env,
+                              workingDirectory: driveC, log: "helpers.log")
+        }
+    }
+
+    /// Starts or restarts Steam without its window, with this game's settings, and waits until it is up.
+    func ensureSteamSession() throws {
+        let running = isSessionRunning()
+        let matches = SteamSession.load(paths)?.fingerprint == SteamLaunch.fingerprint(try launchEnvironment())
+        if running && matches { return }
+        let since = steamConsoleSize()
+        try startSteam(.background)
+        waitForSteam(since: running ? 0 : since)
+    }
+
+    /// Builds Overwatch's recorded pipelines into Metal archives before launch, so the game
+    /// finds them ready. A failure here only costs stutter, so it never stops the launch.
+    func preparePipelines() {
+        let recipes = paths.graphics.appendingPathComponent("recipes")
+        let names = (try? fm.contentsOfDirectory(atPath: recipes.path)) ?? []
+        guard names.contains(where: { $0.hasSuffix(".recipe") }), fm.fileExists(atPath: helper("prepare-pipelines").path) else { return }
+        progress("Preparing Overwatch's graphics pipelines…")
+        do {
+            let output = try runWine([try stage(helper("prepare-pipelines")), recipes.path, paths.graphics.appendingPathComponent("shader-cache").path],
+                                     environment: joined(try launchEnvironment()), timeout: 1800, allowedStatuses: [0, 1])
+            if let summary = output.split(whereSeparator: \.isNewline).last(where: { $0.contains("\"complete\"") }) {
+                progress("Pipelines: \(summary)")
+            }
+        } catch {
+            progress("Pipeline preparation skipped: \(error)")
+        }
+    }
+
+    /// Raises a running program's main window; `false` when it has none.
+    func showWindow(of program: String) -> Bool {
+        guard fm.fileExists(atPath: helper("show-window").path), let path = try? stage(helper("show-window")) else { return false }
+        return (try? runner.run(paths.wine, [path, program], environment: joined(environment(optimized: false, hud: false)), timeout: 30)) != nil
+    }
+
+    /// The display size Windows programs see, while a session runs; the Mac's size otherwise.
+    func windowsDisplay(_ context: LaunchContext) -> LaunchContext {
+        guard isSessionRunning(), fm.fileExists(atPath: helper("display-mode").path), let path = try? stage(helper("display-mode")),
+              let output = try? runner.run(paths.wine, [path], environment: joined(environment(optimized: false, hud: false)), timeout: 30),
+              let size = WindowsHelper.displaySize(output) else { return context }
+        var adjusted = context
+        adjusted.width = size.width
+        adjusted.height = size.height
+        return adjusted
+    }
+}

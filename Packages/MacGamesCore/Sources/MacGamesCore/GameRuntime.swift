@@ -203,9 +203,10 @@ public final class GameRuntime: @unchecked Sendable {
     /// Runs a Wine command. On a timeout it stops the whole session: killing
     /// only the direct child leaves the rest of Wine's processes running.
     @discardableResult
-    func runWine(_ arguments: [String], environment: [String: String], timeout: TimeInterval) throws -> String {
+    func runWine(_ arguments: [String], environment: [String: String], timeout: TimeInterval,
+                 allowedStatuses: Set<Int32> = [0]) throws -> String {
         do {
-            return try runner.run(paths.wine, arguments, environment: environment, timeout: timeout)
+            return try runner.run(paths.wine, arguments, environment: environment, timeout: timeout, allowedStatuses: allowedStatuses)
         } catch let timeout as CommandTimeout {
             _ = try? runner.run(paths.wineserver, ["-k"], environment: environment, timeout: 20, allowedStatuses: [0, 1])
             throw timeout
@@ -308,7 +309,11 @@ public final class GameRuntime: @unchecked Sendable {
             throw SetupError("Steam exited before it opened (exit \(process.terminationStatus)). Log: \(log.path)")
         }
         if !running { try SteamSession.begin(fingerprint: fingerprint, paths: paths, environment: env) }
-        progress(mode == .open ? "Steam is opening." : "Steam received the request.")
+        switch mode {
+        case .open: progress("Steam is opening.")
+        case .background: progress("Steam is starting in the background.")
+        case .install, .play: progress("Steam received the request.")
+        }
     }
 
     /// Why Play cannot start now, in words for the user; `nil` when it can.
@@ -473,6 +478,11 @@ extension GameRuntime {
 
     public func openBattleNet() throws {
         guard fm.fileExists(atPath: paths.battleNetExe.path) else { try installBattleNet(); return }
+        // Battle.net closes to the notification area; starting it again would not show it.
+        if processes(paths.engine).isRunning(executable: "Battle.net.exe", under: paths.engine), showWindow(of: "Battle.net.exe") {
+            progress("Battle.net is open. Choose Play there.")
+            return
+        }
         if !isSessionRunning() { try ensureEngine() }
         try ensureRecipes(environment: environment(optimized: false, hud: false))
         try startDetached([paths.windowsPath(paths.battleNetExe)] + Self.battleNetFlags, environment: try launchEnvironment(),
@@ -499,6 +509,8 @@ extension GameRuntime {
 
     public func play(_ context: LaunchContext) throws {
         if let blocker = Self.playBlocker(state(), title: profile.title) { throw SetupError(blocker) }
+        // Red Alert 2 sizes itself to the display that Windows programs see.
+        let context = profile.id == "red-alert2" ? windowsDisplay(context) : context
         for warning in try GameFiles.prepare(profile, paths: paths, runtime: runtime, context: context) { progress(warning) }
         if ["rockstar", "gta5"].contains(paths.environment.id) { try installRockstarLauncher() }
         switch profile.id {
@@ -508,10 +520,12 @@ extension GameRuntime {
                                               name: "RetoldNotchSafeFullscreen", value: .string(context.hasNotch ? "y" : "n"))],
                                environment: environment(optimized: false, hud: false))
         case "coh3": try ensureCoH3Runtime()
+        case "overwatch": preparePipelines()
         default: break
         }
         switch profile.launch {
         case .steam:
+            try startWatchers(WindowsHelper.watchers(for: profile, paths: paths, context: context))
             try play(displayWidth: context.width, displayHeight: context.height)
         case .direct:
             try ensureSteamReady()
@@ -525,13 +539,21 @@ extension GameRuntime {
     /// Steam must be signed in and idle before a game started outside it can find it.
     func ensureSteamReady() throws {
         guard !isSessionRunning() else { return }
-        let console = paths.steamDir.appendingPathComponent("logs/console_log.txt")
-        let before = (try? fm.attributesOfItem(atPath: console.path)[.size] as? UInt64) ?? 0
+        let before = steamConsoleSize()
         try startSteam(.open)
+        waitForSteam(since: before)
+    }
+
+    var steamConsole: URL { paths.steamDir.appendingPathComponent("logs/console_log.txt") }
+
+    func steamConsoleSize() -> UInt64 { (try? fm.attributesOfItem(atPath: steamConsole.path)[.size] as? UInt64) ?? 0 }
+
+    /// Waits until Steam's console log, past `before`, shows that Steam finished starting.
+    func waitForSteam(since before: UInt64) {
         progress("Waiting for Steam to start…")
         let deadline = Date().addingTimeInterval(90)
         while Date() < deadline {
-            if let handle = try? FileHandle(forReadingFrom: console) {
+            if let handle = try? FileHandle(forReadingFrom: steamConsole) {
                 let size = (try? handle.seekToEnd()) ?? 0
                 // Steam starts a fresh log on some starts; then everything in it is new.
                 try? handle.seek(toOffset: size >= before ? before : 0)

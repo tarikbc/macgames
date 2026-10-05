@@ -9,6 +9,7 @@ extension LaunchContext {
             let size = CGDisplayBounds(CGMainDisplayID()).size
             return LaunchContext(width: Int(size.width), height: Int(size.height))
         }
-        return LaunchContext(width: Int(screen.frame.width), height: Int(screen.frame.height), hasNotch: screen.safeAreaInsets.top > 0)
+        return LaunchContext(width: Int(screen.frame.width), height: Int(screen.frame.height),
+                             hasNotch: screen.safeAreaInsets.top > 0, topInset: screen.safeAreaInsets.top)
     }
 }

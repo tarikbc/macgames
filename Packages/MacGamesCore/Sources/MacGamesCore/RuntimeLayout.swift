@@ -22,6 +22,8 @@ public struct RuntimeLayout: Sendable {
     /// Small per-game files shipped with the app, such as wrapper DLLs.
     public func gameFiles(_ id: String) -> URL { resources.appendingPathComponent("Games/\(id)") }
     public var dependencyLinks: URL { resources.appendingPathComponent("dependency-links.json") }
+    /// Small Windows programs that run next to some games; their source is in WindowsHelpers/.
+    public var windowsHelpers: URL { resources.appendingPathComponent("WindowsHelpers") }
     public var bridge: URL { helpers.appendingPathComponent("MacGamesBridge") }
     public var sidecar: URL { helpers.appendingPathComponent("x87sidecar") }
     public var rosettaProbe: URL { helpers.appendingPathComponent("RosettaProbe") }

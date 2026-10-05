@@ -2,14 +2,21 @@ import Foundation
 
 /// What the display looks like at launch, measured by the app (which has AppKit).
 public struct LaunchContext: Sendable, Equatable {
+    public struct Size: Sendable, Equatable {
+        public let width: Int, height: Int
+        public init(width: Int, height: Int) { self.width = width; self.height = height }
+    }
+
     /// Main display size in points.
     public var width: Int
     public var height: Int
     /// The main display has a camera housing at the top.
     public var hasNotch: Bool
+    /// The height of the notch area at the top of the main display, in points.
+    public var topInset: Double
 
-    public init(width: Int, height: Int, hasNotch: Bool = false) {
-        self.width = width; self.height = height; self.hasNotch = hasNotch
+    public init(width: Int, height: Int, hasNotch: Bool = false, topInset: Double = 0) {
+        self.width = width; self.height = height; self.hasNotch = hasNotch; self.topInset = topInset
     }
 }
 

@@ -3,6 +3,8 @@ import Foundation
 public enum SteamLaunch {
     public enum Mode: Sendable, Equatable {
         case open
+        /// Starts Steam without its window, for helpers that must join its session first.
+        case background
         case install
         case play([String])
     }
@@ -13,6 +15,7 @@ public enum SteamLaunch {
         let base = [steam, "-cef-disable-gpu"] + profile.steamArgs
         switch mode {
         case .open: return base
+        case .background: return base + ["-silent"]
         case .install: return base + ["steam://install/\(profile.steamAppID)"]
         case .play(let extra): return base + ["-applaunch", profile.steamAppID] + profile.gameArgs + extra
         }
@@ -23,12 +26,14 @@ public enum SteamLaunch {
         ["-windowed", "-noborder", "-w", String(width), "-h", String(height)]
     }
 
-    /// Steam hands its environment to the game, so only a game launch needs a
-    /// Steam that runs with the current settings. Opening Steam never
-    /// interrupts a running session, for example a download.
+    /// Steam hands its environment to the game, so only a game launch, or the background
+    /// start just before one, needs a Steam that runs with the current settings. Opening
+    /// Steam never interrupts a running session, for example a download.
     public static func needsRestart(_ mode: Mode, sessionRunning: Bool, fingerprintMatches: Bool) -> Bool {
-        guard case .play = mode else { return false }
-        return sessionRunning && !fingerprintMatches
+        switch mode {
+        case .play, .background: sessionRunning && !fingerprintMatches
+        case .open, .install: false
+        }
     }
 
     /// Identifies the managed part of an environment. Steam hands its

@@ -145,8 +145,10 @@ extension GameRuntime {
 
     public func playOnline(_ context: LaunchContext) throws {
         if !onlineReady { try setupOnline() }
-        for warning in try GameFiles.prepare(profile, paths: paths, runtime: runtime, context: context) { progress(warning) }
         try ensureSteamReady()
+        // The CnCNet client sizes itself to the display that Windows programs see.
+        let context = profile.online == .cncnet ? windowsDisplay(context) : context
+        for warning in try GameFiles.prepare(profile, paths: paths, runtime: runtime, context: context) { progress(warning) }
         let env = try onlineEnvironment()
         switch profile.online {
         case .generalsOnline:

@@ -9,7 +9,7 @@ VENDOR="$ROOT/Vendor"
 OUT="$ROOT/dist"
 NAME="macgames-runtime-$VERSION"
 
-for part in Engine Overlays Games Helpers/x87sidecar dependency-links.json Licenses Sources; do
+for part in Engine Overlays Games WindowsHelpers Helpers/x87sidecar dependency-links.json Licenses Sources; do
   [ -e "$VENDOR/$part" ] || { echo "error: Vendor/$part is missing" >&2; exit 1; }
 done
 codesign --verify --strict "$VENDOR/Engine/bin/wine" "$VENDOR/Engine/bin/wineserver" "$VENDOR/Helpers/x87sidecar"
@@ -19,6 +19,7 @@ mkdir -p "$STAGE/Helpers"
 ditto "$VENDOR/Engine" "$STAGE/Engine"
 ditto "$VENDOR/Overlays" "$STAGE/Overlays"
 ditto "$VENDOR/Games" "$STAGE/Games"
+ditto "$VENDOR/WindowsHelpers" "$STAGE/WindowsHelpers"
 ditto "$VENDOR/Helpers/x87sidecar" "$STAGE/Helpers/x87sidecar"
 cp "$VENDOR/dependency-links.json" "$STAGE/"
 ditto "$VENDOR/Licenses" "$STAGE/Licenses"
@@ -32,6 +33,8 @@ Overlays/controllers/  winebus with SDL2 game controller support, LGPL 2.1+ and 
 Overlays/ntdllfix/ ntdll with the NtQueryDirectoryObject BOOLEAN fix, LGPL 2.1+
 Overlays/aomretold/  winemac with notch-safe fullscreen for Age of Mythology: Retold, LGPL 2.1+
 Games/             cnc-ddraw (MIT) for Heroes III and Red Alert 2, the Witcher 3 FidelityFX proxy (MIT)
+WindowsHelpers/    MacGames' own Windows helpers (source in the repository's WindowsHelpers/, PolyForm
+                   Noncommercial); prepare-pipelines also contains DXMT code (MIT, DXMT-LICENSE.txt)
 Helpers/x87sidecar Fast x87 math under Rosetta 2, MIT
 Sources/           Corresponding source code for Wine, x87sidecar and DXMT
 Licenses/          License texts
