@@ -35,12 +35,39 @@
 
 ## Supported games
 
-| Game | Renderer | Status |
-|---|---|---|
-| Age of Empires IV | Apple D3DMetal, x87sidecar optimization | Tested, runs on an M3 Max |
-| Counter-Strike 2 | DXMT with early shader compile | Tested, reaches the main menu on an M3 Max |
+| Game | Environment | Renderer | Status |
+|---|---|---|---|
+| Age of Empires IV | Steam library | D3DMetal, x87sidecar optimization | Tested on an M3 Max |
+| Counter-Strike 2 | Steam library | DXMT with early shader compile | Tested, reaches the main menu |
+| Age of Empires III: Definitive Edition | Steam library | D3DMetal | Imported |
+| Age of Mythology: Retold | Steam library | D3DMetal, notch-safe fullscreen | Imported |
+| Company of Heroes 3 | Steam library | D3DMetal, Microsoft UCRT for multiplayer | Imported |
+| Command & Conquer: Generals Zero Hour | Steam library | Wine D3D8, GeneralsOnline for online play | Imported |
+| Command & Conquer: Red Alert 2 | Steam library | cnc-ddraw, CnCNet for online play | Imported |
+| Heroes of Might and Magic III | Steam library | cnc-ddraw, sound fix | Imported |
+| Diablo IV | Steam library | D3DMetal | Imported |
+| Path of Exile 2 | Steam library | D3DMetal, DirectX 12 | Imported |
+| Hogwarts Legacy | Steam library | D3DMetal | Imported |
+| The Witcher 3: Wild Hunt | Steam library | D3DMetal, FidelityFX proxy | Imported |
+| Elden Ring | Steam library | D3DMetal, offline play only | Imported |
+| The Elder Scrolls V: Skyrim Special Edition | Skyrim | DXMT 0.72 | Imported |
+| Overwatch | Overwatch | DXMT for Overwatch | Imported |
+| Diablo IV (Battle.net) | Battle.net | D3DMetal, DXMT for the client | Imported |
+| Diablo II: Resurrected | Battle.net | D3DMetal, DXMT for the client | Imported |
+| Red Dead Redemption 2 | Rockstar | D3DMetal, WineD3D for the Rockstar launcher | Imported |
+| GTA San Andreas: The Definitive Edition | Rockstar | D3DMetal, WineD3D for the Rockstar launcher | Imported |
+| Grand Theft Auto V Enhanced | GTA V | Wine 11.13, D3DMetal 4.0b2, story mode only | Imported |
 
-You need to own each game on Steam. MacGames never includes or downloads games itself.
+"Imported" means the game has a full recipe in MacGames but has not been tested in this app yet. Test
+reports are very welcome. You need to own each game. MacGames never includes or downloads games itself.
+
+**Environments.** Most games share one Steam client in the Steam library. A game gets its own Windows
+environment, with its own Steam or Battle.net, when it needs a different engine or changes to Windows
+that would break the others. Each environment downloads its extra parts on first setup.
+
+**Online play.** Zero Hour and Red Alert 2 have a **Play Online** button that sets up and starts the
+community clients. Elden Ring runs offline only, and GTA V runs story mode only. Online play with
+anti-cheat is at your own risk.
 
 ## Requirements
 
@@ -60,7 +87,7 @@ MacGames is not distributed as a ready-made app yet. You build it with Xcode.
    scripts/fetch-runtime.sh
    ```
 
-   This downloads the runtime archive (about 130 MB) from this repository's
+   This downloads the runtime archive (about 125 MB) from this repository's
    [releases](../../releases), checks its SHA-256 and signatures, and unpacks it into `Vendor/`.
 3. Build and open the app:
 
@@ -156,6 +183,11 @@ MacGames stands on these open-source projects:
 - [DXMT](https://github.com/3Shain/dxmt) by Feifan He
 - [Sikarugir](https://github.com/Sikarugir-App), which packages the libraries MacGames downloads
 - [SDL](https://www.libsdl.org), for game controllers
+- [cnc-ddraw](https://github.com/FunkyFr3sh/cnc-ddraw) by FunkyFr3sh, for Heroes III and Red Alert 2
+- [witcher3-crossover-fix](https://github.com/tholtman1-del/witcher3-crossover-fix), the Witcher 3 FidelityFX proxy
+- [CnCNet](https://github.com/CnCNet), the Red Alert 2 online client
+- [EldenRingEacToggler](https://github.com/techiew/EldenRingEacToggler), for the offline Elden Ring start
+- [.NET](https://github.com/dotnet), which the CnCNet client runs on
 
 MacGames is not affiliated with Valve, Microsoft, Apple or CodeWeavers.
 Game names and artwork belong to their owners.

@@ -17,6 +17,25 @@ contains the corresponding source code in `Sources/`.
 | x87sidecar | Fast x87 math under Rosetta 2 for Age of Empires IV | MIT | `Vendor/Sources/sidecar-source.tar.gz`, [`LICENSES/Sidecar-MIT.txt`](LICENSES/Sidecar-MIT.txt) |
 | DXMT (custom build with CS2 early compile) | Direct3D 11 on Metal for Counter-Strike 2 | MIT | `Vendor/Sources/dxmt-cs2-source.tar.gz`, [`LICENSES/DXMT-MIT.txt`](LICENSES/DXMT-MIT.txt) |
 | SDL2 (controller support in winebus) | Game controllers | zlib | [`LICENSES/SDL2.txt`](LICENSES/SDL2.txt) |
+| Wine ntdll fix and notch-safe winemac | Engine fixes for several games | LGPL 2.1 or later | Patches in `Vendor/Sources/ntdll-fix` and `Vendor/Sources/aom-notch` |
+| cnc-ddraw | DirectDraw for Heroes III and Red Alert 2 | MIT | `Vendor/Sources/cnc-ddraw-ra2-source.tar.gz`, [`LICENSES/cnc-ddraw-MIT.txt`](LICENSES/cnc-ddraw-MIT.txt) |
+| Catmull-Rom upscale shader | Red Alert 2 scaling | MIT | License in the file header |
+| Witcher 3 FidelityFX proxy | Stops a shader crash in The Witcher 3 | MIT | `Vendor/Sources/witcher3-ffxproxy`, [`LICENSES/Witcher3-FFXProxy-MIT.txt`](LICENSES/Witcher3-FFXProxy-MIT.txt) |
+
+## Release packs, downloaded on first setup of an environment
+
+| Pack | Contents | License |
+|---|---|---|
+| skyrim | DXMT 0.72 and the ntdll fix | MIT, LGPL 2.1+; source included |
+| overwatch | DXMT for Overwatch and the ntdll fix | MIT, LGPL 2.1+; source included |
+| battlenet | 32-bit DXMT 0.72 for the Battle.net client and the ntdll fix | MIT, LGPL 2.1+; source included |
+| rockstar | Wine kernelbase with the Rockstar CEF patch, WineD3D `d3d11`, `dxgi`, `d3d10core` | LGPL 2.1+; patch included, built from the runtime's Wine source |
+| gta5 | Wine 11.13 with patches | LGPL 2.1+; source and patches included |
+| apple-d3dmetal-4.0b2 | Apple D3DMetal 4.0b2 Redistributables, unmodified | Apple Game Porting Toolkit license, with Apple's notices |
+
+Apple's license allows the Game Porting Toolkit Redistributables to be distributed separately, only for
+non-commercial purposes and for use on Apple-branded systems. MacGames is non-commercial, and these files
+keep Apple's license and notices. The gta5 pack also holds copies of those Apple files.
 
 If you distribute a build of MacGames.app, you must also make the corresponding source of the LGPL and
 other components available, as their licenses require. The archives in `Vendor/Sources` are that source.
@@ -30,6 +49,12 @@ their SHA-256 hash where the file is stable.
 |---|---|---|
 | Sikarugir `Template-1.0.15` libraries, including Apple D3DMetal | github.com/Sikarugir-App/Wrapper | Each library's own license; D3DMetal under Apple's Game Porting Toolkit license |
 | Steam client installer | cdn.akamai.steamstatic.com | Valve's Steam Subscriber Agreement |
+| Battle.net installer | battle.net | Blizzard's terms |
+| Rockstar Games Launcher | gamedownloads.rockstargames.com | Rockstar's terms |
+| Microsoft Visual C++ runtime (Company of Heroes 3) | download.visualstudio.microsoft.com | Microsoft's license |
+| .NET 8 runtimes (CnCNet client) | builds.dotnet.microsoft.com | MIT |
+| CnCNet Yuri's Revenge client package | github.com/CnCNet | Its own license |
+| GeneralsOnline client | cdn.playgenerals.online | Its own terms |
 | Game artwork shown in the library | Steam's public store CDN | Owned by each game's publisher |
 
 ## Trademarks

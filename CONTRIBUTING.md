@@ -54,23 +54,25 @@ A few rules keep the runtime working:
 ## Adding a game
 
 1. Open a [game request](../../issues/new?template=game_request.yml), so others know you are on it.
-2. Add a profile in `GameProfile.swift`:
+2. Add a profile in `GameCatalog.swift`:
 
    ```swift
    public static let mygame = GameProfile(
        id: "mygame", title: "My Game", steamAppID: "123456",
        installFolder: "My Game", executableRelativePath: "bin/MyGame.exe",
-       engineOverlays: ["controllers"], graphics: .d3dmetal,
-       optimizedExecutableSHA256: nil,
        presentation: Presentation(accentHex: "3A7BD5", heroFocus: .init(x: 0.6, y: 0.4)))
    ```
 
-   Then add it to `GameProfile.all`.
+   Then add it to `GameProfile.all`. Options cover the renderer (`graphics`), how it starts (`launch`),
+   Steam options, a minimum macOS version and an online client.
 3. Choose the renderer. `.d3dmetal` suits most DirectX 11 and 12 games. `.dxmt` suits DirectX 11
-   games that DXMT handles well. If the game needs its own environment values, add them in
-   `WineEnvironment.make` behind the profile's ID, with a test in `WineEnvironmentTests`.
-4. Set `heroFocus` to the part of the Steam hero art that must stay visible. The app crops around it.
-5. Test the full flow on your Mac: setup, install in Steam, play, quit, play again. Say in the pull
+   games that DXMT handles well. `.builtin` is for DirectDraw and older games with a bundled wrapper.
+   Game-specific environment values and registry entries go in `GameRecipes.swift`, files to change
+   before a launch in `GameFiles.swift`, each with a test.
+4. If the game needs a different engine or changes Windows in ways that break other games, give it its
+   own `GameEnvironment` instead of the shared Steam library.
+5. Set `heroFocus` to the part of the Steam hero art that must stay visible. The app crops around it.
+6. Test the full flow on your Mac: setup, install in Steam, play, quit, play again. Say in the pull
    request what you tested and on which Mac.
 
 ## Pull requests
