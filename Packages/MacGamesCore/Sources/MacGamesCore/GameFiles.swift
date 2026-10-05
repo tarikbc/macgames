@@ -31,7 +31,7 @@ public enum GameFiles {
         var encoding = String.Encoding.utf8
         var old = ""
         if fm.fileExists(atPath: url.path) {
-            guard let text = try? String(contentsOf: url, usedEncoding: &encoding) ?? String(contentsOf: url, encoding: .utf8) else {
+            guard let text = (try? String(contentsOf: url, usedEncoding: &encoding)) ?? (try? String(contentsOf: url, encoding: .utf8)) else {
                 throw SetupError("\(url.lastPathComponent) uses a text encoding MacGames cannot read, so it was left unchanged.")
             }
             old = text
