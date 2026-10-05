@@ -5,8 +5,13 @@
 <h1 align="center">MacGames</h1>
 
 <p align="center">
-  Play your Windows games from Steam on an Apple Silicon Mac.<br>
-  One shared Steam, with graphics and performance settings tuned for each game.
+  Play your Windows games from Steam and Battle.net on an Apple Silicon Mac.<br>
+  Twenty games, each with graphics and performance settings tuned for it.
+</p>
+
+<p align="center">
+  <a href="https://tarikbc.github.io/macgames/"><b>Website</b></a> ·
+  <a href="https://github.com/tarikbc/macgames/releases/latest"><b>Download</b></a>
 </p>
 
 <p align="center">

@@ -24,6 +24,11 @@ contains the corresponding source code in `Sources/`.
 | MacGames Windows helpers (`WindowsHelpers/`) | Small Windows programs that run next to some games | PolyForm Noncommercial 1.0.0, like MacGames; `prepare-pipelines` also contains DXMT code (MIT, [`LICENSES/DXMT-MIT.txt`](LICENSES/DXMT-MIT.txt)) and the llvm-mingw runtime (Apache 2.0 with LLVM exception) | This repository |
 | Witcher 3 FidelityFX proxy | Stops a shader crash in The Witcher 3 | MIT | `Vendor/Sources/witcher3-ffxproxy`, [`LICENSES/Witcher3-FFXProxy-MIT.txt`](LICENSES/Witcher3-FFXProxy-MIT.txt) |
 
+## Website
+
+The site in `docs/` uses the Barlow Condensed typeface, under the SIL Open Font License 1.1
+([`docs/assets/fonts/OFL.txt`](docs/assets/fonts/OFL.txt)).
+
 ## Release packs, downloaded on first setup of an environment
 
 | Pack | Contents | License |
