@@ -8,9 +8,9 @@ struct SetupStepsView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: Space.m) {
             Text("Setup").font(.system(size: 15, weight: .semibold))
-            VStack(alignment: .leading, spacing: 10) {
+            VStack(alignment: .leading, spacing: Space.m) {
                 ForEach(Array(SetupStep.allCases.enumerated()), id: \.element) { index, step in
                     StepRow(step: step, status: status(of: step), accent: game.profile.accent)
                         .opacity(appeared ? 1 : 0)
@@ -37,7 +37,7 @@ struct StepRow: View {
     let accent: Color
 
     var body: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: Space.m) {
             ZStack {
                 switch status {
                 case .pending:

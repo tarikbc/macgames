@@ -69,6 +69,14 @@ extension GameState {
     }
 }
 
+/// One spacing scale for the whole app.
+enum Space {
+    static let xs: CGFloat = 4, s: CGFloat = 8, m: CGFloat = 12, l: CGFloat = 16, xl: CGFloat = 24, xxl: CGFloat = 32
+    /// Left edge of the game page: the logo, the buttons and the sections all start here.
+    static let page: CGFloat = 40
+    static let sidebarInset: CGFloat = 12
+}
+
 /// Shared motion values, so every transition in the app feels the same.
 enum Motion {
     static let switchGame = Animation.spring(duration: 0.55, bounce: 0.18)

@@ -59,14 +59,14 @@ private struct Sidebar: View {
     @Namespace private var selection
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: 0) {
             Text("Library")
                 .font(.system(size: 22, weight: .heavy).width(.condensed))
-                .padding(.horizontal, 14)
-                .padding(.top, 52)
-                .padding(.bottom, 10)
+                .padding(.leading, Space.s)
+                .padding(.top, 48)
+                .padding(.bottom, Space.l)
             ScrollView {
-                VStack(spacing: 4) {
+                VStack(spacing: Space.xs) {
                     ForEach(library.games) { game in
                         GameRow(game: game, selected: game.id == library.selectedID, namespace: selection)
                             .onTapGesture { withAnimation(Motion.switchGame) { library.selectedID = game.id } }
@@ -76,7 +76,7 @@ private struct Sidebar: View {
             .scrollIndicators(.never)
             Spacer(minLength: 0)
         }
-        .padding(.horizontal, 10)
+        .padding(.horizontal, Space.sidebarInset)
         .background(.ultraThinMaterial.opacity(0.7))
         .overlay(alignment: .trailing) { Rectangle().fill(.white.opacity(0.06)).frame(width: 1) }
     }
@@ -89,13 +89,13 @@ private struct GameRow: View {
     @State private var hovering = false
 
     var body: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: Space.m) {
             ArtImage(url: game.profile.artwork.portrait)
                 .frame(width: 40, height: 60)
                 .background(game.profile.accent.opacity(0.3))
                 .clipShape(RoundedRectangle(cornerRadius: 5))
                 .shadow(color: .black.opacity(0.4), radius: 4, y: 2)
-            VStack(alignment: .leading, spacing: 3) {
+            VStack(alignment: .leading, spacing: Space.xs) {
                 Text(game.profile.title)
                     .font(.system(size: 13, weight: .semibold))
                     .lineLimit(2)
@@ -110,7 +110,7 @@ private struct GameRow: View {
             }
             Spacer(minLength: 0)
         }
-        .padding(8)
+        .padding(Space.s)
         .background {
             if selected {
                 RoundedRectangle(cornerRadius: 10)

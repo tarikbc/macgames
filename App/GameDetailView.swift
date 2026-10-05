@@ -11,7 +11,7 @@ struct GameDetailView: View {
             VStack(spacing: 0) {
                 hero.frame(height: max(300, geo.size.height * 0.54))
                 ScrollView {
-                    VStack(alignment: .leading, spacing: 26) {
+                    VStack(alignment: .leading, spacing: Space.xxl) {
                         ActionBar(game: game)
                         if let error = game.error {
                             ErrorBanner(message: error, showLogs: game.showLogs, dismiss: game.dismissError)
@@ -23,10 +23,10 @@ struct GameDetailView: View {
                         }
                         SettingsSection(game: game)
                     }
-                    .padding(.horizontal, 36)
-                    .padding(.top, 4)
-                    .padding(.bottom, 32)
-                    .frame(maxWidth: 760, alignment: .leading)
+                    .padding(.horizontal, Space.page)
+                    .padding(.top, Space.xl)
+                    .padding(.bottom, Space.xxl + Space.l)
+                    .frame(maxWidth: 760 + 2 * Space.page, alignment: .leading)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .animation(Motion.morph, value: game.error)
                     .animation(Motion.morph, value: game.showsSetupSteps)
@@ -43,16 +43,15 @@ struct GameDetailView: View {
 
     private var hero: some View {
         ZStack(alignment: .bottomLeading) {
+            // The art dissolves into the window's backdrop instead of ending at an edge.
             ArtImage(url: game.profile.artwork.hero, focus: game.profile.heroFocus, drift: true)
-            LinearGradient(stops: [.init(color: .clear, location: 0.35),
-                                   .init(color: .black.opacity(0.55), location: 0.8),
-                                   .init(color: .black.opacity(0.85), location: 1)],
-                           startPoint: .top, endPoint: .bottom)
+                .mask(LinearGradient(stops: [.init(color: .black, location: 0.55), .init(color: .clear, location: 1)],
+                                     startPoint: .top, endPoint: .bottom))
             ArtFit(url: game.profile.artwork.logo)
                 .frame(maxWidth: 360, maxHeight: 150, alignment: .bottomLeading)
                 .shadow(color: .black.opacity(0.6), radius: 18, y: 6)
-                .padding(.leading, 36)
-                .padding(.bottom, 22)
+                .padding(.leading, Space.page - 12)
+                .padding(.bottom, Space.l)
                 .opacity(logoIn ? 1 : 0)
                 .offset(y: logoIn || reduceMotion ? 0 : 22)
                 .accessibilityLabel(game.profile.title)
@@ -66,9 +65,10 @@ private struct ActionBar: View {
     let game: GameModel
 
     var body: some View {
-        HStack(alignment: .center, spacing: 14) {
+        VStack(alignment: .leading, spacing: Space.m) {
+        HStack(alignment: .center, spacing: Space.m) {
             Button(action: game.primaryAction) {
-                HStack(spacing: 9) {
+                HStack(spacing: Space.s) {
                     if game.busy {
                         ProgressView().controlSize(.small).tint(.white)
                     } else {
@@ -78,7 +78,8 @@ private struct ActionBar: View {
                     Text(game.state.actionTitle).contentTransition(.interpolate)
                 }
                 .font(.system(size: 16, weight: .bold))
-                .padding(.horizontal, 26)
+                .padding(.horizontal, Space.xl + Space.xs)
+                .frame(minWidth: 140)
                 .frame(height: 44)
                 .background(Capsule().fill(game.state == .running ? Color.white.opacity(0.16) : game.profile.accent))
                 .foregroundStyle(game.state == .running ? Color.white : game.profile.onAccent)
@@ -93,7 +94,7 @@ private struct ActionBar: View {
             Button(action: game.openSteam) {
                 Label("Open Steam", systemImage: "arrow.up.forward.app")
                     .font(.system(size: 13, weight: .semibold))
-                    .padding(.horizontal, 16)
+                    .padding(.horizontal, Space.l + Space.xs)
                     .frame(height: 44)
                     .background(Capsule().fill(.white.opacity(0.1)))
                     .contentShape(Capsule())
@@ -117,20 +118,20 @@ private struct ActionBar: View {
                 .transition(.scale.combined(with: .opacity))
             }
 
-            VStack(alignment: .leading, spacing: 3) {
+        }
+            HStack(spacing: Space.s) {
                 Text(game.activity ?? game.state.summary)
-                    .font(.system(size: 13))
                     .foregroundStyle(.white.opacity(0.78))
-                    .lineLimit(2)
                     .contentTransition(.opacity)
                 if game.sessionRunning && game.state != .running {
-                    Text("Steam is running")
-                        .font(.system(size: 11))
+                    Text("Steam is running.")
                         .foregroundStyle(.secondary)
                         .transition(.opacity)
                 }
             }
-            .padding(.leading, 6)
+            .font(.system(size: 13))
+            .lineLimit(2)
+            .padding(.leading, Space.xs)
             .animation(Motion.morph, value: game.activity)
         }
         .animation(Motion.morph, value: game.sessionRunning)
@@ -154,7 +155,7 @@ private struct ErrorBanner: View {
     let dismiss: () -> Void
 
     var body: some View {
-        HStack(alignment: .top, spacing: 12) {
+        HStack(alignment: .top, spacing: Space.m) {
             Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.orange)
             Text(message)
                 .font(.system(size: 12))
@@ -164,7 +165,7 @@ private struct ErrorBanner: View {
             Button("Show logs", action: showLogs).buttonStyle(.link)
             Button(action: dismiss) { Image(systemName: "xmark") }.buttonStyle(.plain).foregroundStyle(.secondary)
         }
-        .padding(14)
+        .padding(Space.l)
         .background(RoundedRectangle(cornerRadius: 12).fill(.orange.opacity(0.12)))
         .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(.orange.opacity(0.35)))
     }
@@ -174,7 +175,7 @@ private struct SettingsSection: View {
     @Bindable var game: GameModel
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: Space.m) {
             Text("Settings").font(.system(size: 15, weight: .semibold))
             VStack(spacing: 0) {
                 row("Performance HUD", detail: "Shows the Metal frame rate overlay in the game.") {
@@ -200,25 +201,26 @@ private struct SettingsSection: View {
                     }
                 }
             }
-            .padding(.horizontal, 16)
+            .padding(.horizontal, Space.l + Space.xs)
             .background(RoundedRectangle(cornerRadius: 12).fill(.white.opacity(0.05)))
             .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(.white.opacity(0.08)))
             Text("Setting changes apply the next time Steam starts for this game.")
                 .font(.system(size: 11))
                 .foregroundStyle(.secondary)
+                .padding(.leading, Space.xs)
         }
         .disabled(game.busy)
     }
 
     private func row<Control: View>(_ title: String, detail: String, @ViewBuilder control: () -> Control) -> some View {
-        HStack(spacing: 16) {
-            VStack(alignment: .leading, spacing: 2) {
+        HStack(spacing: Space.l) {
+            VStack(alignment: .leading, spacing: 3) {
                 Text(title).font(.system(size: 13, weight: .medium))
                 Text(detail).font(.system(size: 11)).foregroundStyle(.secondary).lineLimit(2).truncationMode(.middle)
             }
             Spacer(minLength: 12)
             control()
         }
-        .padding(.vertical, 11)
+        .padding(.vertical, Space.m + 2)
     }
 }
