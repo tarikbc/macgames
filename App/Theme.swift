@@ -27,7 +27,7 @@ extension GameState {
         switch self {
         case .notSetUp: "This game needs its own Windows environment and Steam. Setup takes about a minute."
         case .needsSteam: "Windows is ready. Steam is not installed yet."
-        case .needsGame: "Sign in to Steam, then install the game in the default folder."
+        case .needsGame: "Install the game in Steam and keep the default folder. Sign in first if Steam asks."
         case .installing: "Steam is downloading the game."
         case .ready: "Ready to play."
         case .running: "Playing now."
