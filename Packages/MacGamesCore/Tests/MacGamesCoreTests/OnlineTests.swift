@@ -78,3 +78,45 @@ import Testing
         #expect(CnCNet.registerRenderer(in: ini) == ini, "registering twice changes nothing")
     }
 }
+
+@Suite struct SafeZipTests {
+    func zip(_ build: (URL) throws -> Void) throws -> (zip: URL, dir: URL) {
+        let dir = try makeTempDir("zip")
+        let content = dir.appendingPathComponent("content")
+        try FileManager.default.createDirectory(at: content, withIntermediateDirectories: true)
+        try build(content)
+        let zip = dir.appendingPathComponent("t.zip")
+        try ProcessRunner(logDirectory: dir).run(URL(fileURLWithPath: "/usr/bin/zip"), ["-qry", zip.path, "."], workingDirectory: content)
+        return (zip, dir)
+    }
+
+    @Test func linkEntriesAreFoundInTheListing() {
+        let listing = """
+        Archive:  t.zip
+        drwxr-xr-x  3.0 unx        0 bx stor 26-Oct-05 10:04 d/
+        lrwxr-xr-x  3.0 unx        4 bx stor 26-Oct-05 10:04 d/link
+        -rw-a--     2.0 fat     1024 bx defN 26-Oct-05 10:04 d/a b.txt
+        3 files, 7 bytes uncompressed, 7 bytes compressed:  0.0%
+        """
+        #expect(SafeZip.links(inListing: listing) == ["d/link"])
+    }
+
+    @Test func aZipWithASymlinkIsRefusedBeforeAnythingIsWritten() throws {
+        let (zip, dir) = try zip { content in
+            try write("hi", to: content.appendingPathComponent("a.txt"))
+            try FileManager.default.createSymbolicLink(atPath: content.appendingPathComponent("escape").path, withDestinationPath: "/tmp")
+        }
+        defer { try? FileManager.default.removeItem(at: dir) }
+        let target = dir.appendingPathComponent("out")
+        #expect(throws: SetupError.self) { try SafeZip.extract(zip, to: target, runner: ProcessRunner(logDirectory: dir)) }
+        #expect(!FileManager.default.fileExists(atPath: target.appendingPathComponent("a.txt").path))
+    }
+
+    @Test func aPlainZipExtracts() throws {
+        let (zip, dir) = try zip { content in try write("hi", to: content.appendingPathComponent("sub/a.txt")) }
+        defer { try? FileManager.default.removeItem(at: dir) }
+        let target = dir.appendingPathComponent("out")
+        try SafeZip.extract(zip, to: target, runner: ProcessRunner(logDirectory: dir))
+        #expect(read(target.appendingPathComponent("sub/a.txt")) == "hi")
+    }
+}

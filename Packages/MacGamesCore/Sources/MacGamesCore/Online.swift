@@ -230,12 +230,7 @@ extension GameRuntime {
     }
 
     func setupCnCNet() throws {
-        let unzip = URL(fileURLWithPath: "/usr/bin/unzip"), ditto = URL(fileURLWithPath: "/usr/bin/ditto")
-        func extract(_ zip: URL, to target: URL) throws {
-            let entries = try runner.run(unzip, ["-Z1", zip.path], timeout: 60).split(whereSeparator: \.isNewline).map(String.init)
-            guard entries.allSatisfy(CnCNet.isSafeEntry) else { throw SetupError("\(zip.lastPathComponent) holds unsafe paths.") }
-            try runner.run(ditto, ["-x", "-k", zip.path, target.path], timeout: 300)
-        }
+        func extract(_ zip: URL, to target: URL) throws { try SafeZip.extract(zip, to: target, runner: runner) }
         progress("Getting the CnCNet client…")
         let package = try downloader.fetch(CnCNet.package)
         let stage = paths.gameData.appendingPathComponent("cncnet-staging-\(UUID().uuidString)")
@@ -261,5 +256,28 @@ extension GameRuntime {
             return INIFile.set(in: t, section: "Video", key: "BorderlessWindowedClient", value: "True", onlyIfMissing: true)
         }
         fm.createFile(atPath: cncnetReady.path, contents: nil)
+    }
+}
+
+/// Extracts a downloaded zip only when no entry can write outside the target.
+public enum SafeZip {
+    /// Entries that are symbolic links, from `unzip -Z` output. `ditto` follows
+    /// them, so a link followed by a file inside it could write anywhere.
+    public static func links(inListing listing: String) -> [String] {
+        listing.split(whereSeparator: \.isNewline).compactMap { line in
+            let fields = line.split(separator: " ", maxSplits: 8, omittingEmptySubsequences: true)
+            guard fields.count == 9, fields[0].hasPrefix("l") else { return nil }
+            return String(fields[8])
+        }
+    }
+
+    public static func extract(_ zip: URL, to target: URL, runner: ProcessRunner) throws {
+        let unzip = URL(fileURLWithPath: "/usr/bin/unzip")
+        let names = try runner.run(unzip, ["-Z1", zip.path], timeout: 60).split(whereSeparator: \.isNewline).map(String.init)
+        guard names.allSatisfy(CnCNet.isSafeEntry) else { throw SetupError("\(zip.lastPathComponent) holds unsafe paths.") }
+        guard links(inListing: try runner.run(unzip, ["-Z", zip.path], timeout: 60)).isEmpty else {
+            throw SetupError("\(zip.lastPathComponent) holds symbolic links.")
+        }
+        try runner.run(URL(fileURLWithPath: "/usr/bin/ditto"), ["-x", "-k", zip.path, target.path], timeout: 300)
     }
 }
