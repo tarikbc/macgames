@@ -238,7 +238,7 @@ private struct SettingsSection: View {
                 }
                 if game.profile.optimizedExecutableSHA256 != nil {
                     Divider().opacity(0.3)
-                    row("x87 optimization", detail: "Faster math through x87sidecar. It turns itself off for game builds it does not know.") {
+                    row("x87 optimization", detail: game.optimization.detail) {
                         Toggle("", isOn: $game.settings.optimized).labelsHidden().toggleStyle(.switch)
                     }
                 }

@@ -3,22 +3,29 @@ import Foundation
 /// The account the shared Steam client signed in with last.
 public struct SteamAccount: Sendable, Equatable {
     public let personaName: String
+    public let steamID64: UInt64
+
+    /// The short account ID Steam uses for `userdata/<id>` folders.
+    public var accountID: UInt64 { steamID64 >= 76561197960265728 ? steamID64 - 76561197960265728 : steamID64 }
 
     /// Reads Steam's `config/loginusers.vdf`.
     public static func parse(_ text: String) -> SteamAccount? {
         var users: [[String: String]] = []
         var current: [String: String]?
         var depth = 0
+        var lastKey = ""
         for raw in text.split(whereSeparator: \.isNewline) {
             let line = raw.trimmingCharacters(in: .whitespaces)
-            if line == "{" { depth += 1; if depth == 2 { current = [:] }; continue }
+            if line == "{" { depth += 1; if depth == 2 { current = ["__id": lastKey] }; continue }
+            if depth == 1, line.hasPrefix("\"") { lastKey = line.trimmingCharacters(in: CharacterSet(charactersIn: "\"")) }
             if line == "}" { if depth == 2, let user = current { users.append(user); current = nil }; depth -= 1; continue }
             guard depth == 2 else { continue }
             let parts = line.split(separator: "\"", omittingEmptySubsequences: false)
             if parts.count >= 5 { current?[String(parts[1])] = String(parts[3]) }
         }
-        let chosen = users.first { $0["MostRecent"] == "1" } ?? users.last
-        return chosen?["PersonaName"].map(SteamAccount.init(personaName:))
+        guard let chosen = users.first(where: { $0["MostRecent"] == "1" }) ?? users.last,
+              let name = chosen["PersonaName"] else { return nil }
+        return SteamAccount(personaName: name, steamID64: chosen["__id"].flatMap { UInt64($0) } ?? 0)
     }
 
     public static func current(_ paths: GamePaths) -> SteamAccount? {

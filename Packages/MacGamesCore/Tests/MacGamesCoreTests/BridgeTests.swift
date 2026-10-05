@@ -31,7 +31,7 @@ import Testing
 
     @Test func matchingBuildRunsTheSidecarCooperatively() {
         var hashed: String?
-        let d = Bridge.decide(arguments: args, environment: env(sha: good), cwd: "/") { path in hashed = path; return good }
+        let d = Bridge.decide(arguments: args, environment: env(sha: good), cwd: "/", isExecutable: { _ in true }) { path in hashed = path; return good }
         #expect(hashed == "/r/prefix/drive_c/game/RelicCardinal.exe")
         #expect(d == .exec(path: "/app/Helpers/x87sidecar",
                            argv: ["/app/Helpers/x87sidecar", "--cooperative", "/r/engine/bin/wine", "C:\\game\\RelicCardinal.exe", "-arg"],

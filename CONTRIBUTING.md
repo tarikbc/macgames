@@ -17,7 +17,7 @@ You need an Apple Silicon Mac with macOS 26 or later, Xcode 27 and XcodeGen.
 ```sh
 git clone https://github.com/tarikbc/macgames.git
 cd macgames
-scripts/fetch-runtime.sh   # once, see the README
+scripts/fetch-runtime.sh   # once: downloads the runtime into Vendor/
 xcodegen generate
 open MacGames.xcodeproj
 ```
@@ -39,8 +39,8 @@ Please run it before you open a pull request. Every change to `MacGamesCore` com
 | `Packages/MacGamesCore/Sources/BridgeKit`, `MacGamesBridge` | The helper that Wine starts for Age of Empires IV, which decides between x87sidecar and the plain loader |
 | `Packages/MacGamesCore/Tests` | Swift Testing suites; they use temporary folders and real processes |
 | `App` | The SwiftUI app and the headless `--command` mode |
-| `scripts` | Runtime vendoring, the build phase that embeds it, and the icon renderer |
-| `Vendor` (not in git) | The runtime binaries and their source archives |
+| `scripts` | Runtime download and packaging, the build phase that embeds it, and the icon renderer |
+| `Vendor` (not in git) | The runtime binaries and their source archives, from the release |
 
 A few rules keep the runtime working:
 

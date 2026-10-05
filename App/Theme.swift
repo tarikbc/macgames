@@ -83,3 +83,17 @@ enum Motion {
     static let morph = Animation.spring(duration: 0.4, bounce: 0.25)
     static let reveal = Animation.easeOut(duration: 0.45)
 }
+
+extension OptimizationStatus {
+    /// What the next launch does, in one line.
+    var detail: String {
+        switch self {
+        case .notApplicable: "Not used by this game."
+        case .off: "Off. The game runs on standard Wine."
+        case .waitingForGame: "Faster x87 math through x87sidecar, once the game is installed."
+        case .otherBuild: "Not used: this game build is not the one it was made for. The game runs on standard Wine."
+        case .unsupportedRosetta: "Not used: x87sidecar does not support this Mac's Rosetta version."
+        case .active: "Active. Faster x87 math through x87sidecar for this game build."
+        }
+    }
+}

@@ -17,6 +17,7 @@ public enum Bridge {
     public static let pinKey = "MACGAMES_OPTIMIZED_SHA256"
 
     public static func decide(arguments: [String], environment: [String: String], cwd: String,
+                              isExecutable: (String) -> Bool = { FileManager.default.isExecutableFile(atPath: $0) },
                               hash: (String) throws -> String) -> BridgeDecision {
         let sidecar = ((arguments.first ?? "") as NSString).deletingLastPathComponent + "/x87sidecar"
         guard arguments.count > 1, arguments[1] == "--cooperative" else {
@@ -27,7 +28,8 @@ public enum Bridge {
         }
         let loader = arguments[2]
         let game = unixPath(for: arguments[3], prefix: prefix, cwd: cwd)
-        if let pin = environment[pinKey], let actual = try? hash(game), actual == pin {
+        // The game still starts on the plain loader if the sidecar is missing.
+        if isExecutable(sidecar), let pin = environment[pinKey], let actual = try? hash(game), actual == pin {
             return .exec(path: sidecar, argv: [sidecar] + arguments.dropFirst(), unset: [])
         }
         var unset = environment.keys.filter { key in optimizationPrefixes.contains(where: key.hasPrefix) }

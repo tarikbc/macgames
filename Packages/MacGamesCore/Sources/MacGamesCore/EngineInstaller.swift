@@ -49,12 +49,33 @@ public struct EngineInstaller: Sendable {
             try fm.createSymbolicLink(atPath: link.path, withDestinationPath: paths.frameworks.appendingPathComponent(target).path)
         }
         try marker.write(to: stage.appendingPathComponent(Self.markerName), atomically: true, encoding: .utf8)
-
-        let old = paths.root.appendingPathComponent("engine-old-\(UUID().uuidString)")
-        if fm.fileExists(atPath: paths.engine.path) { try fm.moveItem(at: paths.engine, to: old) }
-        defer { try? fm.removeItem(at: old) }
-        try fm.moveItem(at: stage, to: paths.engine)
+        try Self.swap(stage: stage, into: paths.engine)
         return true
+    }
+
+    /// Replaces `engine` with `stage`. If the new engine cannot move into place,
+    /// the old one goes back, so a failed update never leaves no engine at all.
+    static func swap(stage: URL, into engine: URL) throws {
+        let fm = FileManager.default
+        let old = engine.deletingLastPathComponent().appendingPathComponent("engine-old-\(UUID().uuidString)")
+        let hadEngine = fm.fileExists(atPath: engine.path)
+        if hadEngine { try fm.moveItem(at: engine, to: old) }
+        do {
+            try fm.moveItem(at: stage, to: engine)
+        } catch {
+            if hadEngine { try? fm.moveItem(at: old, to: engine) }
+            throw error
+        }
+        try? fm.removeItem(at: old)
+    }
+
+    /// Removes half-built folders that a crash or a forced quit left behind.
+    public static func removeLeftovers(in root: URL) {
+        let fm = FileManager.default
+        for name in (try? fm.contentsOfDirectory(atPath: root.path)) ?? []
+        where ["engine-staging-", "engine-old-", "deps-staging-"].contains(where: name.hasPrefix) {
+            try? fm.removeItem(at: root.appendingPathComponent(name))
+        }
     }
 
     func isSymlink(_ url: URL) -> Bool {

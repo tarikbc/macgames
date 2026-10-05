@@ -54,15 +54,14 @@ You need to own each game on Steam. MacGames never includes or downloads games i
 MacGames is not distributed as a ready-made app yet. You build it with Xcode.
 
 1. Install **Xcode 27** and **XcodeGen** (`brew install xcodegen`).
-2. Get the runtime. MacGames reuses the open-licensed Wine engine, DXMT and x87sidecar binaries from the
-   free a prebuilt alpha app. Install the runtime package, then run:
+2. Get the runtime: the Wine engine, DXMT and x87sidecar, with their source code and licenses.
 
    ```sh
    scripts/fetch-runtime.sh
    ```
 
-   This copies the parts MacGames uses, with their source code and licenses, into `Vendor/`. You can
-   remove the runtime package afterwards.
+   This downloads the runtime archive (about 130 MB) from this repository's
+   [releases](../../releases), checks its SHA-256 and signatures, and unpacks it into `Vendor/`.
 3. Build and open the app:
 
    ```sh
@@ -148,17 +147,15 @@ See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 
 ## Credits
 
-MacGames stands on the work of many projects:
+MacGames stands on these open-source projects:
 
-- [Wine](https://www.winehq.org) and [CodeWeavers](https://www.codeweavers.com), whose CrossOver
-  source the engine is built from
-- a prebuilt, which made the patched engine and the game recipes this
-  project learned from
+- [Wine](https://www.winehq.org), and the open-source release of CrossOver by
+  [CodeWeavers](https://www.codeweavers.com) that the engine is built from
 - [x87sidecar](https://github.com/athei/x87sidecar), based on
   [rosettax87_jit](https://github.com/Lifeisawful/rosettax87_jit)
 - [DXMT](https://github.com/3Shain/dxmt) by Feifan He
-- [Sikarugir](https://github.com/Sikarugir-App), which packages the libraries and Apple's D3DMetal
-- Apple's Game Porting Toolkit
+- [Sikarugir](https://github.com/Sikarugir-App), which packages the libraries MacGames downloads
+- [SDL](https://www.libsdl.org), for game controllers
 
-MacGames is not affiliated with Valve, Microsoft, Apple, CodeWeavers or the makers of the runtime package.
+MacGames is not affiliated with Valve, Microsoft, Apple or CodeWeavers.
 Game names and artwork belong to their owners.

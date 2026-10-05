@@ -1,5 +1,10 @@
 import Foundation
 
+public enum RuntimeEvent: Sendable {
+    case progress(String)
+    case step(SetupStep)
+}
+
 /// Runs every setup, launch and stop step for one game.
 ///
 /// All methods block; call them off the main thread.
@@ -9,20 +14,22 @@ public final class GameRuntime: @unchecked Sendable {
     public let runtime: RuntimeLayout
     public let downloader: Downloader
     public let runner: ProcessRunner
-    public var progress: @Sendable (String) -> Void
-    /// Called when setup enters a new stage.
-    public var stepChanged: @Sendable (SetupStep) -> Void = { _ in }
+    /// Receives progress lines and setup stages. Set once, at creation.
+    let events: @Sendable (RuntimeEvent) -> Void
 
     public init(profile: GameProfile, root: URL? = nil, runtime: RuntimeLayout,
                 downloadCache: URL = GamePaths.sharedDownloads(),
-                progress: @escaping @Sendable (String) -> Void = { _ in }) {
+                events: @escaping @Sendable (RuntimeEvent) -> Void = { _ in }) {
         self.profile = profile
         self.paths = GamePaths(profile: profile, root: root ?? GamePaths.defaultRoot())
         self.runtime = runtime
         self.downloader = Downloader(cache: downloadCache)
         self.runner = ProcessRunner(logDirectory: paths.logs)
-        self.progress = progress
+        self.events = events
     }
+
+    func progress(_ line: String) { events(.progress(line)) }
+    func stepChanged(_ step: SetupStep) { events(.step(step)) }
 
     var fm: FileManager { .default }
     var cs2DisplayPending: URL { paths.gameData.appendingPathComponent("display-pending") }
@@ -44,7 +51,7 @@ public final class GameRuntime: @unchecked Sendable {
         if optimized {
             let report = try check()
             optimized = report.optimizationAvailable
-            report.notes.forEach(progress)
+            report.notes.forEach { progress($0) }
             for helper in [runtime.bridge, runtime.sidecar] where !fm.isExecutableFile(atPath: helper.path) {
                 throw SetupError("The \(helper.lastPathComponent) helper is missing at \(helper.path).")
             }
@@ -65,6 +72,8 @@ public final class GameRuntime: @unchecked Sendable {
         stepChanged(.checkMac)
         progress("Checking this Mac…")
         try check()
+        EngineInstaller.removeLeftovers(in: paths.root)
+        downloader.removePartials()
         guard !isSessionRunning() else { throw SetupError("Close \(profile.title) and its Steam window before setup.") }
         try fm.createDirectory(at: paths.logs, withIntermediateDirectories: true)
 
@@ -96,7 +105,7 @@ public final class GameRuntime: @unchecked Sendable {
         let systemReg = paths.prefix.appendingPathComponent("system.reg")
         if !fm.fileExists(atPath: systemReg.path) {
             progress("Creating a new Windows environment…")
-            try runner.run(paths.wine, ["wineboot", "--init"], environment: plain, timeout: 300)
+            try runWine(["wineboot", "--init"], environment: plain, timeout: 300)
         }
         // wineboot can return before the server flushes the registry.
         let deadline = Date().addingTimeInterval(90)
@@ -107,11 +116,11 @@ public final class GameRuntime: @unchecked Sendable {
         }
         stepChanged(.configure)
         progress("Configuring Windows 10, graphics and controllers…")
-        try runner.run(paths.wine, ["winecfg", "-v", "win10"], environment: plain, timeout: 120)
+        try runWine(["winecfg", "-v", "win10"], environment: plain, timeout: 120)
         try PrefixSetup.replaceUserLinks(prefix: paths.prefix)
         try PrefixSetup.apply(PrefixSetup.libraryGraphicsCopies(root: paths.root))
         for command in PrefixSetup.wineBusCommands {
-            try runner.run(paths.wine, command, environment: plain, timeout: 120)
+            try runWine(command, environment: plain, timeout: 120)
         }
         try runner.run(paths.wineserver, ["-w"], environment: plain, timeout: 120)
 
@@ -136,10 +145,14 @@ public final class GameRuntime: @unchecked Sendable {
             let installer = try downloader.fetch(.steamSetup)
             progress("SteamSetup.exe SHA-256 \(try sha256Hex(ofFileAt: installer))")
             progress("Installing Steam…")
-            try runner.run(paths.wine, [installer.path, "/S"], environment: try launchEnvironment(), timeout: 300)
+            let env = try launchEnvironment()
+            try runWine([installer.path, "/S"], environment: env, timeout: 300)
             guard fm.fileExists(atPath: paths.steamExe.path) else {
                 throw SetupError("The Steam installer finished, but steam.exe is missing. Logs: \(paths.logs.path)")
             }
+            // The installer may start Steam itself, with the environment it got.
+            _ = try? runner.run(paths.wineserver, ["-w"], environment: env, timeout: 15)
+            recordSessionIfRunning(environment: env)
         }
         progress("Steam is installed.")
     }
@@ -151,6 +164,24 @@ public final class GameRuntime: @unchecked Sendable {
         if fm.fileExists(atPath: paths.prefix.appendingPathComponent("drive_c/windows").path) {
             try PrefixSetup.apply(PrefixSetup.libraryGraphicsCopies(root: paths.root))
         }
+    }
+
+    /// Runs a Wine command. On a timeout it stops the whole session: killing
+    /// only the direct child leaves the rest of Wine's processes running.
+    @discardableResult
+    func runWine(_ arguments: [String], environment: [String: String], timeout: TimeInterval) throws -> String {
+        do {
+            return try runner.run(paths.wine, arguments, environment: environment, timeout: timeout)
+        } catch let timeout as CommandTimeout {
+            _ = try? runner.run(paths.wineserver, ["-k"], environment: environment, timeout: 20, allowedStatuses: [0, 1])
+            throw timeout
+        }
+    }
+
+    /// Notes which settings a Steam that MacGames did not start itself runs with.
+    func recordSessionIfRunning(environment: [String: String]) {
+        guard isSessionRunning(), SteamSession.load(paths) == nil else { return }
+        try? SteamSession.begin(fingerprint: SteamLaunch.fingerprint(environment), paths: paths)
     }
 
     // MARK: Steam session
@@ -205,17 +236,74 @@ public final class GameRuntime: @unchecked Sendable {
         progress(mode == .open ? "Steam is opening." : "Steam received the request.")
     }
 
-    public func play(displayWidth: Int? = nil, displayHeight: Int? = nil) throws {
-        guard state() == .ready else {
-            throw SetupError("\(profile.title) is not ready. Install it in this Steam client's default library first.")
+    /// Why Play cannot start now, in words for the user; `nil` when it can.
+    public static func playBlocker(_ state: GameState, title: String) -> String? {
+        switch state {
+        case .ready: nil
+        case .notSetUp: "Set up \(title) first."
+        case .needsSteam: "Install Steam first."
+        case .needsGame: "Install \(title) in Steam first, in the default folder."
+        case .installing: "Wait until Steam finishes the download or update of \(title)."
+        case .running: "\(title) is already running."
         }
+    }
+
+    public func play(displayWidth: Int? = nil, displayHeight: Int? = nil) throws {
+        if let blocker = Self.playBlocker(state(), title: profile.title) { throw SetupError(blocker) }
         var extra: [String] = []
         let fixDisplay = profile.id == "cs2" && fm.fileExists(atPath: cs2DisplayPending.path)
         if fixDisplay, let w = displayWidth, let h = displayHeight {
-            extra = SteamLaunch.cs2DisplayArguments(width: w, height: h)
+            // Prefer the game's own settings file; fall back to launch arguments
+            // when no Steam account has signed in yet.
+            if !(try applyCS2Display(width: w, height: h)) { extra = SteamLaunch.cs2DisplayArguments(width: w, height: h) }
         }
         try startSteam(.play(extra))
-        if fixDisplay && !extra.isEmpty { try? fm.removeItem(at: cs2DisplayPending) }
+        if fixDisplay { try? fm.removeItem(at: cs2DisplayPending) }
+    }
+
+    /// Sets CS2 to borderless fullscreen-windowed for the signed-in account and
+    /// keeps a copy of the previous file. Returns `false` with no account.
+    func applyCS2Display(width: Int, height: Int) throws -> Bool {
+        guard let account = SteamAccount.current(paths), account.steamID64 != 0 else { return false }
+        let url = CS2VideoConfig.url(paths: paths, account: account)
+        let previous = try? String(contentsOf: url, encoding: .utf8)
+        if let previous {
+            let backups = paths.gameData.appendingPathComponent("display-backups")
+            try fm.createDirectory(at: backups, withIntermediateDirectories: true)
+            try previous.write(to: backups.appendingPathComponent("cs2_video-\(Int(Date().timeIntervalSince1970)).txt"),
+                               atomically: true, encoding: .utf8)
+        }
+        try fm.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
+        try CS2VideoConfig.apply(to: previous, width: width, height: height).write(to: url, atomically: true, encoding: .utf8)
+        return true
+    }
+
+    // MARK: Optimization status
+
+    private let statusLock = NSLock()
+    private var cachedSidecarSupport: Bool?
+    private var cachedExecutable: (size: UInt64, modified: Date, sha: String)?
+
+    /// What the next launch does with the x87 optimization. The game's hash is
+    /// cached until the file changes; the sidecar probe runs once per launch.
+    public func optimizationStatus() -> OptimizationStatus {
+        guard profile.optimizedExecutableSHA256 != nil else { return .notApplicable }
+        let enabled = settings.optimized
+        statusLock.lock(); defer { statusLock.unlock() }
+        var sha: String?
+        if let attributes = try? fm.attributesOfItem(atPath: paths.gameExe.path),
+           let size = attributes[.size] as? UInt64, let modified = attributes[.modificationDate] as? Date {
+            if let cached = cachedExecutable, cached.size == size, cached.modified == modified {
+                sha = cached.sha
+            } else if let hash = try? sha256Hex(ofFileAt: paths.gameExe) {
+                cachedExecutable = (size, modified, hash); sha = hash
+            }
+        }
+        if cachedSidecarSupport == nil {
+            cachedSidecarSupport = (try? runner.run(runtime.sidecar, ["--probe"], timeout: 25)) != nil
+        }
+        return OptimizationStatus.evaluate(profile, enabled: enabled, executableSHA256: sha,
+                                           sidecarSupported: cachedSidecarSupport ?? false)
     }
 
     /// Asks the next CS2 launch to apply the borderless window size again.

@@ -4,9 +4,14 @@ import BridgeKit
 
 /// Runs the real MacGamesBridge binary with stand-in sidecar and loader scripts.
 @Suite struct BridgeExecutableTests {
-    static let built = URL(fileURLWithPath: #filePath)
-        .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
-        .appendingPathComponent(".build/debug/MacGamesBridge")
+    /// SwiftPM puts the bridge next to the test bundle, in whatever build folder
+    /// and configuration this run uses.
+    static let built: URL = {
+        let products = Bundle.allBundles.first { $0.bundlePath.hasSuffix(".xctest") }?.bundleURL.deletingLastPathComponent()
+        return (products ?? URL(fileURLWithPath: #filePath).deletingLastPathComponent()
+            .deletingLastPathComponent().deletingLastPathComponent().appendingPathComponent(".build/debug"))
+            .appendingPathComponent("MacGamesBridge")
+    }()
 
     func stage() throws -> (dir: URL, bridge: URL, loader: URL, game: URL) {
         let dir = FileManager.default.temporaryDirectory.appendingPathComponent("bridge-\(UUID().uuidString)")

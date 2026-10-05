@@ -33,6 +33,14 @@ public struct Downloader: Sendable {
 
     public init(cache: URL) { self.cache = cache }
 
+    /// Removes interrupted downloads.
+    public func removePartials() {
+        let fm = FileManager.default
+        for name in (try? fm.contentsOfDirectory(atPath: cache.path)) ?? [] where name.hasSuffix(".partial") {
+            try? fm.removeItem(at: cache.appendingPathComponent(name))
+        }
+    }
+
     public func fetch(_ item: Download) throws -> URL {
         let fm = FileManager.default
         let target = cache.appendingPathComponent(item.fileName)

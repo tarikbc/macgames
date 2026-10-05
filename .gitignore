@@ -6,3 +6,4 @@ DerivedData/
 *.xcodeproj
 .superpowers/
 .DS_Store
+dist/

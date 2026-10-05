@@ -33,7 +33,10 @@ final class GameModel: Identifiable {
     private(set) var finishedSteps: Set<SetupStep> = []
     /// Set when an action would end a running game; the view asks first.
     var confirmingStop = false
-    var settings: LaunchSettings { didSet { let r = runtime, s = settings; Task.detached { r.settings = s } } }
+    /// Saved at once on the main actor, so the file always holds the last change.
+    var settings: LaunchSettings { didSet { runtime.settings = settings; refreshOptimization() } }
+    /// What the next launch does with the x87 optimization.
+    private(set) var optimization: OptimizationStatus = .notApplicable
 
     nonisolated var id: String { profile.id }
 
@@ -43,19 +46,42 @@ final class GameModel: Identifiable {
     init(profile: GameProfile, gate: OperationGate) {
         self.profile = profile
         self.gate = gate
-        let runtime = GameRuntime(profile: profile, runtime: .inBundle())
+        let (events, sink) = AsyncStream.makeStream(of: RuntimeEvent.self)
+        let runtime = GameRuntime(profile: profile, runtime: .inBundle()) { sink.yield($0) }
         self.runtime = runtime
         self.settings = runtime.settings
-        runtime.progress = { [weak self] line in Task { @MainActor in self?.activity = line } }
-        runtime.stepChanged = { [weak self] next in Task { @MainActor in self?.advance(to: next) } }
+        Task { [weak self] in
+            for await event in events {
+                switch event {
+                case .progress(let line): self?.activity = line
+                case .step(let next): self?.advance(to: next)
+                }
+            }
+        }
+    }
+
+    /// Blocking runtime work runs here, not on the threads Swift uses for async tasks.
+    private static let work = DispatchQueue(label: "com.tarikbc.macgames.work", qos: .userInitiated)
+    private static let reads = DispatchQueue(label: "com.tarikbc.macgames.reads", qos: .utility, attributes: .concurrent)
+
+    private static func off<T: Sendable>(_ queue: DispatchQueue, _ body: @escaping @Sendable () -> T) async -> T {
+        await withCheckedContinuation { done in queue.async { done.resume(returning: body()) } }
+    }
+
+    private func refreshOptimization() {
+        let r = runtime
+        Task { optimization = await Self.off(Self.reads) { r.optimizationStatus() } }
     }
 
     func refresh() async {
         guard !locked else { return }
         let r = runtime
-        let (state, live, download) = await Task.detached {
-            (r.state(), r.isSessionRunning(), SteamStatus.downloadProgress(r.paths))
-        }.value
+        let (state, live, download, optimization) = await Self.off(Self.reads) {
+            (r.state(), r.isSessionRunning(), SteamStatus.downloadProgress(r.paths), r.optimizationStatus())
+        }
+        // An old error no longer describes a game that moved to another stage.
+        if state != self.state { error = nil }
+        self.optimization = optimization
         self.state = state
         self.sessionRunning = live
         self.downloadProgress = download
@@ -105,9 +131,9 @@ final class GameModel: Identifiable {
         gate.owner = id; error = nil; activity = "\(label)…"
         let r = runtime
         Task {
-            let failure: String? = await Task.detached {
+            let failure: String? = await Self.off(Self.work) {
                 do { try work(r); return nil } catch { return String(describing: error) }
-            }.value
+            }
             if failure == nil, let current = step { finishedSteps.insert(current) }
             step = nil
             gate.owner = nil

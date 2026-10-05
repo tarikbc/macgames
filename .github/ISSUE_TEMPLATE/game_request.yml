@@ -24,4 +24,4 @@ body:
     id: notes
     attributes:
       label: What do you know so far?
-      description: Tests with CrossOver, Whisky, the runtime package or Proton help a lot. Say if you want to build the profile yourself.
+      description: Tests with Wine, Whisky or Proton help a lot. Say if you want to build the profile yourself.

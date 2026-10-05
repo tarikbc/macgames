@@ -6,7 +6,7 @@ public struct CommandFailure: Error, CustomStringConvertible {
     public let output: String
     public let log: URL
     public var description: String {
-        "\(executable) failed (exit \(status)).\n\(output.suffix(2000))\nLog: \(log.path)"
+        "\(executable) failed (exit \(status)). Log: \(log.path)\n\(output.suffix(2000))"
     }
 }
 
@@ -20,6 +20,14 @@ public struct CommandTimeout: Error, CustomStringConvertible {
 /// rather than a pipe, so a chatty Wine process can never block on a full pipe.
 public struct ProcessRunner: Sendable {
     public let logDirectory: URL
+
+    /// A handle that always writes at the end of the file, even when several
+    /// processes share it (for example two Steam launches in one session).
+    public static func appendHandle(for url: URL) throws -> FileHandle {
+        let fd = open(url.path, O_WRONLY | O_APPEND | O_CREAT, 0o644)
+        guard fd >= 0 else { throw CocoaError(.fileWriteUnknown, userInfo: [NSFilePathErrorKey: url.path]) }
+        return FileHandle(fileDescriptor: fd, closeOnDealloc: true)
+    }
 
     public init(logDirectory: URL) { self.logDirectory = logDirectory }
 

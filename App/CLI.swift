@@ -21,8 +21,8 @@ enum CLI {
             return 64
         }
         let root = value("--root", in: args).map { URL(fileURLWithPath: $0) }
-        let game = GameRuntime(profile: profile, root: root, runtime: .inBundle()) { line in
-            print(line); fflush(stdout)
+        let game = GameRuntime(profile: profile, root: root, runtime: .inBundle()) { event in
+            if case .progress(let line) = event { print(line); fflush(stdout) }
         }
         do {
             switch command {
