@@ -27,7 +27,9 @@ contains the corresponding source code in `Sources/`.
 ## Website
 
 The site in `docs/` uses the Barlow Condensed typeface, under the SIL Open Font License 1.1
-([`docs/assets/fonts/OFL.txt`](docs/assets/fonts/OFL.txt)).
+([`docs/assets/fonts/OFL.txt`](docs/assets/fonts/OFL.txt)). Its game covers load from
+Steam's public store servers when the page opens; they belong to each game's publisher and are not
+part of this repository.
 
 ## Release packs, downloaded on first setup of an environment
 
