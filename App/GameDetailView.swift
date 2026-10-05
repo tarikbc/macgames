@@ -74,14 +74,14 @@ struct GameDetailView: View {
         ZStack(alignment: .bottomLeading) {
             // Expanded, the art dissolves into the window's backdrop. Collapsed, it turns
             // into a frosted bar in the game's own colors with a crisp bottom edge.
-            ArtImage(url: game.profile.artwork.hero, focus: game.profile.heroFocus, drift: true)
+            ArtImage(url: game.profile.artwork?.hero, focus: game.profile.heroFocus, drift: true)
                 .blur(radius: 24 * collapse)
                 .mask(LinearGradient(stops: [.init(color: .black, location: 0.55 + 0.45 * collapse),
                                              .init(color: .black.opacity(collapse), location: 1)],
                                      startPoint: .top, endPoint: .bottom))
             Rectangle().fill(.ultraThinMaterial).opacity(collapse)
             Rectangle().fill(.black.opacity(0.35 * collapse))
-            ArtFit(url: game.profile.artwork.logo)
+            ArtFit(url: game.profile.artwork?.logo, fallback: game.profile.title)
                 // Logo PNGs carry wide transparent margins, so the collapsed size stays generous.
                 .frame(maxWidth: 360 - 150 * collapse, maxHeight: 150 - 94 * collapse, alignment: .bottomLeading)
                 .shadow(color: .black.opacity(0.6 - 0.25 * collapse), radius: 18 - 12 * collapse, y: 6 - 5 * collapse)

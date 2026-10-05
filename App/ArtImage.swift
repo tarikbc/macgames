@@ -4,19 +4,19 @@ import SwiftUI
 /// Fills its frame with remote art, cropping around a focal point so the
 /// subject stays in view at any window shape. Fades in once loaded.
 struct ArtImage: View {
-    let url: URL
+    let url: URL?
     var focus: UnitPoint = .center
     var drift = false
 
     var body: some View {
         GeometryReader { geo in
             ZStack {
-                if let image = ArtworkStore.shared.image(url) {
+                if let url, let image = ArtworkStore.shared.image(url) {
                     FocalFill(image: image, size: geo.size, focus: focus, drift: drift)
                         .transition(.opacity)
                 }
             }
-            .animation(Motion.reveal, value: ArtworkStore.shared.images[url] != nil)
+            .animation(Motion.reveal, value: url.map { ArtworkStore.shared.images[$0] != nil } ?? false)
         }
         .clipped()
         // The cropped image extends past this frame. `clipped()` hides it but
@@ -55,15 +55,23 @@ private struct FocalFill: View {
 
 /// A logo or other image shown whole, never cropped.
 struct ArtFit: View {
-    let url: URL
+    let url: URL?
+    /// Shown when there is no logo image, for games Steam does not sell.
+    var fallback: String? = nil
     var body: some View {
-        ZStack {
-            if let image = ArtworkStore.shared.image(url) {
+        ZStack(alignment: .bottomLeading) {
+            if let url, let image = ArtworkStore.shared.image(url) {
                 Image(nsImage: image).resizable().interpolation(.high).aspectRatio(contentMode: .fit)
                     .transition(.opacity)
+            } else if url == nil, let fallback {
+                Text(fallback)
+                    .font(.system(size: 34, weight: .heavy).width(.condensed))
+                    .foregroundStyle(.white)
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.5)
             }
         }
-        .animation(Motion.reveal, value: ArtworkStore.shared.images[url] != nil)
+        .animation(Motion.reveal, value: url.map { ArtworkStore.shared.images[$0] != nil } ?? false)
         .allowsHitTesting(false)
     }
 }

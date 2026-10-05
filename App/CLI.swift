@@ -3,10 +3,12 @@ import Foundation
 import MacGamesCore
 
 /// Headless access to every step, for scripting and testing without the UI.
+@MainActor
 enum CLI {
     static let usage = """
-    usage: MacGames --command <check|setup|steam|install|play|stop|status|reset-display|settings>
-                    --game <aoe4|cs2> [--root <data root>] [--optimized on|off] [--hud on|off]
+    usage: MacGames --command <check|setup|launcher|install|play|stop|status|reset-display|settings>
+                    --game <id> [--root <data root>] [--optimized on|off] [--hud on|off]
+    games: \(GameProfile.all.map(\.id).joined(separator: ", "))
     """
 
     static func value(_ name: String, in args: [String]) -> String? {
@@ -32,14 +34,13 @@ enum CLI {
                 report.notes.forEach { print($0) }
             case "setup":
                 try game.prepare()
-                try game.installSteam()
-            case "steam":
-                try game.startSteam(.open)
+                try game.installLauncher()
+            case "steam", "launcher":
+                try game.openLauncher()
             case "install":
                 try game.startSteam(.install)
             case "play":
-                let screen = CGDisplayBounds(CGMainDisplayID()).size
-                try game.play(displayWidth: Int(screen.width), displayHeight: Int(screen.height))
+                try game.play(LaunchContext.mainDisplay())
             case "stop":
                 try game.stop()
             case "status":

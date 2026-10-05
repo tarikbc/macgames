@@ -92,19 +92,22 @@ final class GameModel: Identifiable {
         switch state {
         case .notSetUp:
             finishedSteps = []
-            perform("Setting up") { r in try r.prepare(); try r.installSteam(); try r.startSteam(.install) }
+            perform("Setting up") { r in try r.prepare(); try r.installLauncher(); try r.openForInstall() }
         case .needsSteam:
-            perform("Installing Steam") { r in try r.installSteam(); try r.startSteam(.install) }
-        case .needsGame: perform("Opening Steam") { r in try r.startSteam(.install) }
+            perform("Installing \(launcherName)") { r in try r.installLauncher(); try r.openForInstall() }
+        case .needsGame: perform("Opening \(launcherName)") { r in try r.openForInstall() }
         case .installing: openSteam()
         case .ready:
-            let size = CGDisplayBounds(CGMainDisplayID()).size
-            perform("Starting \(profile.title)") { r in try r.play(displayWidth: Int(size.width), displayHeight: Int(size.height)) }
+            let context = LaunchContext.mainDisplay()
+            perform("Starting \(profile.title)") { r in try r.play(context) }
         case .running: confirmingStop = true
         }
     }
 
-    func openSteam() { perform("Opening Steam") { r in try r.startSteam(.open) } }
+    /// "Steam" or "Battle.net": the client this game's environment uses.
+    var launcherName: String { profile.gameEnvironment.launcher == .battleNet ? "Battle.net" : "Steam" }
+
+    func openSteam() { perform("Opening \(launcherName)") { r in try r.openLauncher() } }
 
     func requestStop() {
         if state == .running { confirmingStop = true } else { stop() }

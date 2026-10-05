@@ -42,7 +42,7 @@ private struct Backdrop: View {
         ZStack {
             Color.black
             if let game {
-                ArtImage(url: game.profile.artwork.hero, focus: game.profile.heroFocus)
+                ArtImage(url: game.profile.artwork?.hero, focus: game.profile.heroFocus)
                     .blur(radius: 80)
                     .saturation(1.25)
                     .opacity(0.55)
@@ -93,7 +93,7 @@ private struct GameRow: View {
 
     var body: some View {
         HStack(spacing: Space.m) {
-            ArtImage(url: game.profile.artwork.portrait)
+            ArtImage(url: game.profile.artwork?.portrait)
                 .frame(width: 40, height: 60)
                 .background(game.profile.accent.opacity(0.3))
                 .clipShape(RoundedRectangle(cornerRadius: 5))
