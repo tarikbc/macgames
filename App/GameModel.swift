@@ -21,6 +21,8 @@ final class GameModel: Identifiable {
     private(set) var sessionRunning = false
     /// 0...1 while Steam installs or updates this game.
     private(set) var downloadProgress: Double?
+    /// The game's community online client is installed.
+    private(set) var onlineReady = false
     @ObservationIgnored private let gate: OperationGate
     /// This game's task is running.
     var busy: Bool { gate.owner == id }
@@ -76,9 +78,10 @@ final class GameModel: Identifiable {
     func refresh() async {
         guard !locked else { return }
         let r = runtime
-        let (state, live, download, optimization) = await Self.off(Self.reads) {
-            (r.state(), r.isSessionRunning(), SteamStatus.downloadProgress(r.paths), r.optimizationStatus())
+        let (state, live, download, optimization, online) = await Self.off(Self.reads) {
+            (r.state(), r.isSessionRunning(), SteamStatus.downloadProgress(r.paths), r.optimizationStatus(), r.onlineReady)
         }
+        self.onlineReady = online
         // An old error no longer describes a game that moved to another stage.
         if state != self.state { error = nil }
         self.optimization = optimization
@@ -108,6 +111,11 @@ final class GameModel: Identifiable {
     var launcherName: String { profile.gameEnvironment.launcher == .battleNet ? "Battle.net" : "Steam" }
 
     func openSteam() { perform("Opening \(launcherName)") { r in try r.openLauncher() } }
+
+    func playOnline() {
+        let context = LaunchContext.mainDisplay()
+        perform(onlineReady ? "Starting the online client" : "Setting up online play") { r in try r.playOnline(context) }
+    }
 
     func requestStop() {
         if state == .running { confirmingStop = true } else { stop() }
@@ -164,9 +172,20 @@ final class LibraryModel {
     }
 
     var selected: GameModel? { games.first { $0.id == selectedID } }
-    /// Stopping Steam ends a running game, so that game's page asks first.
+    var selectedEnvironment: GameEnvironment { selected?.profile.gameEnvironment ?? .steam }
+
+    /// Games grouped by the Windows environment they live in, shared Steam first.
+    var sections: [(environment: GameEnvironment, games: [GameModel])] {
+        GameEnvironment.all.map { env in (env, games.filter { $0.profile.environment == env.id }) }.filter { !$0.games.isEmpty }
+    }
+
+    /// Games in sidebar order, for ⌘1…⌘9.
+    var ordered: [GameModel] { sections.flatMap(\.games) }
+
+    /// Stopping a launcher ends the games it runs, so a running game's page asks first.
     func requestStopSteam() {
-        if let playing = games.first(where: { $0.state == .running }) {
+        let env = selectedEnvironment
+        if let playing = games.first(where: { $0.profile.environment == env.id && $0.state == .running }) {
             selectedID = playing.id
             playing.confirmingStop = true
         } else {
@@ -174,25 +193,32 @@ final class LibraryModel {
         }
     }
 
-    /// Steam is shared, so any game can tell whether it runs.
-    var steamRunning: Bool { games.contains(where: \.sessionRunning) }
-
-    func select(index: Int) {
-        guard games.indices.contains(index) else { return }
-        selectedID = games[index].id
+    /// Every game of an environment shares its session, so any of them can tell.
+    func launcherRunning(_ env: GameEnvironment) -> Bool {
+        games.contains { $0.profile.environment == env.id && $0.sessionRunning }
     }
 
-    private(set) var steam = SteamStatus(account: nil, downloads: [])
-    /// The Steam client's own icon, read from its install once it exists.
-    private(set) var steamIcon: NSImage?
+    func select(index: Int) {
+        guard ordered.indices.contains(index) else { return }
+        selectedID = ordered[index].id
+    }
+
+    /// Account and downloads of each environment's Steam.
+    private(set) var launcher: [String: SteamStatus] = [:]
+    /// Each Steam client's own icon, read from its install once it exists.
+    private(set) var steamIcons: [String: NSImage] = [:]
 
     func poll() async {
-        let root = GamePaths.defaultRoot()
         while !Task.isCancelled {
             for game in games { await game.refresh() }
-            steam = await Task.detached { SteamStatus.read(root: root) }.value
-            if steamIcon == nil, let game = games.first {
-                steamIcon = NSImage(contentsOf: game.runtime.paths.steamDir.appendingPathComponent("public/steam_tray.ico"))
+            for env in GameEnvironment.all where env.launcher == .steam {
+                let root = GamePaths.defaultRoot(for: env)
+                guard FileManager.default.fileExists(atPath: root.path) else { continue }
+                launcher[env.id] = await Task.detached { SteamStatus.read(root: root, environment: env) }.value
+                if steamIcons[env.id] == nil, let game = env.games.first,
+                   let icon = NSImage(contentsOf: GamePaths(profile: game, root: root).steamDir.appendingPathComponent("public/steam_tray.ico")) {
+                    steamIcons[env.id] = icon
+                }
             }
             try? await Task.sleep(for: .seconds(3))
         }

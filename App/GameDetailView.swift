@@ -108,7 +108,7 @@ private struct CompactPlay: View {
         Button(action: game.primaryAction) {
             HStack(spacing: 6) {
                 Image(systemName: game.state.actionSymbol).contentTransition(.symbolEffect(.replace))
-                Text(game.state.actionTitle)
+                Text(game.state.actionTitle(launcher: game.launcherName))
             }
             .font(.system(size: 13, weight: .bold))
             .padding(.horizontal, Space.l)
@@ -135,7 +135,7 @@ private struct ActionBar: View {
                         Image(systemName: game.state.actionSymbol)
                             .contentTransition(.symbolEffect(.replace))
                     }
-                    Text(game.state.actionTitle).contentTransition(.interpolate)
+                    Text(game.state.actionTitle(launcher: game.launcherName)).contentTransition(.interpolate)
                 }
                 .font(.system(size: 16, weight: .bold))
                 .padding(.horizontal, Space.xl + Space.xs)
@@ -150,8 +150,25 @@ private struct ActionBar: View {
             .keyboardShortcut(.defaultAction)
             .animation(Motion.morph, value: game.state)
             .animation(Motion.morph, value: game.busy)
+            .overlay(alignment: .trailing) {
+                if game.profile.online != nil, game.state == .ready {
+                    Button(action: game.playOnline) {
+                        Label(game.onlineReady ? "Play Online" : "Set up online", systemImage: "globe")
+                            .font(.system(size: 14, weight: .semibold))
+                            .padding(.horizontal, Space.l + Space.xs)
+                            .frame(height: 44)
+                            .background(Capsule().fill(.white.opacity(0.12)))
+                            .contentShape(Capsule())
+                    }
+                    .buttonStyle(PressableStyle())
+                    .disabled(game.locked)
+                    .fixedSize()
+                    .alignmentGuide(.trailing) { $0[.leading] - Space.m }
+                    .transition(.opacity.combined(with: .move(edge: .leading)))
+                }
+            }
 
-            Text(game.activity ?? game.state.summary)
+            Text(game.activity ?? game.state.summary(launcher: game.launcherName))
                 .font(.system(size: 13))
                 .foregroundStyle(.white.opacity(0.78))
                 .lineLimit(2)

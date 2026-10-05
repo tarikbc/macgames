@@ -85,9 +85,10 @@ public struct SteamStatus: Sendable, Equatable {
         return AppManifest(contentsOf: paths.appManifest)?.downloadProgress(stagedBytes: AppManifest.stagedBytes(in: staging))
     }
 
-    public static func read(root: URL) -> SteamStatus {
-        let any = GamePaths(profile: GameProfile.all[0], root: root)
-        let downloads = GameProfile.all.compactMap { profile -> Download? in
+    public static func read(root: URL, environment: GameEnvironment = .steam) -> SteamStatus {
+        guard let first = environment.games.first else { return SteamStatus(account: nil, downloads: []) }
+        let any = GamePaths(profile: first, root: root)
+        let downloads = environment.games.filter { $0.launch != .battleNet }.compactMap { profile -> Download? in
             let paths = GamePaths(profile: profile, root: root)
             guard let progress = downloadProgress(paths) else { return nil }
             return Download(profile: profile, progress: progress)

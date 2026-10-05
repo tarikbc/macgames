@@ -23,12 +23,14 @@ extension GameProfile {
 
 extension GameState {
     /// One line for the game page.
-    var summary: String {
+    func summary(launcher: String) -> String {
         switch self {
-        case .notSetUp: "This game needs its own Windows environment and Steam. Setup takes about a minute."
-        case .needsSteam: "Windows is ready. Steam is not installed yet."
-        case .needsGame: "Install the game in Steam and keep the default folder. Sign in first if Steam asks."
-        case .installing: "Steam is downloading the game."
+        case .notSetUp: "This game needs a Windows environment and \(launcher). Setup takes about a minute."
+        case .needsSteam: "Windows is ready. \(launcher) is not installed yet."
+        case .needsGame: launcher == "Steam"
+            ? "Install the game in Steam and keep the default folder. Sign in first if Steam asks."
+            : "Sign in to \(launcher), then install the game there."
+        case .installing: "\(launcher) is installing the game."
         case .ready: "Ready to play."
         case .running: "Playing now."
         }
@@ -38,7 +40,7 @@ extension GameState {
     var shortSummary: String {
         switch self {
         case .notSetUp: "Not set up"
-        case .needsSteam: "Needs Steam"
+        case .needsSteam: "Needs launcher"
         case .needsGame: "Not installed"
         case .installing: "Downloading"
         case .ready: "Ready"
@@ -46,12 +48,12 @@ extension GameState {
         }
     }
 
-    var actionTitle: String {
+    func actionTitle(launcher: String) -> String {
         switch self {
         case .notSetUp: "Set up"
-        case .needsSteam: "Install Steam"
-        case .needsGame: "Install in Steam"
-        case .installing: "Show download"
+        case .needsSteam: "Install \(launcher)"
+        case .needsGame: launcher == "Steam" ? "Install in Steam" : "Open \(launcher)"
+        case .installing: launcher == "Steam" ? "Show download" : "Show \(launcher)"
         case .ready: "Play"
         case .running: "Stop"
         }

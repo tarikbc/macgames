@@ -25,7 +25,7 @@ struct LibraryView: View {
         .task { await library.poll() }
         .background {
             // ⌘1…⌘9 select a game by its place in the list.
-            ForEach(Array(library.games.prefix(9).enumerated()), id: \.offset) { index, _ in
+            ForEach(Array(library.ordered.prefix(9).enumerated()), id: \.offset) { index, _ in
                 Button("") { withAnimation(Motion.switchGame) { library.select(index: index) } }
                     .keyboardShortcut(KeyEquivalent(Character("\(index + 1)")), modifiers: .command)
                     .hidden()
@@ -67,10 +67,24 @@ private struct Sidebar: View {
                 .padding(.top, 48)
                 .padding(.bottom, Space.l)
             ScrollView {
-                VStack(spacing: Space.xs) {
-                    ForEach(library.games) { game in
-                        GameRow(game: game, selected: game.id == library.selectedID, namespace: selection)
-                            .onTapGesture { withAnimation(Motion.switchGame) { library.selectedID = game.id } }
+                VStack(alignment: .leading, spacing: Space.xs) {
+                    ForEach(library.sections, id: \.environment.id) { section in
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(section.environment.id == "steam" ? "Steam library" : section.environment.title)
+                                .font(.system(size: 11, weight: .semibold))
+                                .foregroundStyle(.secondary)
+                            if section.environment.id != "steam" {
+                                Text("Its own Windows environment")
+                                    .font(.system(size: 10))
+                                    .foregroundStyle(.tertiary)
+                            }
+                        }
+                        .padding(.leading, Space.s)
+                        .padding(.top, section.environment.id == "steam" ? 0 : Space.m)
+                        ForEach(section.games) { game in
+                            GameRow(game: game, selected: game.id == library.selectedID, namespace: selection)
+                                .onTapGesture { withAnimation(Motion.switchGame) { library.selectedID = game.id } }
+                        }
                     }
                 }
             }
@@ -127,8 +141,8 @@ private struct GameRow: View {
         .contentShape(RoundedRectangle(cornerRadius: 10))
         .onHover { over in withAnimation(.easeOut(duration: 0.15)) { hovering = over } }
         .contextMenu {
-            Button(game.state.actionTitle, action: game.primaryAction).disabled(game.locked)
-            Button("Open Steam", action: game.openSteam).disabled(!game.steamAvailable || game.locked)
+            Button(game.state.actionTitle(launcher: game.launcherName), action: game.primaryAction).disabled(game.locked)
+            Button("Open \(game.launcherName)", action: game.openSteam).disabled(!game.steamAvailable || game.locked)
             Divider()
             Button("Show logs", action: game.showLogs)
         }
@@ -172,20 +186,23 @@ private struct SteamControl: View {
 
     var body: some View {
         let game = library.selected
-        let running = library.steamRunning
+        let env = library.selectedEnvironment
+        let running = library.launcherRunning(env)
         let installed = game?.steamAvailable == true
+        let name = env.launcher == .battleNet ? "Battle.net" : "Steam"
+        let status = library.launcher[env.id] ?? SteamStatus(account: nil, downloads: [])
         VStack(alignment: .leading, spacing: Space.m) {
             HStack(spacing: Space.m) {
-                SteamIcon(image: library.steamIcon, running: running)
+                SteamIcon(image: env.launcher == .steam ? library.steamIcons[env.id] : nil, running: running)
                 VStack(alignment: .leading, spacing: 2) {
                     HStack(spacing: 6) {
-                        Text("Steam").font(.system(size: 14, weight: .bold))
+                        Text(name).font(.system(size: 14, weight: .bold))
                         if running {
                             Circle().fill(.green).frame(width: 6, height: 6)
                                 .transition(.scale.combined(with: .opacity))
                         }
                     }
-                    Text(subtitle(running: running, installed: installed))
+                    Text(subtitle(running: running, installed: installed, name: name, account: status.account))
                         .font(.system(size: 11))
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
@@ -194,7 +211,7 @@ private struct SteamControl: View {
                 Spacer(minLength: 0)
             }
 
-            ForEach(library.steam.downloads, id: \.profile.id) { download in
+            ForEach(status.downloads, id: \.profile.id) { download in
                 VStack(alignment: .leading, spacing: Space.xs) {
                     Text("Downloading \(download.profile.title)")
                         .font(.system(size: 11))
@@ -207,7 +224,7 @@ private struct SteamControl: View {
 
             HStack(spacing: Space.s) {
                 Button { game?.openSteam() } label: {
-                    Label("Open Steam", systemImage: "arrow.up.forward.app")
+                    Label("Open \(name)", systemImage: "arrow.up.forward.app")
                         .font(.system(size: 12, weight: .semibold))
                         .frame(maxWidth: .infinity)
                         .frame(height: 30)
@@ -217,7 +234,7 @@ private struct SteamControl: View {
                 .buttonStyle(PressableStyle())
                 .disabled(!installed || game?.locked == true)
                 .keyboardShortcut("o", modifiers: .command)
-                .help("Open the Steam window (⌘O)")
+                .help("Open the \(name) window (⌘O)")
 
                 if running {
                     Button { withAnimation(Motion.switchGame) { library.requestStopSteam() } } label: {
@@ -229,7 +246,7 @@ private struct SteamControl: View {
                     }
                     .buttonStyle(PressableStyle())
                     .disabled(game?.locked ?? true)
-                    .help("Stop Steam and every game it runs")
+                    .help("Stop \(name) and every game it runs")
                     .transition(.scale.combined(with: .opacity))
                 }
             }
@@ -238,12 +255,13 @@ private struct SteamControl: View {
         .background(RoundedRectangle(cornerRadius: 12).fill(.white.opacity(0.06)))
         .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(.white.opacity(0.09)))
         .animation(Motion.morph, value: running)
-        .animation(Motion.morph, value: library.steam.downloads.map(\.profile.id))
+        .animation(Motion.morph, value: status.downloads.map(\.profile.id))
+        .animation(Motion.morph, value: env.id)
     }
 
-    private func subtitle(running: Bool, installed: Bool) -> String {
-        if !installed { return "Set up a game to install Steam" }
-        if let name = library.steam.account?.personaName { return running ? "Signed in as \(name)" : "\(name), not running" }
+    private func subtitle(running: Bool, installed: Bool, name: String, account: SteamAccount?) -> String {
+        if !installed { return "Set up a game to install \(name)" }
+        if let persona = account?.personaName { return running ? "Signed in as \(persona)" : "\(persona), not running" }
         return running ? "Running" : "Not running"
     }
 }
