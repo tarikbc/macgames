@@ -28,5 +28,9 @@
 	<true/>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Allow microphone access for in-game voice chat.</string>
+	<key>SUFeedURL</key>
+	<string>https://github.com/tarikbc/macgames/releases/download/appcast/appcast.xml</string>
+	<key>SUPublicEDKey</key>
+	<string>7WXA3k62dGas339ybVRjgt7oWvd6O51hxr5Qy50VQ4k=</string>
 </dict>
 </plist>

@@ -16,6 +16,8 @@ mkdir -p "$RT" "$HELPERS"
 rsync -a --delete "$VENDOR/Engine/" "$RT/Engine/"
 rsync -a --delete "$VENDOR/Overlays/" "$RT/Overlays/"
 rsync -a --delete "$VENDOR/Licenses/" "$RT/Licenses/"
+# Licenses of parts linked into the app itself, such as Sparkle.
+cp "$SRCROOT/LICENSES/Sparkle-MIT.txt" "$RT/Licenses/"
 rsync -a --delete "$VENDOR/Games/" "$RT/Games/"
 rsync -a --delete "$VENDOR/WindowsHelpers/" "$RT/WindowsHelpers/"
 cp "$VENDOR/dependency-links.json" "$RT/dependency-links.json"

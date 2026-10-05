@@ -20,6 +20,8 @@ contains the corresponding source code in `Sources/`.
 | Wine ntdll fix and notch-safe winemac | Engine fixes for several games | LGPL 2.1 or later | Patches in `Vendor/Sources/ntdll-fix` and `Vendor/Sources/aom-notch` |
 | cnc-ddraw | DirectDraw for Heroes III and Red Alert 2 | MIT | `Vendor/Sources/cnc-ddraw-ra2-source.tar.gz`, [`LICENSES/cnc-ddraw-MIT.txt`](LICENSES/cnc-ddraw-MIT.txt) |
 | Catmull-Rom upscale shader | Red Alert 2 scaling | MIT | License in the file header |
+| Sparkle | Signed app updates | MIT | [`LICENSES/Sparkle-MIT.txt`](LICENSES/Sparkle-MIT.txt) |
+| MacGames Windows helpers (`WindowsHelpers/`) | Small Windows programs that run next to some games | PolyForm Noncommercial 1.0.0, like MacGames; `prepare-pipelines` also contains DXMT code (MIT, [`LICENSES/DXMT-MIT.txt`](LICENSES/DXMT-MIT.txt)) and the llvm-mingw runtime (Apache 2.0 with LLVM exception) | This repository |
 | Witcher 3 FidelityFX proxy | Stops a shader crash in The Witcher 3 | MIT | `Vendor/Sources/witcher3-ffxproxy`, [`LICENSES/Witcher3-FFXProxy-MIT.txt`](LICENSES/Witcher3-FFXProxy-MIT.txt) |
 
 ## Release packs, downloaded on first setup of an environment

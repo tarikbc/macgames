@@ -76,9 +76,15 @@ anti-cheat is at your own risk.
 - Rosetta 2 (MacGames tells you how to install it if it is missing)
 - About 3 GB for the shared environment, plus the size of your games
 
+## Install
+
+Download `MacGames-<version>.dmg` from the [latest release](../../releases/latest), open it, and
+drag MacGames into Applications. The app is signed with a Developer ID and notarized by Apple.
+MacGames checks for updates itself; you can also choose **MacGames > Check for Updates…**.
+
 ## Build and run
 
-MacGames is not distributed as a ready-made app yet. You build it with Xcode.
+To build MacGames yourself, use Xcode.
 
 1. Install **Xcode 27** and **XcodeGen** (`brew install xcodegen`).
 2. Get the runtime: the Wine engine, DXMT and x87sidecar, with their source code and licenses.
@@ -111,14 +117,17 @@ MacGames is not distributed as a ready-made app yet. You build it with Xcode.
 Settings for each game are on its page: the Metal performance HUD, the x87 optimization for
 Age of Empires IV, and a window size reset for Counter-Strike 2.
 
+**Uninstall** on a game's page deletes its files and keeps your saves and settings. When no game
+of a group is installed any more, **Remove setup** deletes that group's launcher and Windows files.
+
 Everything also works from the command line, which helps with scripts and bug reports:
 
 ```sh
 MacGames.app/Contents/MacOS/MacGames --command status --game aoe4
 ```
 
-Commands: `check`, `setup`, `steam`, `install`, `play`, `stop`, `status`, `reset-display`, and
-`settings --optimized on|off --hud on|off`.
+Commands: `check`, `setup`, `steam`, `install`, `play`, `stop`, `uninstall`, `remove-setup`, `status`,
+`reset-display`, and `settings --optimized on|off --hud on|off`.
 
 ## How it works
 

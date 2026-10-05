@@ -2,7 +2,7 @@
 
 All notable changes to MacGames are listed here.
 
-## 0.1.0 (unreleased)
+## 0.1.0 - 2026-10-05
 
 First version.
 
@@ -21,3 +21,8 @@ First version.
   grouped in the sidebar by launcher or publisher
 - Release packs for the extra engines and renderers, downloaded on first setup
 - Play Online for Zero Hour (GeneralsOnline) and Red Alert 2 (CnCNet)
+- Windows helpers of our own: GPU keys and notch-safe fullscreen for Age of Mythology: Retold, the
+  driver advisory for GTA V, pipeline preparation for Overwatch, a hidden Battle.net window, and the
+  display size for Red Alert 2
+- Uninstall for each game, and Remove setup for a group with no installed games
+- Signed and notarized disk image, with automatic updates through Sparkle
