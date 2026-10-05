@@ -43,31 +43,30 @@
 
 ## Supported games
 
-| Game | Environment | Renderer | Status |
-|---|---|---|---|
-| [Age of Empires IV](https://macgames.app/games/age-of-empires-iv/) | Steam library | D3DMetal, x87sidecar optimization | Tested on an M3 Max |
-| [Counter-Strike 2](https://macgames.app/games/counter-strike-2/) | Steam library | DXMT with early shader compile | Tested, reaches the main menu |
-| [Age of Empires III: Definitive Edition](https://macgames.app/games/age-of-empires-iii-definitive-edition/) | Steam library | D3DMetal | Imported |
-| [Age of Mythology: Retold](https://macgames.app/games/age-of-mythology-retold/) | Steam library | D3DMetal, notch-safe fullscreen | Imported |
-| [Company of Heroes 3](https://macgames.app/games/company-of-heroes-3/) | Steam library | D3DMetal, Microsoft UCRT for multiplayer | Imported |
-| [Command & Conquer: Generals Zero Hour](https://macgames.app/games/command-and-conquer-generals-zero-hour/) | Steam library | Wine D3D8, GeneralsOnline for online play | Imported |
-| [Command & Conquer: Red Alert 2](https://macgames.app/games/command-and-conquer-red-alert-2/) | Steam library | cnc-ddraw, CnCNet for online play | Imported |
-| [Heroes of Might and Magic III](https://macgames.app/games/heroes-of-might-and-magic-iii/) | Steam library | cnc-ddraw, sound fix | Imported |
-| [Diablo IV](https://macgames.app/games/diablo-iv/) | Steam library | D3DMetal | Imported |
-| [Path of Exile 2](https://macgames.app/games/path-of-exile-2/) | Steam library | D3DMetal, DirectX 12 | Imported |
-| [Hogwarts Legacy](https://macgames.app/games/hogwarts-legacy/) | Steam library | D3DMetal | Imported |
-| [The Witcher 3: Wild Hunt](https://macgames.app/games/the-witcher-3-wild-hunt/) | Steam library | D3DMetal, FidelityFX proxy | Imported |
-| [Elden Ring](https://macgames.app/games/elden-ring/) | Steam library | D3DMetal, offline play only | Imported |
-| [The Elder Scrolls V: Skyrim Special Edition](https://macgames.app/games/skyrim-special-edition/) | Skyrim | DXMT 0.72 | Imported |
-| [Overwatch](https://macgames.app/games/overwatch/) | Overwatch | Recall 1.1's Wine and DXMT, through Battle.net | Imported |
-| [Diablo IV (Battle.net)](https://macgames.app/games/diablo-iv-battle-net/) | Battle.net | D3DMetal, DXMT for the client | Imported |
-| [Diablo II: Resurrected](https://macgames.app/games/diablo-ii-resurrected/) | Battle.net | D3DMetal, DXMT for the client | Imported |
-| [Red Dead Redemption 2](https://macgames.app/games/red-dead-redemption-2/) | Rockstar | D3DMetal, WineD3D for the Rockstar launcher | Imported |
-| [GTA San Andreas: The Definitive Edition](https://macgames.app/games/gta-san-andreas-definitive-edition/) | Rockstar | D3DMetal, WineD3D for the Rockstar launcher | Imported |
-| [Grand Theft Auto V Enhanced](https://macgames.app/games/gta-v-enhanced/) | GTA V | Wine 11.13, D3DMetal 4.0b2, story mode only | Imported |
+| Game | Environment | Renderer |
+|---|---|---|
+| [Age of Empires IV](https://macgames.app/games/age-of-empires-iv/) | Steam library | D3DMetal, x87sidecar optimization |
+| [Counter-Strike 2](https://macgames.app/games/counter-strike-2/) | Steam library | DXMT with early shader compile |
+| [Age of Empires III: Definitive Edition](https://macgames.app/games/age-of-empires-iii-definitive-edition/) | Steam library | D3DMetal |
+| [Age of Mythology: Retold](https://macgames.app/games/age-of-mythology-retold/) | Steam library | D3DMetal, notch-safe fullscreen |
+| [Company of Heroes 3](https://macgames.app/games/company-of-heroes-3/) | Steam library | D3DMetal, Microsoft UCRT for multiplayer |
+| [Command & Conquer: Generals Zero Hour](https://macgames.app/games/command-and-conquer-generals-zero-hour/) | Steam library | Wine D3D8, GeneralsOnline for online play |
+| [Command & Conquer: Red Alert 2](https://macgames.app/games/command-and-conquer-red-alert-2/) | Steam library | cnc-ddraw, CnCNet for online play |
+| [Heroes of Might and Magic III](https://macgames.app/games/heroes-of-might-and-magic-iii/) | Steam library | cnc-ddraw, sound fix |
+| [Diablo IV](https://macgames.app/games/diablo-iv/) | Steam library | D3DMetal |
+| [Path of Exile 2](https://macgames.app/games/path-of-exile-2/) | Steam library | D3DMetal, DirectX 12 |
+| [Hogwarts Legacy](https://macgames.app/games/hogwarts-legacy/) | Steam library | D3DMetal |
+| [The Witcher 3: Wild Hunt](https://macgames.app/games/the-witcher-3-wild-hunt/) | Steam library | D3DMetal, FidelityFX proxy |
+| [Elden Ring](https://macgames.app/games/elden-ring/) | Steam library | D3DMetal, offline play only |
+| [The Elder Scrolls V: Skyrim Special Edition](https://macgames.app/games/skyrim-special-edition/) | Skyrim | DXMT 0.72 |
+| [Overwatch](https://macgames.app/games/overwatch/) | Overwatch | Recall 1.1's Wine and DXMT, through Battle.net |
+| [Diablo IV (Battle.net)](https://macgames.app/games/diablo-iv-battle-net/) | Battle.net | D3DMetal, DXMT for the client |
+| [Diablo II: Resurrected](https://macgames.app/games/diablo-ii-resurrected/) | Battle.net | D3DMetal, DXMT for the client |
+| [Red Dead Redemption 2](https://macgames.app/games/red-dead-redemption-2/) | Rockstar | D3DMetal, WineD3D for the Rockstar launcher |
+| [GTA San Andreas: The Definitive Edition](https://macgames.app/games/gta-san-andreas-definitive-edition/) | Rockstar | D3DMetal, WineD3D for the Rockstar launcher |
+| [Grand Theft Auto V Enhanced](https://macgames.app/games/gta-v-enhanced/) | GTA V | Wine 11.13, D3DMetal 4.0b2, story mode only |
 
-"Imported" means the game has a full recipe in MacGames but has not been tested in this app yet. Test
-reports are very welcome. You need to own each game. MacGames never includes or downloads games itself.
+You need to own each game. MacGames never includes or downloads games itself.
 
 **Environments.** Most games share one Steam client in the Steam library. A game gets its own Windows
 environment, with its own Steam or Battle.net, when it needs a different engine or changes to Windows

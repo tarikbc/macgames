@@ -121,9 +121,7 @@
       meta.append(element("span", "", groups[d.group]), element("span", "", d.renderer));
       const recipe = element("ul", "spot-recipe");
       d.recipe.split("|").forEach((line) => recipe.append(element("li", "", line)));
-      const status = element("p", d.status ? "spot-status tested" : "spot-status");
-      status.append(element("i", "dot"), document.createTextNode(d.status || "Recipe ready. Test it and tell us."));
-      card.append(meta, recipe, status);
+      card.append(meta, recipe);
       // Each game has its own page; the link is also how search engines find it.
       if (d.page) {
         const link = element("a", "spot-link", "How it runs on Mac");

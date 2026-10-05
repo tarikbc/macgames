@@ -18,7 +18,7 @@ DOCS = Path(__file__).resolve().parent.parent / "docs"
 SITE = "https://macgames.app/"
 RELEASES = "https://github.com/tarikbc/macgames/releases/latest"
 REPO = "https://github.com/tarikbc/macgames"
-STYLE, SCRIPT = "assets/css/style.css?v=7", "assets/js/site.js?v=6"
+STYLE, SCRIPT = "assets/css/style.css?v=8", "assets/js/site.js?v=7"
 GITHUB_ICON = ""  # copied from the home page header in main()
 
 SHARED_STEAM = ("One Steam for your games",
@@ -32,14 +32,14 @@ ROCKSTAR_STEPS = "Steam opens. Sign in, then install {name} and keep the default
 GAMES = {
     "aoe4": dict(STEAM, slug="age-of-empires-iv", also="AoE4",
         lead="MacGames runs Age of Empires IV on Apple silicon Macs. It sets up Steam in a Windows environment, turns the game's DirectX 12 into Metal, and runs its x87 math through x87sidecar.",
-        tested="Tested on a Mac", where="Steam, in the shared Steam library",
+        where="Steam, in the shared Steam library",
         does=[("Fast x87 math", "Age of Empires IV uses old x87 math, which Rosetta 2 translates slowly. On the game build it was made for, the game runs under x87sidecar, which translates that math much faster. Any other build falls back to standard Wine on its own."),
               ("DirectX 12 through Metal", "Apple's D3DMetal turns the game's DirectX 12 calls into Metal."),
               ("Game controllers", "Controllers work through SDL, also when the game window is in the back."),
               ("Settings on its page", "Turn the x87 optimization and the Metal performance HUD on or off on the game's page in MacGames.")]),
     "cs2": dict(STEAM, slug="counter-strike-2", also="CS2",
         lead="MacGames runs Counter-Strike 2 on Apple silicon Macs with DXMT, which turns DirectX 11 into Metal. Shaders compile before the match, and the first launch opens a window that fits your display.",
-        tested="Tested on a Mac: it reaches the main menu", where="Steam, in the shared Steam library",
+        where="Steam, in the shared Steam library",
         online="Counter-Strike 2 uses VAC. Online play with anti-cheat is at your own risk.",
         does=[("DirectX 11 on Metal", "A build of DXMT made for Counter-Strike 2 translates the game's DirectX 11 into Metal."),
               ("Shaders before the match", "Shaders and pipelines compile early and stay in a cache between sessions, so they are ready when the match needs them."),
@@ -275,14 +275,10 @@ def questions(game, words):
     name, macos = words.get("game", name_of(game)), words.get("macos", "26")
     own = (f"No. {name} is free to play. You sign in to your own Battle.net account." if words.get("free")
            else f"No. You sign in to your own {words['account']} account and install the copy you own. MacGames never includes or downloads games itself.")
-    test = ("Yes. It ran on an Apple silicon Mac in MacGames. Tell us how it runs on yours."
-            if words.get("tested") else
-            "Not yet. Its recipe is complete, but nobody has tested it in MacGames so far. Your test report helps it reach Tested.")
     online = words.get("online", "Online play with anti-cheat is at your own risk.")
     return [
         (f"Do I need to buy {name} again?", own),
         ("Which Macs can run it?", f"A Mac with Apple silicon (M1 or later) and macOS {macos} or later, with Rosetta 2. MacGames tells you how to install Rosetta 2 if it is missing. Frame rates depend on your Mac."),
-        ("Has it been tested?", test),
         ("Can I play online?", online),
         ("Is MacGames free?", "Yes. MacGames is free and open source under the PolyForm Noncommercial license. Nobody can sell it."),
     ]
@@ -299,9 +295,6 @@ def game_page(game, games):
     # Search results show about 155 characters, so the game and the app come first.
     rest = words.get("meta") or words["lead"].split(". ", 1)[1]
     description = f"Play {name} on your Apple silicon Mac with MacGames, a free app. {rest}"
-    tested = words.get("tested")
-    status = f'<p class="spot-status tested"><i class="dot"></i>{e(tested)}</p>' if tested \
-        else '<p class="spot-status"><i class="dot"></i>Recipe ready, not tested yet</p>'
     store = STORE_LINKS.get(game["id"], f"https://store.steampowered.com/app/{game['hero'].split('/apps/')[1].split('/')[0]}/")
     does = "\n".join(f"            <li><h3>{e(h)}</h3><p>{e(p)}</p></li>" for h, p in words["does"])
     install = words.get("steps_install", "{store} opens. Sign in with your own account, then install {name} and keep the default folder.")
@@ -353,7 +346,6 @@ def game_page(game, games):
             <h1 class="game-title">{e(name)} on Mac</h1>
             <p class="lead">{e(words['lead'])}</p>
             <p class="spot-meta"><span>{e(words['where'])}</span><span>{e(game['renderer'])}</span></p>
-            {status}
             <div class="hero-actions">
               <a class="btn btn-primary" href="{RELEASES}" data-download>
                 <svg width="14" height="16" viewBox="0 0 14 16" aria-hidden="true"><path d="M1 1.5v13l12-6.5z" fill="currentColor"/></svg>
@@ -379,7 +371,6 @@ def game_page(game, games):
           <dl class="needs glass">
             <div><dt>Store</dt><dd>{e(words['where'])}. <a href="{store}">{e(plain)} on {e(words['store'])}</a></dd></div>
             <div><dt>Graphics</dt><dd>{e(game['renderer'])}</dd></div>
-            <div><dt>Status</dt><dd>{e(tested or "Recipe ready, not tested yet")}</dd></div>
             <div><dt>Mac</dt><dd>Apple silicon, M1 or later</dd></div>
             <div><dt>macOS</dt><dd>{words.get('macos', '26')} or later, with Rosetta 2</dd></div>
           </dl>

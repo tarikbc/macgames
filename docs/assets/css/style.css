@@ -218,10 +218,6 @@ h3 { font: 700 25px/1.1 var(--display); letter-spacing: 0.01em; margin: 0; }
 .js [data-reveal].in { clip-path: inset(-20px -20px -20px 0); }
 .js .section-head p[data-reveal] { transition-delay: 0.15s; }
 
-/* Status dots, as in the app's sidebar */
-.dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: rgba(255, 255, 255, 0.45); flex: none; }
-.tested .dot, .ribbon .dot { background: var(--ready); box-shadow: 0 0 8px rgba(52, 199, 89, 0.7); }
-
 /* Game select: a spotlight like the app's game page, over a wall of covers */
 .select { display: grid; gap: 22px; }
 .spotlight, .spot-frame { position: relative; }
@@ -271,8 +267,6 @@ h3 { font: 700 25px/1.1 var(--display); letter-spacing: 0.01em; margin: 0; }
 .spot-recipe { list-style: none; padding: 0; display: grid; gap: 6px; color: rgba(244, 241, 255, 0.88); font-size: 15px; }
 .spot-recipe li { position: relative; padding-left: 18px; }
 .spot-recipe li::before { content: ""; position: absolute; left: 2px; top: 0.6em; width: 6px; height: 6px; border-radius: 50%; background: var(--amber); }
-.spot-status { display: inline-flex; align-items: center; gap: 8px; font: 600 13px/1 var(--body); color: var(--muted); }
-.spot-status.tested { color: var(--ink); }
 .spot-link { justify-self: start; font: 600 14px/1.2 var(--body); color: var(--amber-hi); }
 
 .spot-controls { display: flex; align-items: center; gap: 14px; margin-top: 16px; padding: 0 4px; }
@@ -349,14 +343,6 @@ html:not(.js) .filter.is-active { background: rgba(232, 163, 58, 0.22); }
   mix-blend-mode: overlay;
 }
 .cover-btn:hover .glare { opacity: 1; }
-.ribbon {
-  position: absolute; top: 8px; left: 8px; display: inline-flex; align-items: center; gap: 6px;
-  font: 600 11px/1 var(--body); font-style: normal; color: var(--ink);
-  padding: 5px 8px 5px 7px; border-radius: 999px;
-  background: rgba(14, 15, 34, 0.55); border: 1px solid var(--hairline);
-  -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
-}
-.ribbon .dot { width: 6px; height: 6px; }
 .js .covers:not(.in) li { opacity: 0; }
 .js .covers.in li { animation: deal 0.6s var(--ease-out) both; animation-delay: calc(var(--i, 0) * 0.035s); }
 @keyframes deal { from { opacity: 0; transform: perspective(700px) rotateX(24deg) translateY(28px); } to { opacity: 1; transform: none; } }
