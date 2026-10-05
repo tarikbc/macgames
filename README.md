@@ -25,22 +25,32 @@ Core tests: `cd Packages/MacGamesCore && swift test`.
 
 ## How it works
 
-Each game gets its own data root in `~/Library/Application Support/macgames/<game>`:
+All games share one Steam client in one data root, `~/Library/Application Support/macgames/steam`:
 
 | Path | Contents |
 |---|---|
 | `deps/Frameworks` | Sikarugir `Template-1.0.15` libraries and D3DMetal, downloaded and SHA-256 checked at setup |
-| `engine` | Copy of the vendored Wine engine plus the game's overlays, with links into `deps/Frameworks` |
-| `prefix` | The Wine prefix with its own Steam client |
+| `engine` | Copy of the vendored Wine engine plus every game's overlays (DXMT, controllers), with links into `deps/Frameworks` |
+| `prefix` | The Wine prefix with the shared Steam client and its library |
+| `games/<id>` | Per-game settings and caches (CS2 shader and pipeline caches) |
 | `logs` | One log per command, plus `steam-session.log` |
 
 Setup runs `wineboot`, sets Windows 10, replaces the prefix's links to your Mac home with empty folders,
-installs the graphics DLLs, enables SDL controllers in winebus, and installs Steam silently.
+installs every game's graphics DLLs (D3DMetal natives in `system32` for AoE IV, `winemetal.dll` for CS2),
+enables SDL controllers in winebus, and installs Steam silently.
+
+**Per-game graphics.** Steam passes its environment to the games it starts, and the games need different
+renderers: AoE IV loads D3DMetal (`dxgi,d3d11,d3d12,atidxx64=n,b`), CS2 forces the DXMT builtins
+(`dxgi,d3d11,d3d10core,d3d12,atidxx64,winemetal=b`). When you press Play and Steam runs with another game's
+settings, MacGames restarts Steam first (never while a game runs). Opening Steam never restarts it.
 
 **AoE IV optimization.** With the optimization on, the patched Wine loader re-execs `RelicCardinal.exe`
 through `MacGamesBridge`. The bridge checks the game's SHA-256 against the build the fixed-address
 optimization was made for (24231237). On a match it runs the game under `x87sidecar --cooperative`;
 on any other build it runs the plain Wine loader.
+
+**Adding a game.** Add a `GameProfile` (Steam app ID, install folder, executable, renderer, overlays,
+accent color and art focal point). The library, art and setup steps follow from it.
 
 ## Headless use
 
