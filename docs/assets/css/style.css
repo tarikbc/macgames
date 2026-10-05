@@ -321,9 +321,11 @@ html:not(.js) .filter.is-active { background: rgba(232, 163, 58, 0.22); }
   --rx: 0deg; --ry: 0deg; --lift: 0px; --mx: 50%; --my: 30%;
   position: relative; display: block; width: 100%; padding: 7px; border: 1px solid transparent; cursor: pointer;
   border-radius: var(--r-row); background: transparent; color: inherit;
-  transition: background-color 0.3s, border-color 0.3s;
+  /* The plate and its cover move as one, so the cover stays centered in its plate. */
+  transform: translateY(var(--lift));
+  transition: background-color 0.3s, border-color 0.3s, transform 0.4s var(--ease-out);
 }
-.cover-btn:hover { background: var(--glass); }
+.cover-btn:hover { background: var(--glass); --lift: -4px; }
 .cover-btn[aria-pressed="true"] {
   background: color-mix(in srgb, var(--accent) 22%, transparent);
   border-color: color-mix(in srgb, var(--accent) 50%, transparent);
@@ -331,13 +333,13 @@ html:not(.js) .filter.is-active { background: rgba(232, 163, 58, 0.22); }
 .cover-art {
   position: relative; display: block; aspect-ratio: 2 / 3; border-radius: var(--r-cover); overflow: hidden;
   background: color-mix(in srgb, var(--accent) 40%, var(--deep));
-  transform: perspective(700px) rotateX(var(--rx)) rotateY(var(--ry)) translateY(var(--lift));
+  transform: perspective(700px) rotateX(var(--rx)) rotateY(var(--ry));
   transition: transform 0.4s var(--ease-out), box-shadow 0.4s;
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.45);
 }
 .cover-art img { width: 100%; height: 100%; object-fit: cover; }
 .cover-btn:hover .cover-art, .cover-btn:focus-visible .cover-art, .cover-btn[aria-pressed="true"] .cover-art {
-  --lift: -4px; box-shadow: 0 18px 34px color-mix(in srgb, var(--accent) 45%, transparent), 0 8px 20px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 18px 34px color-mix(in srgb, var(--accent) 45%, transparent), 0 8px 20px rgba(0, 0, 0, 0.5);
 }
 .cover-btn.tilting .cover-art { transition: transform 0.08s linear, box-shadow 0.4s; }
 .glare {
@@ -484,5 +486,5 @@ html:not(.js) .filter.is-active { background: rgba(232, 163, 58, 0.22); }
   .js .steps li:not(.in)::before { transform: none; background: linear-gradient(180deg, #f2b453, var(--amber)); color: #1a1030; }
   .js .steps li:not(.in)::after { transform: none; }
   .js .cta-band:not(.in) .marquee .ch { opacity: 1; }
-  .cover-art { transform: none !important; }
+  .cover-art, .cover-btn { transform: none !important; }
 }
