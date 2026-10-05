@@ -68,6 +68,39 @@ struct GameDetailView: View {
         } message: {
             Text("The game and Steam close at once. Progress since your last save is lost.")
         }
+        .confirmationDialog(removalTitle, isPresented: removalShown, presenting: game.removal) { removal in
+            switch removal {
+            case .uninstall: Button("Uninstall", role: .destructive, action: game.confirmRemoval)
+            case .removeSetup: Button("Remove setup", role: .destructive, action: game.confirmRemoval)
+            }
+        } message: { removal in
+            Text(removalMessage(removal))
+        }
+    }
+
+    private var removalShown: Binding<Bool> {
+        Binding(get: { game.removal != nil }, set: { if !$0 { game.removal = nil } })
+    }
+
+    private var removalTitle: String {
+        switch game.removal {
+        case .removeSetup: "Remove the \(game.profile.gameEnvironment.group) setup?"
+        default: "Uninstall \(game.profile.title)?"
+        }
+    }
+
+    private func removalMessage(_ removal: GameModel.Removal) -> String {
+        switch removal {
+        case .uninstall(let bytes):
+            let size = ByteCountFormatter.string(fromByteCount: Int64(bytes), countStyle: .file)
+            return game.launcherName == "Steam"
+                ? "MacGames deletes the game's files (\(size)). Your saves, settings and Steam account stay. Steam closes first."
+                : "Blizzard's uninstaller opens to delete the game's files (\(size)). Your saves and Battle.net account stay."
+        case .removeSetup(let bytes):
+            let size = ByteCountFormatter.string(fromByteCount: Int64(bytes), countStyle: .file)
+            return "MacGames deletes \(game.launcherName), its sign-in and the Windows files of \(game.profile.gameEnvironment.group) (\(size)). "
+                + "Saves kept only in those files go too. You can set it up again later."
+        }
     }
 
     private func hero(collapse: CGFloat) -> some View {
@@ -273,15 +306,35 @@ private struct SettingsSection: View {
                     }
                 }
             }
-            .padding(.horizontal, Space.l + Space.xs)
-            .background(RoundedRectangle(cornerRadius: 12).fill(.white.opacity(0.05)))
-            .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(.white.opacity(0.08)))
+            .modifier(Card())
             Text("Setting changes apply the next time \(game.launcherName) starts for this game.")
                 .font(.system(size: 11))
                 .foregroundStyle(.secondary)
                 .padding(.leading, Space.xs)
+            if game.canUninstall {
+                row("Uninstall", detail: "Deletes the game's files from this Mac. Saves and settings stay.") {
+                    Button("Uninstall…", role: .destructive, action: game.requestUninstall)
+                }
+                .modifier(Card())
+                .padding(.top, Space.s)
+            } else if game.canRemoveSetup {
+                row("Remove setup", detail: "Deletes \(game.launcherName) and the Windows files of \(game.profile.gameEnvironment.group).") {
+                    Button("Remove…", role: .destructive, action: game.requestRemoveSetup)
+                }
+                .modifier(Card())
+                .padding(.top, Space.s)
+            }
         }
         .disabled(game.locked)
+    }
+
+    private struct Card: ViewModifier {
+        func body(content: Content) -> some View {
+            content
+                .padding(.horizontal, Space.l + Space.xs)
+                .background(RoundedRectangle(cornerRadius: 12).fill(.white.opacity(0.05)))
+                .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(.white.opacity(0.08)))
+        }
     }
 
     private func row<Control: View>(_ title: String, detail: String, @ViewBuilder control: () -> Control) -> some View {

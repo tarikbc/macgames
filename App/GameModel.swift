@@ -35,6 +35,11 @@ final class GameModel: Identifiable {
     private(set) var finishedSteps: Set<SetupStep> = []
     /// Set when an action would end a running game; the view asks first.
     var confirmingStop = false
+    /// What a confirmed removal deletes, with its size; the view asks first.
+    enum Removal: Equatable { case uninstall(bytes: UInt64), removeSetup(bytes: UInt64) }
+    var removal: Removal?
+    /// Every game of this environment is uninstalled, so its setup can go.
+    private(set) var canRemoveSetup = false
     /// Saved at once on the main actor, so the file always holds the last change.
     var settings: LaunchSettings { didSet { runtime.settings = settings; refreshOptimization() } }
     /// What the next launch does with the x87 optimization.
@@ -79,12 +84,13 @@ final class GameModel: Identifiable {
     func refresh(_ snapshot: ProcessSnapshot? = nil) async {
         guard !locked else { return }
         let r = runtime
-        let (state, live, download, optimization, online) = await Self.off(Self.reads) {
+        let (state, live, download, optimization, online, removable) = await Self.off(Self.reads) {
             let processes = snapshot ?? ProcessSnapshot.take(under: r.paths.engine)
             return (r.state(using: processes), r.isSessionRunning(using: processes), SteamStatus.downloadProgress(r.paths),
-                    r.optimizationStatus(), r.onlineReady)
+                    r.optimizationStatus(), r.onlineReady, r.canRemoveEnvironment)
         }
         self.onlineReady = online
+        self.canRemoveSetup = removable
         // An old error no longer describes a game that moved to another stage.
         if state != self.state { error = nil }
         self.optimization = optimization
@@ -125,6 +131,29 @@ final class GameModel: Identifiable {
     }
 
     func stop() { perform("Stopping") { r in try r.stop() } }
+
+    /// The game has files on this Mac.
+    var canUninstall: Bool { state == .ready || state == .installing }
+
+    /// Measures what goes, then asks for confirmation.
+    func requestUninstall() {
+        let r = runtime
+        Task { removal = .uninstall(bytes: await Self.off(Self.reads) { (try? r.installedSize()) ?? 0 }) }
+    }
+
+    func requestRemoveSetup() {
+        let r = runtime
+        Task { removal = .removeSetup(bytes: await Self.off(Self.reads) { (try? r.environmentSize()) ?? 0 }) }
+    }
+
+    func confirmRemoval() {
+        switch removal {
+        case .uninstall: perform("Uninstalling \(profile.title)") { r in try r.uninstall() }
+        case .removeSetup: perform("Removing the setup") { r in try r.removeEnvironment() }
+        case nil: break
+        }
+        removal = nil
+    }
     func resetDisplay() { runtime.resetDisplay(); activity = "The next launch sets the window size again." }
     func showLogs() { NSWorkspace.shared.open(runtime.paths.logs) }
     /// The game's install folder once Steam made it, otherwise the library.

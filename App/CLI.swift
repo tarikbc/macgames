@@ -6,7 +6,7 @@ import MacGamesCore
 @MainActor
 enum CLI {
     static let usage = """
-    usage: MacGames --command <check|setup|launcher|install|play|stop|status|reset-display|settings>
+    usage: MacGames --command <check|setup|launcher|install|play|stop|uninstall|remove-setup|status|reset-display|settings>
                     --game <id> [--root <data root>] [--optimized on|off] [--hud on|off]
     games: \(GameProfile.all.map(\.id).joined(separator: ", "))
     """
@@ -43,6 +43,10 @@ enum CLI {
                 try game.play(LaunchContext.mainDisplay())
             case "stop":
                 try game.stop()
+            case "uninstall":
+                try game.uninstall()
+            case "remove-setup":
+                try game.removeEnvironment()
             case "status":
                 print("\(profile.id): \(game.state().rawValue)")
                 print("root: \(game.paths.root.path)")
