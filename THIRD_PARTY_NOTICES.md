@@ -21,7 +21,7 @@ contains the corresponding source code in `Sources/`.
 | cnc-ddraw | DirectDraw for Heroes III and Red Alert 2 | MIT | `Vendor/Sources/cnc-ddraw-ra2-source.tar.gz`, [`LICENSES/cnc-ddraw-MIT.txt`](LICENSES/cnc-ddraw-MIT.txt) |
 | Catmull-Rom upscale shader | Red Alert 2 scaling | MIT | License in the file header |
 | Sparkle | Signed app updates | MIT | [`LICENSES/Sparkle-MIT.txt`](LICENSES/Sparkle-MIT.txt) |
-| MacGames Windows helpers (`WindowsHelpers/`) | Small Windows programs that run next to some games | PolyForm Noncommercial 1.0.0, like MacGames; `prepare-pipelines` also contains DXMT code (MIT, [`LICENSES/DXMT-MIT.txt`](LICENSES/DXMT-MIT.txt)) and the llvm-mingw runtime (Apache 2.0 with LLVM exception) | This repository |
+| MacGames Windows helpers (`WindowsHelpers/`) | Small Windows programs that run next to some games | PolyForm Noncommercial 1.0.0, like MacGames; they contain the llvm-mingw runtime (Apache 2.0 with LLVM exception) | This repository |
 | Witcher 3 FidelityFX proxy | Stops a shader crash in The Witcher 3 | MIT | `Vendor/Sources/witcher3-ffxproxy`, [`LICENSES/Witcher3-FFXProxy-MIT.txt`](LICENSES/Witcher3-FFXProxy-MIT.txt) |
 
 ## Website
@@ -36,7 +36,8 @@ part of this repository.
 | Pack | Contents | License |
 |---|---|---|
 | skyrim | DXMT 0.72 and the ntdll fix | MIT, LGPL 2.1+; source included |
-| overwatch | DXMT for Overwatch and the ntdll fix | MIT, LGPL 2.1+; source included |
+| overwatch-recall | [Recall](https://github.com/AsherJN/recall) 1.1.0's runtime, unchanged: Wine from CodeWeavers' 26.3 source and DXMT (NerRobDog's fork), both with Recall's patches, with GnuTLS, Nettle, GMP, FreeType, Wine Mono, MoltenVK, libinotify and Apple's `libd3dshared.dylib`; and Recall's graphics pipeline tool | Recall's code: Apache 2.0, with Recall's NOTICE. Wine, DXMT, GnuTLS: LGPL 2.1+; Nettle, GMP: LGPL 3+ or GPL 2+; the others under their own licenses, all in the pack. Source of every LGPL and GPL part, with Recall's patches, in the [packs-2 release](../../releases/tag/packs-2), listed in its `SOURCES.md` |
+| overwatch | DXMT for Overwatch and the ntdll fix, used by MacGames 0.1.0 | MIT, LGPL 2.1+; source included |
 | battlenet | 32-bit DXMT 0.72 for the Battle.net client and the ntdll fix | MIT, LGPL 2.1+; source included |
 | rockstar | Wine kernelbase with the Rockstar CEF patch, WineD3D `d3d11`, `dxgi`, `d3d10core` | LGPL 2.1+; patch included, built from the runtime's Wine source |
 | gta5 | Wine 11.13 with patches | LGPL 2.1+; source and patches included |
@@ -44,7 +45,8 @@ part of this repository.
 
 Apple's license allows the Game Porting Toolkit Redistributables to be distributed separately, only for
 non-commercial purposes and for use on Apple-branded systems. MacGames is non-commercial, and these files
-keep Apple's license and notices. The gta5 pack also holds copies of those Apple files.
+keep Apple's license and notices. The gta5 pack also holds copies of those Apple files, and the
+overwatch-recall pack holds Apple's `libd3dshared.dylib` with Apple's license, as Recall ships it.
 
 If you distribute a build of MacGames.app, you must also make the corresponding source of the LGPL and
 other components available, as their licenses require. The archives in `Vendor/Sources` are that source.
@@ -70,5 +72,6 @@ their SHA-256 hash where the file is stable.
 
 Steam is a trademark of Valve Corporation. Age of Empires is a trademark of Microsoft Corporation.
 Counter-Strike is a trademark of Valve Corporation. Apple, Mac, Metal and Rosetta are trademarks of
-Apple Inc. CrossOver is a trademark of CodeWeavers. MacGames is not affiliated with or endorsed by any of
-these companies, or by the makers of Sikarugir, DXMT or x87sidecar.
+Apple Inc. CrossOver is a trademark of CodeWeavers. Overwatch, Diablo and Battle.net are trademarks of
+Blizzard Entertainment, Inc. MacGames is not affiliated with or endorsed by any of these companies, or by
+the makers of Sikarugir, DXMT, x87sidecar or Recall.

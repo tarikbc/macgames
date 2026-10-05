@@ -19,7 +19,8 @@ rsync -a --delete "$VENDOR/Licenses/" "$RT/Licenses/"
 # Licenses of parts linked into the app itself, such as Sparkle.
 cp "$SRCROOT/LICENSES/Sparkle-MIT.txt" "$RT/Licenses/"
 rsync -a --delete "$VENDOR/Games/" "$RT/Games/"
-rsync -a --delete "$VENDOR/WindowsHelpers/" "$RT/WindowsHelpers/"
+# Runtime 4 still holds the retired Overwatch pipeline helper; Overwatch now uses Recall's tool from its pack.
+rsync -a --delete --exclude prepare-pipelines.exe --exclude DXMT-LICENSE.txt "$VENDOR/WindowsHelpers/" "$RT/WindowsHelpers/"
 cp "$VENDOR/dependency-links.json" "$RT/dependency-links.json"
 shasum -a 256 "$VENDOR/SHA256SUMS" | cut -c1-16 > "$RT/VERSION"
 

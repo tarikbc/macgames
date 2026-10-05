@@ -32,6 +32,9 @@
 - **One Steam for every game.** All games share one Steam client and one library, so you sign in once.
 - **Tuned per game.** Each game gets the renderer that works best for it: Apple D3DMetal for
   Age of Empires IV, and DXMT with shader pre-compilation for Counter-Strike 2.
+- **Overwatch on Recall's engine.** Overwatch runs on the Wine and DXMT build of
+  [Recall](https://github.com/AsherJN/recall), with its fullscreen canvas, raw mouse input, macOS Game
+  Mode and graphics pipelines prepared before each session. Battle.net starts the game when you choose Play.
 - **Faster x87 math for Age of Empires IV.** On the exact game build it was made for, the game runs
   under [x87sidecar](https://github.com/athei/x87sidecar), a JIT that replaces Rosetta's slow x87
   translation. Any other build falls back to standard Wine on its own.
@@ -56,7 +59,7 @@
 | The Witcher 3: Wild Hunt | Steam library | D3DMetal, FidelityFX proxy | Imported |
 | Elden Ring | Steam library | D3DMetal, offline play only | Imported |
 | The Elder Scrolls V: Skyrim Special Edition | Skyrim | DXMT 0.72 | Imported |
-| Overwatch | Overwatch | DXMT for Overwatch | Imported |
+| Overwatch | Overwatch | Recall 1.1's Wine and DXMT, through Battle.net | Imported |
 | Diablo IV (Battle.net) | Battle.net | D3DMetal, DXMT for the client | Imported |
 | Diablo II: Resurrected | Battle.net | D3DMetal, DXMT for the client | Imported |
 | Red Dead Redemption 2 | Rockstar | D3DMetal, WineD3D for the Rockstar launcher | Imported |
