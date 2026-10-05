@@ -65,11 +65,14 @@ import Testing
 @Suite struct LiveProcessTests {
     @Test func findsARunningProcessUnderAFolder() throws {
         let dir = try makeTempDir(); defer { try? FileManager.default.removeItem(at: dir) }
+        // macOS kills relocated copies of Apple's own binaries, so build a fresh one.
         let copy = dir.appendingPathComponent("bin/sleep")
         try FileManager.default.createDirectory(at: copy.deletingLastPathComponent(), withIntermediateDirectories: true)
-        try FileManager.default.copyItem(at: URL(fileURLWithPath: "/bin/sleep"), to: copy)
+        let source = dir.appendingPathComponent("sleep.c")
+        try write("#include <unistd.h>\nint main(void){sleep(10);return 0;}\n", to: source)
+        try ProcessRunner(logDirectory: dir).run(URL(fileURLWithPath: "/usr/bin/cc"), [source.path, "-o", copy.path])
         #expect(LiveProcesses.paths(under: dir).isEmpty)
-        let p = Process(); p.executableURL = copy; p.arguments = ["10"]; try p.run()
+        let p = Process(); p.executableURL = copy; try p.run()
         defer { p.terminate(); p.waitUntilExit() }
         Thread.sleep(forTimeInterval: 0.2)
         #expect(LiveProcesses.paths(under: dir).map(\.lastPathComponent) == ["sleep"])
