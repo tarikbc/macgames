@@ -91,13 +91,19 @@ public struct GameProfile: Sendable, Hashable, Identifiable {
 
     public var executableName: String { (executableRelativePath as NSString).lastPathComponent }
 
-    /// Steam store art; `nil` for games Steam does not sell.
+    /// Steam store art at the fixed paths of older apps; `nil` for games Steam does not sell.
     public var artwork: Artwork? {
         guard !steamAppID.isEmpty else { return nil }
-        let base = "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/\(steamAppID)/"
+        let base = SteamStoreArt.cdn + "steam/apps/\(steamAppID)/"
         return Artwork(hero: URL(string: base + "library_hero.jpg")!,
                        logo: URL(string: base + "logo.png")!,
                        portrait: URL(string: base + "library_600x900.jpg")!)
+    }
+
+    /// The art the store lists for this game, else the fixed paths.
+    public func artwork(resolved: [String: Artwork]) -> Artwork? {
+        guard !steamAppID.isEmpty else { return nil }
+        return resolved[steamAppID] ?? artwork
     }
 
     public var gameEnvironment: GameEnvironment { GameEnvironment.named(environment) ?? .steam }

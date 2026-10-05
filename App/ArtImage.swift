@@ -56,14 +56,14 @@ private struct FocalFill: View {
 /// A logo or other image shown whole, never cropped.
 struct ArtFit: View {
     let url: URL?
-    /// Shown when there is no logo image, for games Steam does not sell.
+    /// Shown when there is no logo image; newer Steam apps have no logo at a known path.
     var fallback: String? = nil
     var body: some View {
         ZStack(alignment: .bottomLeading) {
             if let url, let image = ArtworkStore.shared.image(url) {
                 Image(nsImage: image).resizable().interpolation(.high).aspectRatio(contentMode: .fit)
                     .transition(.opacity)
-            } else if url == nil, let fallback {
+            } else if let fallback, url.map(ArtworkStore.shared.failed.contains) ?? true {
                 Text(fallback)
                     .font(.system(size: 34, weight: .heavy).width(.condensed))
                     .foregroundStyle(.white)

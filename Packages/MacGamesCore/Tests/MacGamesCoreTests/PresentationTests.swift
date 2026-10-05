@@ -15,10 +15,6 @@ import Testing
         #expect(GameProfile.aoe4.presentation.accentHex != GameProfile.cs2.presentation.accentHex)
     }
 
-    @Test func gamesSteamDoesNotSellHaveNoArtwork() {
-        #expect(GameProfile.diablo2Resurrected.artwork == nil)
-    }
-
     @Test func defaultPresentationIsCentered() {
         let p = GameProfile.Presentation()
         #expect(p.heroFocus.x == 0.5 && p.heroFocus.y == 0.5)

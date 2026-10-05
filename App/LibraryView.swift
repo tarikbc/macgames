@@ -42,7 +42,7 @@ private struct Backdrop: View {
         ZStack {
             Color.black
             if let game {
-                ArtImage(url: game.profile.artwork?.hero, focus: game.profile.heroFocus)
+                ArtImage(url: game.profile.art?.hero, focus: game.profile.heroFocus)
                     .blur(radius: 80)
                     .saturation(1.25)
                     .opacity(0.55)
@@ -68,19 +68,12 @@ private struct Sidebar: View {
                 .padding(.bottom, Space.l)
             ScrollView {
                 VStack(alignment: .leading, spacing: Space.xs) {
-                    ForEach(library.sections, id: \.environment.id) { section in
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(section.environment.id == "steam" ? "Steam library" : section.environment.title)
-                                .font(.system(size: 11, weight: .semibold))
-                                .foregroundStyle(.secondary)
-                            if section.environment.id != "steam" {
-                                Text("Its own Windows environment")
-                                    .font(.system(size: 10))
-                                    .foregroundStyle(.tertiary)
-                            }
-                        }
-                        .padding(.leading, Space.s)
-                        .padding(.top, section.environment.id == "steam" ? 0 : Space.m)
+                    ForEach(Array(library.sections.enumerated()), id: \.element.title) { index, section in
+                        Text(section.title)
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundStyle(.secondary)
+                            .padding(.leading, Space.s)
+                            .padding(.top, index == 0 ? 0 : Space.m)
                         ForEach(section.games) { game in
                             GameRow(game: game, selected: game.id == library.selectedID, namespace: selection)
                                 .onTapGesture { withAnimation(Motion.switchGame) { library.selectedID = game.id } }
@@ -107,7 +100,7 @@ private struct GameRow: View {
 
     var body: some View {
         HStack(spacing: Space.m) {
-            ArtImage(url: game.profile.artwork?.portrait)
+            ArtImage(url: game.profile.art?.portrait)
                 .frame(width: 40, height: 60)
                 .background(game.profile.accent.opacity(0.3))
                 .clipShape(RoundedRectangle(cornerRadius: 5))

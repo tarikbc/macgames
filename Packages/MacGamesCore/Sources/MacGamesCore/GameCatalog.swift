@@ -92,7 +92,7 @@ extension GameProfile {
         presentation: Presentation(accentHex: "B3261E", heroFocus: p(0.6, 0.4)))
 
     public static let diablo2Resurrected = GameProfile(
-        id: "diablo2-resurrected", title: "Diablo II: Resurrected", steamAppID: "",
+        id: "diablo2-resurrected", title: "Diablo II: Resurrected", steamAppID: "2536520",
         installFolder: "Diablo II Resurrected", executableRelativePath: "D2R.exe", environment: "battlenet",
         launch: .battleNet, minimumMacOS: [26, 5], presentation: Presentation(accentHex: "8E1B12"))
 

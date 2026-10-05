@@ -17,6 +17,7 @@ First version.
 - 18 more games: Age of Empires III, Age of Mythology: Retold, Company of Heroes 3, Zero Hour, Red Alert 2,
   Heroes III, Diablo IV, Path of Exile 2, Hogwarts Legacy, The Witcher 3, Elden Ring, Skyrim, Overwatch,
   Diablo IV and Diablo II: Resurrected on Battle.net, Red Dead Redemption 2, San Andreas and GTA V
-- Windows environments: a shared Steam library, plus separate environments for games that need them
+- Windows environments: a shared Steam library, plus separate environments for games that need them,
+  grouped in the sidebar by launcher or publisher
 - Release packs for the extra engines and renderers, downloaded on first setup
 - Play Online for Zero Hour (GeneralsOnline) and Red Alert 2 (CnCNet)
