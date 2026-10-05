@@ -27,9 +27,10 @@ public struct AppManifest: Sendable {
 
     public subscript(key: String) -> String? { values[key] }
 
-    /// Steam writes StateFlags 4 ("fully installed") once download and verification finish.
+    /// StateFlags is a bit field; bit 4 ("fully installed") stays set while an update waits.
     public func isFullyInstalled(_ profile: GameProfile) -> Bool {
-        self["appid"] == profile.steamAppID && self["installdir"] == profile.installFolder && self["StateFlags"] == "4"
+        guard let flags = self["StateFlags"].flatMap({ Int($0) }) else { return false }
+        return self["appid"] == profile.steamAppID && self["installdir"] == profile.installFolder && flags & 4 != 0
     }
 }
 
@@ -49,13 +50,16 @@ public enum GameProcessLog {
         return tracked != nil
     }
 
-    /// Reads only the last 128 KiB; the log grows for the life of the prefix.
+    public static func url(_ paths: GamePaths) -> URL { paths.steamDir.appendingPathComponent("logs/gameprocess_log.txt") }
+
+    /// Reads at most the last 128 KiB, and nothing from before the current Steam
+    /// session: a session ended with `wineserver -k` never logs the game's exit.
     public static func isRunning(_ profile: GameProfile, paths: GamePaths) -> Bool {
-        let url = paths.steamDir.appendingPathComponent("logs/gameprocess_log.txt")
-        guard let handle = try? FileHandle(forReadingFrom: url) else { return false }
+        guard let handle = try? FileHandle(forReadingFrom: url(paths)) else { return false }
         defer { try? handle.close() }
         guard let size = try? handle.seekToEnd() else { return false }
-        try? handle.seek(toOffset: size > 131_072 ? size - 131_072 : 0)
+        let sessionStart = SteamSession.load(paths)?.gameLogOffset ?? 0
+        try? handle.seek(toOffset: max(sessionStart <= size ? sessionStart : 0, size > 131_072 ? size - 131_072 : 0))
         let data = (try? handle.readToEnd()) ?? Data()
         return isRunning(profile, log: String(decoding: data, as: UTF8.self))
     }

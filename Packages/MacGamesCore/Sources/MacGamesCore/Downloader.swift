@@ -44,11 +44,22 @@ public struct Downloader: Sendable {
         let partial = cache.appendingPathComponent(".\(item.fileName).\(UUID().uuidString).partial")
         defer { try? fm.removeItem(at: partial) }
         try transfer(item.url, to: partial)
-        if let pin = item.sha256 {
+        return try commit(partial, to: target, pin: item.sha256)
+    }
+
+    /// Verifies `partial` and puts it at `target`. Another setup may have
+    /// placed the same file meanwhile; a verified one is kept.
+    func commit(_ partial: URL, to target: URL, pin: String?) throws -> URL {
+        let fm = FileManager.default
+        if let pin {
             let actual = try sha256Hex(ofFileAt: partial)
             guard actual == pin else {
-                throw SetupError("\(item.fileName) failed verification (SHA-256 \(actual), expected \(pin)).")
+                throw SetupError("\(target.lastPathComponent) failed verification (SHA-256 \(actual), expected \(pin)).")
             }
+        }
+        if fm.fileExists(atPath: target.path) {
+            if pin == nil || (try? sha256Hex(ofFileAt: target)) == pin { return target }
+            try fm.removeItem(at: target)
         }
         try fm.moveItem(at: partial, to: target)
         return target

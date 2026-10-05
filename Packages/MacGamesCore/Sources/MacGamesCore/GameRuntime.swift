@@ -82,7 +82,7 @@ public final class GameRuntime: @unchecked Sendable {
         }
 
         progress("Installing the Wine engine…")
-        try EngineInstaller(runtime: runtime).install(for: paths)
+        try ensureEngine()
         let plain = environment(optimized: false, hud: false)
         progress(try runner.run(paths.wine, ["--version"], environment: plain, timeout: 60).trimmingCharacters(in: .whitespacesAndNewlines))
         try runner.run(paths.wineserver, ["--version"], environment: plain, timeout: 60)
@@ -133,21 +133,22 @@ public final class GameRuntime: @unchecked Sendable {
         progress("Steam is installed.")
     }
 
+    /// Installs the current engine. The prefix holds copies of engine and
+    /// renderer DLLs, so a new engine re-copies them.
+    public func ensureEngine() throws {
+        guard try EngineInstaller(runtime: runtime).install(for: paths) else { return }
+        if fm.fileExists(atPath: paths.prefix.appendingPathComponent("drive_c/windows").path) {
+            try PrefixSetup.apply(PrefixSetup.graphicsCopies(for: paths))
+        }
+    }
+
     // MARK: Steam session
 
-    /// `true` while this game's wineserver is alive. `wineserver -w` returns at
-    /// once when no server exists and blocks while one does.
+    /// `true` while this game's wineserver is alive. Every Wine process of a
+    /// prefix needs its server, so the server's lifetime is the session's.
     public func isSessionRunning() -> Bool {
-        guard fm.fileExists(atPath: paths.wineserver.path) else { return false }
-        do {
-            try runner.run(paths.wineserver, ["-w"], environment: environment(optimized: false, hud: false),
-                           timeout: 1.5, allowedStatuses: [0, 1])
-            return false
-        } catch is CommandTimeout {
-            return true
-        } catch {
-            return false
-        }
+        let server = paths.wineserver.resolvingSymlinksInPath().path
+        return LiveProcesses.paths(under: paths.engine).contains { $0.path == server }
     }
 
     public func startSteam(_ mode: SteamLaunch.Mode) throws {
@@ -155,11 +156,12 @@ public final class GameRuntime: @unchecked Sendable {
             throw SetupError("Set up Steam first.")
         }
         let wasRunning = isSessionRunning()
-        if !wasRunning { try EngineInstaller(runtime: runtime).install(for: paths) }
+        if !wasRunning { try ensureEngine() }
         let env = try launchEnvironment()
         let fingerprint = SteamLaunch.fingerprint(env)
         var running = wasRunning
-        if running, (try? String(contentsOf: paths.steamSession, encoding: .utf8)) != fingerprint {
+        let matches = SteamSession.load(paths)?.fingerprint == fingerprint
+        if SteamLaunch.needsRestart(mode, sessionRunning: running, fingerprintMatches: matches) {
             guard !GameProcessLog.isRunning(profile, paths: paths) else {
                 throw SetupError("Close \(profile.title) before you change its launch settings.")
             }
@@ -187,7 +189,7 @@ public final class GameRuntime: @unchecked Sendable {
         if !process.isRunning && process.terminationStatus != 0 {
             throw SetupError("Steam exited before it opened (exit \(process.terminationStatus)). Log: \(log.path)")
         }
-        if !running { try fingerprint.write(to: paths.steamSession, atomically: true, encoding: .utf8) }
+        if !running { try SteamSession.begin(fingerprint: fingerprint, paths: paths) }
         progress(mode == .open ? "Steam is opening." : "Steam received the request.")
     }
 

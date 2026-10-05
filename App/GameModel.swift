@@ -13,6 +13,8 @@ final class GameModel: Identifiable {
     private(set) var busy = false
     private(set) var activity: String?
     private(set) var error: String?
+    /// Set when an action would end a running game; the view asks first.
+    var confirmingStop = false
     var settings: LaunchSettings { didSet { let r = runtime, s = settings; Task.detached { r.settings = s } } }
 
     nonisolated var id: String { profile.id }
@@ -41,11 +43,15 @@ final class GameModel: Identifiable {
         case .ready:
             let size = CGDisplayBounds(CGMainDisplayID()).size
             perform("Starting \(profile.title)") { r in try r.play(displayWidth: Int(size.width), displayHeight: Int(size.height)) }
-        case .running: stop()
+        case .running: confirmingStop = true
         }
     }
 
     func openSteam() { perform("Opening Steam") { r in try r.startSteam(.open) } }
+    func requestStop() {
+        if state == .running { confirmingStop = true } else { stop() }
+    }
+
     func stop() { perform("Stopping") { r in try r.stop() } }
     func resetDisplay() { runtime.resetDisplay(); activity = "The next launch sets the window size again." }
     func showLogs() { NSWorkspace.shared.open(runtime.paths.logs) }

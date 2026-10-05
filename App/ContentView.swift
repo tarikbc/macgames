@@ -83,6 +83,11 @@ struct GamePanel: View {
             .padding(.top, 4)
         }
         .frame(maxWidth: 380, alignment: .leading)
+        .confirmationDialog("Stop \(game.profile.title)?", isPresented: Bindable(game).confirmingStop) {
+            Button("Stop the game and Steam", role: .destructive, action: game.stop)
+        } message: {
+            Text("The game closes at once. Progress since your last save is lost.")
+        }
     }
 
     @ViewBuilder private var statusLine: some View {
@@ -110,7 +115,7 @@ struct GameMenu: View {
     var body: some View {
         Menu {
             Button("Open Steam", action: game.openSteam).disabled(game.state == .notSetUp || game.state == .needsSteam)
-            Button("Stop Steam and the game", action: game.stop)
+            Button("Stop Steam and the game", action: game.requestStop)
             Divider()
             Toggle("Performance HUD", isOn: $game.settings.hud)
             if game.profile.optimizedExecutableSHA256 != nil {

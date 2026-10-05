@@ -2,7 +2,7 @@ import SwiftUI
 
 struct MacGamesApp: App {
     var body: some Scene {
-        WindowGroup("MacGames") {
+        Window("MacGames", id: "main") {
             ContentView()
         }
         .windowStyle(.hiddenTitleBar)
