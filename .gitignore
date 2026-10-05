@@ -1,0 +1,8 @@
+Vendor/
+build/
+DerivedData/
+.build/
+.swiftpm/
+*.xcodeproj
+.superpowers/
+.DS_Store
