@@ -1,0 +1,89 @@
+# project.yml — repo root. Generate with: xcodegen generate
+name: MacGames
+options:
+  minimumXcodeGenVersion: "2.42.0"
+  bundleIdPrefix: com.tarikbc
+  developmentLanguage: en
+  deploymentTarget:
+    macOS: "26.0"
+  createIntermediateGroups: true
+
+schemes:
+  MacGames:
+    build:
+      targets:
+        MacGames: all
+    run:
+      config: Debug
+
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    ARCHS: arm64
+    ONLY_ACTIVE_ARCH: NO
+    CODE_SIGN_STYLE: Manual
+    CODE_SIGN_IDENTITY: "-"
+    ENABLE_HARDENED_RUNTIME: NO
+    ENABLE_USER_SCRIPT_SANDBOXING: NO
+    SWIFT_STRICT_CONCURRENCY: complete
+
+packages:
+  MacGamesCore:
+    path: Packages/MacGamesCore
+
+targets:
+
+  # The SwiftUI launcher. Also runs headless with --command (see App/CLI.swift).
+  MacGames:
+    type: application
+    platform: macOS
+    sources: [App]
+    dependencies:
+      - package: MacGamesCore
+        product: MacGamesCore
+      - target: MacGamesBridge
+        embed: false
+      - target: RosettaProbe
+        embed: false
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.tarikbc.macgames
+        PRODUCT_NAME: MacGames
+        ENABLE_APP_SANDBOX: NO
+        GENERATE_INFOPLIST_FILE: NO
+    info:
+      path: App/Info.plist
+      properties:
+        CFBundleDisplayName: MacGames
+        LSMinimumSystemVersion: "26.0"
+        LSApplicationCategoryType: public.app-category.games
+        NSMicrophoneUsageDescription: "Allow microphone access for in-game voice chat."
+        NSHighResolutionCapable: true
+    postBuildScripts:
+      - name: Embed runtime
+        script: "\"$SRCROOT/scripts/embed-runtime.sh\""
+        basedOnDependencyAnalysis: false
+
+  # Wine's patched loader execs this for RelicCardinal.exe (AOELAB_SIDECAR_PATH).
+  MacGamesBridge:
+    type: tool
+    platform: macOS
+    sources: [Packages/MacGamesCore/Sources/MacGamesBridge]
+    dependencies:
+      - package: MacGamesCore
+        product: BridgeKit
+    settings:
+      base:
+        PRODUCT_NAME: MacGamesBridge
+
+  # Intel-only on purpose: it runs only when Rosetta works.
+  RosettaProbe:
+    type: tool
+    platform: macOS
+    sources: [Probe]
+    settings:
+      base:
+        PRODUCT_NAME: RosettaProbe
+        ARCHS: x86_64

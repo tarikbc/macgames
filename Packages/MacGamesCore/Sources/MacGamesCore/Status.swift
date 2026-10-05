@@ -76,7 +76,8 @@ public enum LiveProcesses {
             var buffer = [CChar](repeating: 0, count: 4096)
             let length = buffer.withUnsafeMutableBytes { proc_pidpath(pid, $0.baseAddress, 4096) }
             guard length > 0 else { continue }
-            let path = URL(fileURLWithPath: String(cString: buffer)).resolvingSymlinksInPath()
+            let path = URL(fileURLWithPath: String(decoding: buffer.prefix(Int(length)).map { UInt8(bitPattern: $0) }, as: UTF8.self))
+                .resolvingSymlinksInPath()
             if path.path.hasPrefix(prefix) { found.append(path) }
         }
         return found
