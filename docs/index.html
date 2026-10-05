@@ -8,7 +8,7 @@
   <meta name="theme-color" content="#141A33">
   <link rel="icon" href="assets/img/favicon-32.png" sizes="32x32">
   <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
-  <link rel="stylesheet" href="assets/css/style.css?v=3">
+  <link rel="stylesheet" href="assets/css/style.css?v=5">
   <script>document.documentElement.classList.add("js")</script>
   <meta property="og:type" content="website">
   <meta property="og:title" content="MacGames: Windows games on your Mac">
@@ -18,9 +18,10 @@
   <meta name="twitter:card" content="summary_large_image">
 </head>
 <body>
+  <div class="ambient" aria-hidden="true"><span></span><span></span><span></span></div>
 
   <header class="site-header">
-    <div class="wrap">
+    <div class="wrap bar">
       <a class="brand" href="#top">
         <img src="assets/img/icon-64.png" width="30" height="30" alt="">
         MacGames
@@ -57,8 +58,7 @@
         <p class="hero-meta">Free and open source. Needs macOS 26 on Apple silicon. <span data-version></span></p>
       </div>
       <div class="wrap">
-        <figure class="hud hero-shot" data-lock>
-          <span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span>
+        <figure class="shot hero-shot" data-lock>
           <img src="assets/img/library-aoe4.webp" width="1800" height="1179" alt="The MacGames library: Age of Empires IV is selected and ready to play, with the other games in the sidebar.">
         </figure>
       </div>
@@ -74,89 +74,91 @@
         <div class="select" data-select>
           <div class="spotlight" data-lock aria-live="polite">
             <div class="spot-frame">
-            <span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span>
             <div class="spot-stage">
           <div class="spot-art" style="--focus:32% 45%"><img class="spot-hero" src="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1466860/library_hero.jpg" alt=""></div>
           <div class="spot-body" style="--accent:#C8403B">
             <img class="spot-logo" src="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1466860/logo.png" alt="Age of Empires IV">
             <h3 class="spot-title">Age of Empires IV</h3>
-            <p class="spot-meta"><span>Steam library</span><span>Apple D3DMetal</span></p>
-            <ul class="spot-recipe"><li>Fast x87 math through x87sidecar</li><li>Controllers through SDL</li></ul>
-            <p class="spot-status tested">Tested on a Mac</p>
+            <div class="spot-card">
+              <p class="spot-meta"><span>Steam library</span><span>Apple D3DMetal</span></p>
+              <ul class="spot-recipe"><li>Fast x87 math through x87sidecar</li><li>Controllers through SDL</li></ul>
+              <p class="spot-status tested"><i class="dot"></i>Tested on a Mac</p>
+            </div>
           </div>
             </div>
             </div>
             <div class="spot-controls">
-              <button class="spot-step" type="button" data-step="-1" aria-label="Previous game"><svg width="14" height="16" viewBox="0 0 14 16" aria-hidden="true"><path d="M13 1.5v13L1 8z" fill="currentColor"/></svg></button>
+              <button class="spot-step" type="button" data-step="-1" aria-label="Previous game"><svg width="14" height="16" viewBox="0 0 14 16" aria-hidden="true"><path d="M9.5 2.5 4 8l5.5 5.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
               <div class="spot-progress" aria-hidden="true"><span></span></div>
-              <button class="spot-step" type="button" data-step="1" aria-label="Next game"><svg width="14" height="16" viewBox="0 0 14 16" aria-hidden="true"><path d="M1 1.5v13l12-6.5z" fill="currentColor"/></svg></button>
+              <button class="spot-step" type="button" data-step="1" aria-label="Next game"><svg width="14" height="16" viewBox="0 0 14 16" aria-hidden="true"><path d="M4.5 2.5 10 8l-5.5 5.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
             </div>
           </div>
 
           <div class="filters" aria-label="Show games of">
+            <span class="thumb" aria-hidden="true"></span>
             <button class="filter is-active" type="button" data-filter="all" aria-pressed="true">All games <span>20</span></button><button class="filter" type="button" data-filter="steam" aria-pressed="false">Steam library <span>13</span></button><button class="filter" type="button" data-filter="battlenet" aria-pressed="false">Battle.net <span>2</span></button><button class="filter" type="button" data-filter="rockstar" aria-pressed="false">Rockstar <span>3</span></button><button class="filter" type="button" data-filter="own" aria-pressed="false">On their own <span>2</span></button>
           </div>
 
           <ul class="covers">
             <li><button class="cover-btn" type="button" style="--accent:#C8403B" aria-pressed="true" aria-label="Age of Empires IV" data-id="aoe4" data-group="steam" data-title="Age of Empires IV" data-hero="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1466860/library_hero.jpg" data-logo="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1466860/logo.png" data-renderer="Apple D3DMetal" data-recipe="Fast x87 math through x87sidecar|Controllers through SDL" data-status="Tested on a Mac" data-focus="32% 45%" data-accent="#C8403B">
-              <img src="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1466860/library_600x900.jpg" alt="" width="300" height="450" loading="lazy"><em class="ribbon">Tested</em><span class="glare"></span>
+              <span class="cover-art"><img src="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1466860/library_600x900.jpg" alt="" width="300" height="450" loading="lazy"><em class="ribbon"><i class="dot"></i>Tested</em><span class="glare"></span></span>
             </button></li>
             <li><button class="cover-btn" type="button" style="--accent:#E9A23B" aria-pressed="false" aria-label="Counter-Strike 2" data-id="cs2" data-group="steam" data-title="Counter-Strike 2" data-hero="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/730/library_hero.jpg" data-logo="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/730/logo.png" data-renderer="DXMT" data-recipe="Shaders compiled before the match|Borderless window sized to your display" data-status="Tested on a Mac" data-focus="78% 40%" data-accent="#E9A23B">
-              <img src="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/730/library_600x900.jpg" alt="" width="300" height="450" loading="lazy"><em class="ribbon">Tested</em><span class="glare"></span>
+              <span class="cover-art"><img src="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/730/library_600x900.jpg" alt="" width="300" height="450" loading="lazy"><em class="ribbon"><i class="dot"></i>Tested</em><span class="glare"></span></span>
             </button></li>
             <li><button class="cover-btn" type="button" style="--accent:#2F6DB5" aria-pressed="false" aria-label="Age of Empires III: Definitive Edition" data-id="aoe3" data-group="steam" data-title="Age of Empires III: Definitive Edition" data-hero="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/933110/library_hero.jpg" data-logo="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/933110/logo.png" data-renderer="Apple D3DMetal" data-recipe="Game settings tuned for Wine" data-status="" data-focus="60% 40%" data-accent="#2F6DB5">
-              <img src="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/933110/library_600x900.jpg" alt="" width="300" height="450" loading="lazy"><span class="glare"></span>
+              <span class="cover-art"><img src="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/933110/library_600x900.jpg" alt="" width="300" height="450" loading="lazy"><span class="glare"></span></span>
             </button></li>
             <li><button class="cover-btn" type="button" style="--accent:#C9A227" aria-pressed="false" aria-label="Age of Mythology: Retold" data-id="aom-retold" data-group="steam" data-title="Age of Mythology: Retold" data-hero="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1934680/library_hero.jpg" data-logo="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1934680/logo.png" data-renderer="Apple D3DMetal" data-recipe="GPU entries that match D3DMetal|Fullscreen below the notch" data-status="" data-focus="60% 40%" data-accent="#C9A227">
-              <img src="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1934680/library_600x900.jpg" alt="" width="300" height="450" loading="lazy"><span class="glare"></span>
+              <span class="cover-art"><img src="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1934680/library_600x900.jpg" alt="" width="300" height="450" loading="lazy"><span class="glare"></span></span>
             </button></li>
             <li><button class="cover-btn" type="button" style="--accent:#8A9A5B" aria-pressed="false" aria-label="Company of Heroes 3" data-id="coh3" data-group="steam" data-title="Company of Heroes 3" data-hero="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1677280/library_hero.jpg" data-logo="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1677280/logo.png" data-renderer="Apple D3DMetal" data-recipe="Microsoft&#x27;s C runtime for multiplayer" data-status="" data-focus="60% 40%" data-accent="#8A9A5B">
-              <img src="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1677280/library_600x900.jpg" alt="" width="300" height="450" loading="lazy"><span class="glare"></span>
+              <span class="cover-art"><img src="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1677280/library_600x900.jpg" alt="" width="300" height="450" loading="lazy"><span class="glare"></span></span>
             </button></li>
             <li><button class="cover-btn" type="button" style="--accent:#6B8E23" aria-pressed="false" aria-label="Command &amp; Conquer: Generals Zero Hour" data-id="zero-hour" data-group="steam" data-title="Command &amp; Conquer: Generals Zero Hour" data-hero="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/2732960/library_hero.jpg" data-logo="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/2732960/logo.png" data-renderer="Wine D3D8" data-recipe="Play Online through GeneralsOnline|Resolution set to your display" data-status="" data-focus="60% 40%" data-accent="#6B8E23">
-              <img src="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/2732960/library_600x900.jpg" alt="" width="300" height="450" loading="lazy"><span class="glare"></span>
+              <span class="cover-art"><img src="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/2732960/library_600x900.jpg" alt="" width="300" height="450" loading="lazy"><span class="glare"></span></span>
             </button></li>
             <li><button class="cover-btn" type="button" style="--accent:#C0392B" aria-pressed="false" aria-label="Command &amp; Conquer: Red Alert 2" data-id="red-alert2" data-group="steam" data-title="Command &amp; Conquer: Red Alert 2" data-hero="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/2229850/library_hero.jpg" data-logo="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/2229850/logo.png" data-renderer="cnc-ddraw" data-recipe="Play Online through CnCNet|Saves kept when you uninstall" data-status="" data-focus="60% 40%" data-accent="#C0392B">
-              <img src="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/2229850/library_600x900.jpg" alt="" width="300" height="450" loading="lazy"><span class="glare"></span>
+              <span class="cover-art"><img src="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/2229850/library_600x900.jpg" alt="" width="300" height="450" loading="lazy"><span class="glare"></span></span>
             </button></li>
             <li><button class="cover-btn" type="button" style="--accent:#C2A049" aria-pressed="false" aria-label="Heroes of Might and Magic III" data-id="heroes3" data-group="steam" data-title="Heroes of Might and Magic III" data-hero="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/4921760/d3c5ef38b81e5bd64bb04f5ceb256eb1c85e75b2/library_hero.jpg" data-logo="" data-renderer="cnc-ddraw" data-recipe="A fix for the game&#x27;s sound|Saves kept when you uninstall" data-status="" data-focus="50% 40%" data-accent="#C2A049">
-              <img src="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/4921760/b2e1ea51b208661858d58e45fee3444935a88721/library_capsule.jpg" alt="" width="300" height="450" loading="lazy"><span class="glare"></span>
+              <span class="cover-art"><img src="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/4921760/b2e1ea51b208661858d58e45fee3444935a88721/library_capsule.jpg" alt="" width="300" height="450" loading="lazy"><span class="glare"></span></span>
             </button></li>
             <li><button class="cover-btn" type="button" style="--accent:#B3261E" aria-pressed="false" aria-label="Diablo IV" data-id="diablo4" data-group="steam" data-title="Diablo IV" data-hero="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/2344520/cd5817c4f6256d206c077cb611da21a5de4a5452/library_hero.jpg" data-logo="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/2344520/logo.png" data-renderer="Apple D3DMetal" data-recipe="Shared D3DMetal libraries for the game" data-status="" data-focus="60% 40%" data-accent="#B3261E">
-              <img src="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/2344520/94a971a57dbfc1a8d9ddcb3ec39cfd93e2418d23/library_capsule.jpg" alt="" width="300" height="450" loading="lazy"><span class="glare"></span>
+              <span class="cover-art"><img src="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/2344520/94a971a57dbfc1a8d9ddcb3ec39cfd93e2418d23/library_capsule.jpg" alt="" width="300" height="450" loading="lazy"><span class="glare"></span></span>
             </button></li>
             <li><button class="cover-btn" type="button" style="--accent:#A8342A" aria-pressed="false" aria-label="Path of Exile 2" data-id="poe2" data-group="steam" data-title="Path of Exile 2" data-hero="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/2694490/5e6bce4eff4f86c546191799c4f333cfadef7458/library_hero.jpg" data-logo="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/2694490/logo.png" data-renderer="Apple D3DMetal, DirectX 12" data-recipe="Wine sync tuned for the game" data-status="" data-focus="60% 40%" data-accent="#A8342A">
-              <img src="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/2694490/9ba938a146c753bc8cfd28742fcd069b9b2061bf/library_capsule.jpg" alt="" width="300" height="450" loading="lazy"><span class="glare"></span>
+              <span class="cover-art"><img src="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/2694490/9ba938a146c753bc8cfd28742fcd069b9b2061bf/library_capsule.jpg" alt="" width="300" height="450" loading="lazy"><span class="glare"></span></span>
             </button></li>
             <li><button class="cover-btn" type="button" style="--accent:#B08D57" aria-pressed="false" aria-label="Hogwarts Legacy" data-id="hogwarts-legacy" data-group="steam" data-title="Hogwarts Legacy" data-hero="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/990080/471c718aa6d4e2111ae24d7a7427a7485c076f38/library_hero.jpg" data-logo="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/990080/logo.png" data-renderer="Apple D3DMetal" data-recipe="A shader cache of its own" data-status="" data-focus="60% 40%" data-accent="#B08D57">
-              <img src="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/990080/dca9bb926befe37ff9754e3336cd9fe4c969c1e9/library_capsule.jpg" alt="" width="300" height="450" loading="lazy"><span class="glare"></span>
+              <span class="cover-art"><img src="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/990080/dca9bb926befe37ff9754e3336cd9fe4c969c1e9/library_capsule.jpg" alt="" width="300" height="450" loading="lazy"><span class="glare"></span></span>
             </button></li>
             <li><button class="cover-btn" type="button" style="--accent:#B8322A" aria-pressed="false" aria-label="The Witcher 3: Wild Hunt" data-id="witcher3" data-group="steam" data-title="The Witcher 3: Wild Hunt" data-hero="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/292030/2dbca4868f3a9912aad6966bb0b6ab2d270f6da6/library_hero.jpg" data-logo="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/292030/logo.png" data-renderer="Apple D3DMetal" data-recipe="A FidelityFX proxy that stops a shader crash|Reports Windows 11 to the game" data-status="" data-focus="60% 40%" data-accent="#B8322A">
-              <img src="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/292030/dd1c19c4e41b120ddfa35734cc31f79254c25082/library_capsule.jpg" alt="" width="300" height="450" loading="lazy"><span class="glare"></span>
+              <span class="cover-art"><img src="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/292030/dd1c19c4e41b120ddfa35734cc31f79254c25082/library_capsule.jpg" alt="" width="300" height="450" loading="lazy"><span class="glare"></span></span>
             </button></li>
             <li><button class="cover-btn" type="button" style="--accent:#C8A951" aria-pressed="false" aria-label="Elden Ring" data-id="elden-ring" data-group="steam" data-title="Elden Ring" data-hero="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1245620/library_hero.jpg" data-logo="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1245620/logo.png" data-renderer="Apple D3DMetal" data-recipe="Windows runtimes installed for you|Offline play" data-status="" data-focus="60% 40%" data-accent="#C8A951">
-              <img src="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1245620/library_600x900.jpg" alt="" width="300" height="450" loading="lazy"><span class="glare"></span>
+              <span class="cover-art"><img src="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1245620/library_600x900.jpg" alt="" width="300" height="450" loading="lazy"><span class="glare"></span></span>
             </button></li>
             <li><button class="cover-btn" type="button" style="--accent:#B3261E" aria-pressed="false" aria-label="Diablo IV on Battle.net" data-id="diablo4-battlenet" data-group="battlenet" data-title="Diablo IV on Battle.net" data-hero="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/2344520/cd5817c4f6256d206c077cb611da21a5de4a5452/library_hero.jpg" data-logo="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/2344520/logo.png" data-renderer="Apple D3DMetal" data-recipe="DXMT for the Battle.net client|Battle.net&#x27;s hidden window comes back" data-status="" data-focus="60% 40%" data-accent="#B3261E">
-              <img src="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/2344520/94a971a57dbfc1a8d9ddcb3ec39cfd93e2418d23/library_capsule.jpg" alt="" width="300" height="450" loading="lazy"><span class="glare"></span>
+              <span class="cover-art"><img src="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/2344520/94a971a57dbfc1a8d9ddcb3ec39cfd93e2418d23/library_capsule.jpg" alt="" width="300" height="450" loading="lazy"><span class="glare"></span></span>
             </button></li>
             <li><button class="cover-btn" type="button" style="--accent:#8E1B12" aria-pressed="false" aria-label="Diablo II: Resurrected" data-id="diablo2-resurrected" data-group="battlenet" data-title="Diablo II: Resurrected" data-hero="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/2536520/a06b367f20fae83aa5d7d533dae5ee9385dde866/library_hero.jpg" data-logo="" data-renderer="Apple D3DMetal" data-recipe="DXMT for the Battle.net client|Uninstalls through Blizzard&#x27;s own uninstaller" data-status="" data-focus="50% 50%" data-accent="#8E1B12">
-              <img src="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/2536520/e36657ec80e83a1265b0cb3073e3cb6246443314/library_capsule.jpg" alt="" width="300" height="450" loading="lazy"><span class="glare"></span>
+              <span class="cover-art"><img src="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/2536520/e36657ec80e83a1265b0cb3073e3cb6246443314/library_capsule.jpg" alt="" width="300" height="450" loading="lazy"><span class="glare"></span></span>
             </button></li>
             <li><button class="cover-btn" type="button" style="--accent:#B22222" aria-pressed="false" aria-label="Red Dead Redemption 2" data-id="rdr2" data-group="rockstar" data-title="Red Dead Redemption 2" data-hero="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1174180/library_hero.jpg" data-logo="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1174180/logo.png" data-renderer="Apple D3DMetal" data-recipe="WineD3D for the Rockstar Games Launcher" data-status="" data-focus="60% 40%" data-accent="#B22222">
-              <img src="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1174180/library_600x900.jpg" alt="" width="300" height="450" loading="lazy"><span class="glare"></span>
+              <span class="cover-art"><img src="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1174180/library_600x900.jpg" alt="" width="300" height="450" loading="lazy"><span class="glare"></span></span>
             </button></li>
             <li><button class="cover-btn" type="button" style="--accent:#E67E22" aria-pressed="false" aria-label="GTA San Andreas: The Definitive Edition" data-id="san-andreas-de" data-group="rockstar" data-title="GTA San Andreas: The Definitive Edition" data-hero="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1547000/library_hero.jpg" data-logo="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1547000/logo.png" data-renderer="Apple D3DMetal" data-recipe="WineD3D for the Rockstar Games Launcher" data-status="" data-focus="60% 40%" data-accent="#E67E22">
-              <img src="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1547000/library_600x900.jpg" alt="" width="300" height="450" loading="lazy"><span class="glare"></span>
+              <span class="cover-art"><img src="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1547000/library_600x900.jpg" alt="" width="300" height="450" loading="lazy"><span class="glare"></span></span>
             </button></li>
             <li><button class="cover-btn" type="button" style="--accent:#2E8B57" aria-pressed="false" aria-label="Grand Theft Auto V Enhanced" data-id="gta5-enhanced" data-group="rockstar" data-title="Grand Theft Auto V Enhanced" data-hero="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3240220/156530620aa0b27bc9c73f78c3ca64f7d8fed03d/library_hero.jpg" data-logo="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3240220/logo.png" data-renderer="Apple D3DMetal 4.0 on Wine 11.13" data-recipe="The driver warning is answered for you|Story mode" data-status="" data-focus="60% 40%" data-accent="#2E8B57">
-              <img src="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3240220/394239e5da54fed177bd0ab04590812f6add1bb5/library_600x900.jpg" alt="" width="300" height="450" loading="lazy"><span class="glare"></span>
+              <span class="cover-art"><img src="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3240220/394239e5da54fed177bd0ab04590812f6add1bb5/library_600x900.jpg" alt="" width="300" height="450" loading="lazy"><span class="glare"></span></span>
             </button></li>
             <li><button class="cover-btn" type="button" style="--accent:#9AA5B1" aria-pressed="false" aria-label="The Elder Scrolls V: Skyrim Special Edition" data-id="skyrim-se" data-group="own" data-title="The Elder Scrolls V: Skyrim Special Edition" data-hero="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/489830/library_hero.jpg" data-logo="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/489830/logo.png" data-renderer="DXMT 0.72" data-recipe="An engine and drives of its own" data-status="" data-focus="60% 40%" data-accent="#9AA5B1">
-              <img src="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/489830/library_600x900.jpg" alt="" width="300" height="450" loading="lazy"><span class="glare"></span>
+              <span class="cover-art"><img src="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/489830/library_600x900.jpg" alt="" width="300" height="450" loading="lazy"><span class="glare"></span></span>
             </button></li>
             <li><button class="cover-btn" type="button" style="--accent:#F99E1A" aria-pressed="false" aria-label="Overwatch" data-id="overwatch" data-group="own" data-title="Overwatch" data-hero="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/2357570/a65d981a8253682e6ee0eb72aeb64b12ef2dc860/library_hero.jpg" data-logo="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/2357570/logo.png" data-renderer="DXMT for Overwatch" data-recipe="Pipelines prepared before launch" data-status="" data-focus="60% 40%" data-accent="#F99E1A">
-              <img src="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/2357570/b564b231521983c27b96acfb21c5b3cf7099817c/library_capsule.jpg" alt="" width="300" height="450" loading="lazy"><span class="glare"></span>
+              <span class="cover-art"><img src="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/2357570/b564b231521983c27b96acfb21c5b3cf7099817c/library_capsule.jpg" alt="" width="300" height="450" loading="lazy"><span class="glare"></span></span>
             </button></li>
           </ul>
         </div>
@@ -186,8 +188,7 @@
             </li>
           </ol>
         </div>
-        <figure class="hud shot-side" data-lock>
-          <span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span>
+        <figure class="shot shot-side" data-lock>
           <img src="assets/img/setup-rdr2.webp" width="1400" height="917" loading="lazy" alt="Red Dead Redemption 2 before setup, with the six setup steps listed under the Set up button.">
         </figure>
       </div>
@@ -209,8 +210,7 @@
           <li><h3>Online clients</h3><p>GeneralsOnline and CnCNet, set up and started with one button.</p></li>
           <li><h3>Kept apart</h3><p>Windows has no links into your home folder. Saves and settings stay when you uninstall a game.</p></li>
         </ul>
-        <figure class="hud shot-wide" data-lock>
-          <span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span>
+        <figure class="shot shot-wide" data-lock>
           <img src="assets/img/library-cs2.webp" width="1400" height="917" loading="lazy" alt="Counter-Strike 2 ready to play, with its settings: the performance HUD and the window size.">
         </figure>
       </div>
@@ -234,7 +234,7 @@
             <svg width="14" height="16" viewBox="0 0 14 16" aria-hidden="true"><path d="M1 1.5v13l12-6.5z" fill="currentColor"/></svg>
             Download for Mac
           </a>
-          <dl class="needs">
+          <dl class="needs glass">
             <div><dt>Mac</dt><dd>Apple silicon, M1 or later</dd></div>
             <div><dt>macOS</dt><dd>26 or later, with Rosetta 2</dd></div>
             <div><dt>Space</dt><dd>About 3 GB, plus your games</dd></div>
@@ -251,8 +251,7 @@
           <p>MacGames is open source under the PolyForm Noncommercial license. You can use it, change it and share it for anything that is not commercial. Nobody can sell it.</p>
           <p>It stands on the work of open-source projects: <a href="https://www.winehq.org">Wine</a>, <a href="https://github.com/3Shain/dxmt">DXMT</a>, <a href="https://github.com/athei/x87sidecar">x87sidecar</a>, <a href="https://github.com/FunkyFr3sh/cnc-ddraw">cnc-ddraw</a>, <a href="https://www.libsdl.org">SDL</a> and <a href="https://sparkle-project.org">Sparkle</a>.</p>
         </div>
-        <div class="hud contribute" data-lock>
-          <span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span>
+        <div class="glass contribute" data-lock>
           <h3>Help a game reach Tested</h3>
           <p>Try a game you own and tell us what happened, or add a game: each one is a single profile in code.</p>
           <div class="hero-actions">
@@ -290,6 +289,6 @@
     </div>
   </footer>
 
-  <script src="assets/js/site.js?v=3" defer></script>
+  <script src="assets/js/site.js?v=5" defer></script>
 </body>
 </html>

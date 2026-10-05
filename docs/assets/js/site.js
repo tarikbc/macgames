@@ -43,11 +43,7 @@
   // Parts that animate once when they scroll in.
   document.querySelectorAll(".section-head h2, .section-head p").forEach((el) => el.setAttribute("data-reveal", ""));
   document.querySelectorAll(".covers li").forEach((li, i) => li.style.setProperty("--i", i));
-  const loadout = document.querySelector(".loadout");
-  if (loadout) {
-    const tops = [...new Set([...loadout.children].map((li) => li.offsetTop))].sort((a, b) => a - b);
-    [...loadout.children].forEach((li) => li.style.setProperty("--row", tops.indexOf(li.offsetTop)));
-  }
+  document.querySelectorAll(".loadout li").forEach((li, k) => li.style.setProperty("--k", k));
   // Headings start fully clipped, which an observer counts as not on screen, so their block is watched.
   const watched = document.querySelectorAll(".section-head, [data-lock]:not(.hero-shot), .steps li, .loadout, .covers, .installer, .cta-band");
   const reveal = (el) => {
@@ -119,13 +115,16 @@
         body.append(element("p", "spot-logo-text", d.title));
       }
       body.append(element("h3", "spot-title", d.title));
+      // The details sit on frosted glass over the art, like the app's cards.
+      const card = element("div", "spot-card");
       const meta = element("p", "spot-meta");
       meta.append(element("span", "", groups[d.group]), element("span", "", d.renderer));
       const recipe = element("ul", "spot-recipe");
       d.recipe.split("|").forEach((line) => recipe.append(element("li", "", line)));
-      const status = d.status ? element("p", "spot-status tested", d.status)
-                              : element("p", "spot-status", "Recipe ready. Test it and tell us.");
-      body.append(meta, recipe, status);
+      const status = element("p", d.status ? "spot-status tested" : "spot-status");
+      status.append(element("i", "dot"), document.createTextNode(d.status || "Recipe ready. Test it and tell us."));
+      card.append(meta, recipe, status);
+      body.append(card);
       stage.querySelector(".spot-body")?.remove();
       stage.append(body);
 
@@ -213,6 +212,19 @@
       show(target, true);
     });
 
+    // The thumb behind the chosen filter slides to it, like a segmented control.
+    const thumb = root.querySelector(".filters .thumb");
+    const placeThumb = () => {
+      const active = filters.find((f) => f.classList.contains("is-active"));
+      if (!thumb || !active) return;
+      thumb.style.width = `${active.offsetWidth}px`;
+      thumb.style.height = `${active.offsetHeight}px`;
+      thumb.style.transform = `translate(${active.offsetLeft}px, ${active.offsetTop}px)`;
+    };
+    placeThumb();
+    window.addEventListener("resize", placeThumb);
+    document.fonts?.ready.then(placeThumb);
+
     filters.forEach((filter) => {
       filter.addEventListener("click", () => {
         const group = filter.dataset.filter;
@@ -220,6 +232,12 @@
           f.classList.toggle("is-active", f === filter);
           f.setAttribute("aria-pressed", String(f === filter));
         });
+        placeThumb();
+        // On a phone the filters scroll sideways; the chosen one moves to the middle.
+        const row = filter.parentElement;
+        if (row.scrollWidth > row.clientWidth) {
+          row.scrollTo({ left: filter.offsetLeft - (row.clientWidth - filter.offsetWidth) / 2, behavior: reduceMotion ? "auto" : "smooth" });
+        }
         // FLIP: covers that stay glide to their new place; covers that join pop in.
         const before = new Map(visible().map((c) => [c, c.getBoundingClientRect()]));
         covers.forEach((c) => c.closest("li").classList.toggle("out", group !== "all" && c.dataset.group !== group));
