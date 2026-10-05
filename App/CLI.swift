@@ -38,7 +38,7 @@ enum CLI {
             case "steam", "launcher":
                 try game.openLauncher()
             case "install":
-                try game.startSteam(.install)
+                try game.openForInstall()
             case "play":
                 try game.play(LaunchContext.mainDisplay())
             case "stop":

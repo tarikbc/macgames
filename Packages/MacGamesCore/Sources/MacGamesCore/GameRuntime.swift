@@ -109,6 +109,7 @@ public final class GameRuntime: @unchecked Sendable {
         stepChanged(.engine)
         progress("Installing the Wine engine…")
         try ensureEngine()
+        ensureSandbox()
         let plain = environment(optimized: false, hud: false)
         progress(try runner.run(paths.wine, ["--version"], environment: plain, timeout: 60).trimmingCharacters(in: .whitespacesAndNewlines))
         try runner.run(paths.wineserver, ["--version"], environment: plain, timeout: 60)
@@ -137,15 +138,8 @@ public final class GameRuntime: @unchecked Sendable {
                 try runWine(command, environment: plain, timeout: 120)
             }
         }
-        let registry = paths.environment.games.flatMap(GameRecipes.registry(for:))
-        if !registry.isEmpty { try importRegistry(registry, environment: plain) }
+        try ensureRecipes(environment: plain)
         try runner.run(paths.wineserver, ["-w"], environment: plain, timeout: 120)
-
-        for game in paths.environment.games {
-            for folder in GameRecipes.sandboxFolders(for: game, paths: GamePaths(profile: game, root: paths.root)) {
-                try fm.createDirectory(at: folder, withIntermediateDirectories: true)
-            }
-        }
         for game in paths.environment.games where game.graphics == .dxmt {
             let gamePaths = GamePaths(profile: game, root: paths.root)
             // A game prepared for the first time also gets its window fitted on first launch.
@@ -190,6 +184,10 @@ public final class GameRuntime: @unchecked Sendable {
     /// Installs the current engine. The prefix holds copies of engine and
     /// renderer DLLs, so a new engine re-copies them.
     public func ensureEngine() throws {
+        // A newer app may pin newer packs; fetch them before the engine marker is compared.
+        for pack in paths.environment.packs {
+            try Packs.install(pack, paths: paths, downloader: downloader, runner: runner)
+        }
         guard try EngineInstaller(runtime: runtime).install(for: paths) else { return }
         if fm.fileExists(atPath: paths.prefix.appendingPathComponent("drive_c/windows").path) {
             try PrefixSetup.apply(PrefixSetup.graphicsCopies(for: paths))
@@ -211,7 +209,46 @@ public final class GameRuntime: @unchecked Sendable {
     /// Notes which settings a Steam that MacGames did not start itself runs with.
     func recordSessionIfRunning(environment: [String: String]) {
         guard isSessionRunning(), SteamSession.load(paths) == nil else { return }
-        try? SteamSession.begin(fingerprint: SteamLaunch.fingerprint(environment), paths: paths)
+        try? SteamSession.begin(fingerprint: SteamLaunch.fingerprint(environment), paths: paths, environment: environment)
+    }
+
+    /// The title of a game of this environment that runs now, Steam-tracked or not.
+    func runningGameTitle() -> String? {
+        for game in paths.environment.games {
+            let gamePaths = GamePaths(profile: game, root: paths.root)
+            if GameRecipes.processNames(for: game).contains(where: { LiveProcesses.isRunning(executable: $0, under: paths.engine) })
+                || (isSessionRunning() && GameProcessLog.isRunning(game, paths: gamePaths)) {
+                return game.title
+            }
+        }
+        return nil
+    }
+
+    /// The sandbox folders of every game in this environment; Wine starts with them as HOME and TMPDIR.
+    func ensureSandbox() {
+        for game in paths.environment.games {
+            for folder in GameRecipes.sandboxFolders(for: game, paths: GamePaths(profile: game, root: paths.root)) {
+                try? fm.createDirectory(at: folder, withIntermediateDirectories: true)
+            }
+        }
+    }
+
+    /// Brings registry values and sandbox folders of every game in the environment up to date,
+    /// including games added after the environment was first set up.
+    func ensureRecipes(environment env: [String: String]) throws {
+        ensureSandbox()
+        let marker = paths.root.appendingPathComponent("recipes-applied")
+        let wanted = GameRecipes.recipeHash(for: paths.environment, root: paths.root)
+        guard (try? String(contentsOf: marker, encoding: .utf8)) != wanted else { return }
+        let registry = paths.environment.games.flatMap(GameRecipes.registry(for:))
+        if !registry.isEmpty { try importRegistry(registry, environment: env) }
+        try wanted.write(to: marker, atomically: true, encoding: .utf8)
+    }
+
+    /// A process that joins a running session must use the server's sync settings.
+    func joined(_ env: [String: String]) -> [String: String] {
+        guard isSessionRunning(), let session = SteamSession.load(paths) else { return env }
+        return session.join(env)
     }
 
     // MARK: Steam session
@@ -230,13 +267,14 @@ public final class GameRuntime: @unchecked Sendable {
         let wasRunning = isSessionRunning()
         if !wasRunning { try ensureEngine() }
         let env = try launchEnvironment()
+        try ensureRecipes(environment: environment(optimized: false, hud: false))
         let fingerprint = SteamLaunch.fingerprint(env)
         var running = wasRunning
         let matches = SteamSession.load(paths)?.fingerprint == fingerprint
         if SteamLaunch.needsRestart(mode, sessionRunning: running, fingerprintMatches: matches) {
             // Every game shares this Steam; restarting it ends whichever one plays.
-            if let playing = GameProfile.all.first(where: { GameProcessLog.isRunning($0, paths: GamePaths(profile: $0, root: paths.root)) }) {
-                throw SetupError("Close \(playing.title) first. Steam must restart with \(profile.title)'s settings.")
+            if let playing = runningGameTitle() {
+                throw SetupError("Close \(playing) first. Steam must restart with \(profile.title)'s settings.")
             }
             progress("Restarting Steam with the current settings…")
             try stop()
@@ -262,7 +300,7 @@ public final class GameRuntime: @unchecked Sendable {
         if !process.isRunning && process.terminationStatus != 0 {
             throw SetupError("Steam exited before it opened (exit \(process.terminationStatus)). Log: \(log.path)")
         }
-        if !running { try SteamSession.begin(fingerprint: fingerprint, paths: paths) }
+        if !running { try SteamSession.begin(fingerprint: fingerprint, paths: paths, environment: env) }
         progress(mode == .open ? "Steam is opening." : "Steam received the request.")
     }
 
@@ -372,9 +410,10 @@ extension GameRuntime {
     /// Writes all values in one REGEDIT4 file and imports it with a single Wine start.
     func importRegistry(_ values: [RegistryValue], environment: [String: String]) throws {
         let file = paths.prefix.appendingPathComponent("drive_c/macgames-registry-\(UUID().uuidString).reg")
+        try fm.createDirectory(at: file.deletingLastPathComponent(), withIntermediateDirectories: true)
         try RegistryFile.render(values).write(to: file, atomically: true, encoding: .utf8)
         defer { try? fm.removeItem(at: file) }
-        try runWine(["reg", "import", paths.windowsPath(file)], environment: environment, timeout: 120)
+        try runWine(["reg", "import", paths.windowsPath(file)], environment: joined(environment), timeout: 120)
     }
 
     /// Starts a process that keeps running after this call, with its output appended to `log`.
@@ -385,7 +424,7 @@ extension GameRuntime {
         let process = Process()
         process.executableURL = paths.wine
         process.arguments = arguments
-        process.environment = environment
+        process.environment = joined(environment)
         process.currentDirectoryURL = workingDirectory
         process.standardOutput = handle
         process.standardError = handle
@@ -402,8 +441,11 @@ extension GameRuntime {
 
     // MARK: Battle.net
 
+    var battleNetInstallerRunning: Bool { LiveProcesses.isRunning(executable: "Battle.net-Setup.exe", under: paths.engine) }
+
     func installBattleNet() throws {
         guard !fm.fileExists(atPath: paths.battleNetExe.path) else { return }
+        guard !battleNetInstallerRunning else { progress("The Battle.net installer is still running."); return }
         progress("Getting the Battle.net installer…")
         let installer = try downloader.fetch(.battleNetSetup)
         let staged = driveC.appendingPathComponent("Battle.net-Setup.exe")
@@ -416,6 +458,8 @@ extension GameRuntime {
 
     public func openBattleNet() throws {
         guard fm.fileExists(atPath: paths.battleNetExe.path) else { try installBattleNet(); return }
+        if !isSessionRunning() { try ensureEngine() }
+        try ensureRecipes(environment: environment(optimized: false, hud: false))
         try startDetached([paths.windowsPath(paths.battleNetExe)] + Self.battleNetFlags, environment: try launchEnvironment(),
                           workingDirectory: paths.battleNetExe.deletingLastPathComponent(), log: "battlenet-session.log")
         progress("Battle.net is opening. Choose Play there.")
@@ -440,7 +484,8 @@ extension GameRuntime {
 
     public func play(_ context: LaunchContext) throws {
         if let blocker = Self.playBlocker(state(), title: profile.title) { throw SetupError(blocker) }
-        try GameFiles.prepare(profile, paths: paths, runtime: runtime, context: context)
+        for warning in try GameFiles.prepare(profile, paths: paths, runtime: runtime, context: context) { progress(warning) }
+        if ["rockstar", "gta5"].contains(paths.environment.id) { try installRockstarLauncher() }
         switch profile.id {
         case "aom-retold":
             // A patched Mac driver keeps the game's fullscreen below the notch.
@@ -472,13 +517,16 @@ extension GameRuntime {
         let deadline = Date().addingTimeInterval(90)
         while Date() < deadline {
             if let handle = try? FileHandle(forReadingFrom: console) {
-                try? handle.seek(toOffset: before)
+                let size = (try? handle.seekToEnd()) ?? 0
+                // Steam starts a fresh log on some starts; then everything in it is new.
+                try? handle.seek(toOffset: size >= before ? before : 0)
                 let fresh = String(decoding: (try? handle.readToEnd()) ?? Data(), as: UTF8.self)
                 try? handle.close()
                 if fresh.contains("System startup time:") { return }
             }
             Thread.sleep(forTimeInterval: 1)
         }
+        progress("Steam is taking long to start; starting the game anyway.")
     }
 
     func launchDirect() throws {
@@ -529,8 +577,8 @@ extension GameRuntime {
         let dll = driveC.appendingPathComponent("windows/system32/ucrtbase.dll")
         let receipt = paths.gameData.appendingPathComponent("ucrtbase-ready")
         if fm.fileExists(atPath: receipt.path), (try? sha256Hex(ofFileAt: dll)) == Self.ucrtbaseSHA { return }
-        if GameProfile.all.contains(where: { $0.environment == profile.environment && LiveProcesses.isRunning(executable: $0.executableName, under: paths.engine) }) {
-            throw SetupError("Close the running game first. Company of Heroes 3 needs a one-time Windows runtime update.")
+        if let playing = runningGameTitle() {
+            throw SetupError("Close \(playing) first. Company of Heroes 3 needs a one-time Windows runtime update.")
         }
         progress("Getting Microsoft's C runtime for multiplayer…")
         let package = try downloader.fetch(.vcRedist2019)

@@ -276,7 +276,7 @@ private struct SettingsSection: View {
             .padding(.horizontal, Space.l + Space.xs)
             .background(RoundedRectangle(cornerRadius: 12).fill(.white.opacity(0.05)))
             .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(.white.opacity(0.08)))
-            Text("Setting changes apply the next time Steam starts for this game.")
+            Text("Setting changes apply the next time \(game.launcherName) starts for this game.")
                 .font(.system(size: 11))
                 .foregroundStyle(.secondary)
                 .padding(.leading, Space.xs)

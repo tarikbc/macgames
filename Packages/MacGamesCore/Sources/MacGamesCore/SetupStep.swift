@@ -11,7 +11,7 @@ public enum SetupStep: Int, CaseIterable, Sendable, Comparable {
         case .engine: "Install the Wine engine"
         case .windows: "Create Windows"
         case .configure: "Configure graphics and controllers"
-        case .steam: "Install Steam"
+        case .steam: "Install the game launcher"
         }
     }
 

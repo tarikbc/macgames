@@ -86,6 +86,22 @@ public enum GameRecipes {
         }
     }
 
+    /// Every Windows program that counts as this game running, including processes Steam
+    /// does not track: online clients and the games they start.
+    public static func processNames(for profile: GameProfile) -> [String] {
+        switch profile.online {
+        case .generalsOnline: [profile.executableName, "GeneralsOnlineZH.exe", "GeneralsOnlineZH_60.exe", "generals.exe", "game.dat"]
+        case .cncnet: [profile.executableName, "gamemd.exe", "gamemd-spawn.exe", "game.exe", "dotnet.exe"]
+        case nil: [profile.executableName]
+        }
+    }
+
+    /// Identifies an environment's registry and sandbox recipes, so a change reaches existing installs.
+    static func recipeHash(for environment: GameEnvironment, root: URL) -> String {
+        let registry = environment.games.flatMap(registry(for:)).map { "\($0.key)|\($0.name)|\($0.value)" }
+        return sha256Hex(Data(registry.joined(separator: "\n").utf8))
+    }
+
     /// Registry values a game needs, scoped to its own executables where possible.
     public static func registry(for profile: GameProfile) -> [RegistryValue] {
         typealias R = RegistryValue

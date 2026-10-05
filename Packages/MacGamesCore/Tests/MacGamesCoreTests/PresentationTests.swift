@@ -26,6 +26,6 @@ import Testing
 
     @Test func setupStepsAreInOrder() {
         #expect(SetupStep.allCases.map(\.title) == ["Check this Mac", "Get libraries", "Install the Wine engine",
-                                                      "Create Windows", "Configure graphics and controllers", "Install Steam"])
+                                                      "Create Windows", "Configure graphics and controllers", "Install the game launcher"])
     }
 }

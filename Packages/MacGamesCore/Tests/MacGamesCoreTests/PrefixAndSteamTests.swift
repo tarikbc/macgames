@@ -102,8 +102,8 @@ import Testing
     }
 
     @Test func fingerprintIgnoresUnmanagedKeys() {
-        let a = ["HOME": "/a", "TERM": "x", "WINEPREFIX": "/p", "MTL_HUD_ENABLED": "0"]
-        let b = ["HOME": "/b", "WINEPREFIX": "/p", "MTL_HUD_ENABLED": "0"]
+        let a = ["PWD": "/a", "TERM": "x", "WINEPREFIX": "/p", "MTL_HUD_ENABLED": "0"]
+        let b = ["PWD": "/b", "WINEPREFIX": "/p", "MTL_HUD_ENABLED": "0"]
         #expect(SteamLaunch.fingerprint(a) == SteamLaunch.fingerprint(b))
     }
 

@@ -74,9 +74,15 @@ public struct EngineInstaller: Sendable {
     /// Removes half-built folders that a crash or a forced quit left behind.
     public static func removeLeftovers(in root: URL) {
         let fm = FileManager.default
-        for name in (try? fm.contentsOfDirectory(atPath: root.path)) ?? []
-        where ["engine-staging-", "engine-old-", "deps-staging-"].contains(where: name.hasPrefix) {
-            try? fm.removeItem(at: root.appendingPathComponent(name))
+        func clean(_ folder: URL, _ prefixes: [String]) {
+            for name in (try? fm.contentsOfDirectory(atPath: folder.path)) ?? [] where prefixes.contains(where: name.hasPrefix) {
+                try? fm.removeItem(at: folder.appendingPathComponent(name))
+            }
+        }
+        clean(root, ["engine-staging-", "engine-old-", "deps-staging-", "crt-staging-"])
+        clean(root.appendingPathComponent("packs"), ["staging-"])
+        for game in (try? fm.contentsOfDirectory(atPath: root.appendingPathComponent("games").path)) ?? [] {
+            clean(root.appendingPathComponent("games/\(game)"), ["cncnet-staging-"])
         }
     }
 

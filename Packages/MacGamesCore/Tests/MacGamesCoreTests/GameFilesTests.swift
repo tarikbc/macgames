@@ -65,9 +65,8 @@ import Testing
         try write("proxy", to: s.runtime.gameFiles("witcher3").appendingPathComponent("amd_fidelityfx_loader_dx12.dll"))
         let loader = s.paths.installDir.appendingPathComponent("bin/x64_dx12/amd_fidelityfx_loader_dx12.dll")
         try write("original", to: loader)
-        #expect(throws: SetupError.self) {
-            try GameFiles.prepare(.witcher3, paths: s.paths, runtime: s.runtime, context: context)
-        }
+        let warnings = try GameFiles.prepare(.witcher3, paths: s.paths, runtime: s.runtime, context: context)
+        #expect(warnings.count == 1, "an unknown loader is skipped with a warning")
         #expect(read(loader) == "original")
         try GameFiles.prepare(.witcher3, paths: s.paths, runtime: s.runtime, context: context,
                               witcherSHA: sha256Hex(Data("original".utf8)))

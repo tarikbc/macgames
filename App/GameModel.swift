@@ -126,7 +126,7 @@ final class GameModel: Identifiable {
     func showLogs() { NSWorkspace.shared.open(runtime.paths.logs) }
     /// The game's install folder once Steam made it, otherwise the library.
     var dataFolder: URL {
-        let folder = runtime.paths.steamapps.appendingPathComponent("common/\(profile.installFolder)")
+        let folder = runtime.paths.installDir
         return FileManager.default.fileExists(atPath: folder.path) ? folder : runtime.paths.root
     }
     func showData() { NSWorkspace.shared.activateFileViewerSelecting([dataFolder]) }

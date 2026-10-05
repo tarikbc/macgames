@@ -145,7 +145,7 @@ extension GameRuntime {
 
     public func playOnline(_ context: LaunchContext) throws {
         if !onlineReady { try setupOnline() }
-        try GameFiles.prepare(profile, paths: paths, runtime: runtime, context: context)
+        for warning in try GameFiles.prepare(profile, paths: paths, runtime: runtime, context: context) { progress(warning) }
         try ensureSteamReady()
         let env = try onlineEnvironment()
         switch profile.online {
@@ -182,7 +182,8 @@ extension GameRuntime {
         try importRegistry([RegistryValue(key: #"HKEY_CURRENT_USER\Software\GeneralsOnline"#, name: "InstallPath", value: .string(dir)),
                             Self.avalonSoftware], environment: env)
         progress("Finish the GeneralsOnline installer. Keep the folder it suggests.")
-        try runWine([installer.path, "/DIR=\(dir)", "/NORESTART"], environment: env, timeout: 1800)
+        // An interactive wizard: a slow user is not a hang, so a timeout never stops the session.
+        try runner.run(paths.wine, [installer.path, "/DIR=\(dir)", "/NORESTART"], environment: joined(env), timeout: 3600)
         guard fm.fileExists(atPath: generalsOnlineClient.path) else {
             throw SetupError("The GeneralsOnline installer finished, but its client is missing. Run the online setup again.")
         }
@@ -197,11 +198,18 @@ extension GameRuntime {
         request.httpBody = GeneralsOnline.versionCheckBody(crc: CRC32.checksum(data))
         guard let update = try GeneralsOnline.update(from: try Self.send(request)) else { return }
         progress("Updating GeneralsOnline…")
-        let patcher = try downloader.fetch(Download(url: update.url, sha256: nil, fileName: update.url.lastPathComponent))
-        let header = try FileHandle(forReadingFrom: patcher).read(upToCount: 2)
-        guard header == Data("MZ".utf8), (try? fm.attributesOfItem(atPath: patcher.path)[.size] as? Int) == update.size else {
-            throw SetupError("The GeneralsOnline update did not verify.")
+        let item = Download(url: update.url, sha256: nil, fileName: update.url.lastPathComponent)
+        func verified(_ file: URL) -> Bool {
+            (try? FileHandle(forReadingFrom: file).read(upToCount: 2)) == Data("MZ".utf8)
+                && (try? fm.attributesOfItem(atPath: file.path)[.size] as? Int) == update.size
         }
+        var patcher = try downloader.fetch(item)
+        if !verified(patcher) {
+            // A cached file from an interrupted earlier download; fetch it again once.
+            try? fm.removeItem(at: patcher)
+            patcher = try downloader.fetch(item)
+        }
+        guard verified(patcher) else { throw SetupError("The GeneralsOnline update did not verify.") }
         try runWine([patcher.path, "/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART", "/DIR=\(paths.windowsPath(paths.installDir))"],
                     environment: env, timeout: 1800)
     }
