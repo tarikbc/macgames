@@ -4,12 +4,22 @@ import SwiftUI
 struct GameDetailView: View {
     @Bindable var game: GameModel
     @State private var logoIn = false
+    /// How far the page has scrolled; negative while pulled past the top.
+    @State private var scrolled: CGFloat = 0
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    /// Height of the header once the art has collapsed.
+    static let collapsedHeight: CGFloat = 76
 
     var body: some View {
         GeometryReader { geo in
-            VStack(spacing: 0) {
-                hero.frame(height: max(300, geo.size.height * 0.54))
+            let expanded = max(300, geo.size.height * 0.54)
+            let range = expanded - Self.collapsedHeight
+            // 0 with the full art, 1 once it has collapsed into the header.
+            let collapse = min(1, max(0, scrolled / range))
+            // The small Play button appears once the page's own button has gone under the bar.
+            let mainButtonHidden = scrolled > expanded + Space.xl + 44 - Self.collapsedHeight
+            ZStack(alignment: .top) {
                 ScrollView {
                     VStack(alignment: .leading, spacing: Space.xxl) {
                         ActionBar(game: game)
@@ -24,14 +34,33 @@ struct GameDetailView: View {
                         SettingsSection(game: game)
                     }
                     .padding(.horizontal, Space.page)
-                    .padding(.top, Space.xl)
+                    .padding(.top, expanded + Space.xl)
                     .padding(.bottom, Space.xxl + Space.l)
                     .frame(maxWidth: 760 + 2 * Space.page, alignment: .leading)
                     .frame(maxWidth: .infinity, alignment: .leading)
+                    // Even a short page can scroll the art and the main button under the bar.
+                    .frame(minHeight: geo.size.height + expanded, alignment: .top)
                     .animation(Motion.morph, value: game.error)
                     .animation(Motion.morph, value: game.showsSetupSteps)
                 }
                 .scrollIndicators(.never)
+                .onScrollGeometryChange(for: CGFloat.self) { $0.contentOffset.y + $0.contentInsets.top } action: { _, offset in
+                    scrolled = offset
+                }
+
+                // Shrinks from the full art to a slim header as the page scrolls, and
+                // stretches a little when pulled down past the top.
+                hero(collapse: collapse)
+                    .frame(height: max(Self.collapsedHeight, expanded - scrolled))
+                    .allowsHitTesting(false)
+                    .overlay(alignment: .trailing) {
+                        CompactPlay(game: game)
+                            .padding(.trailing, Space.page)
+                            .opacity(mainButtonHidden ? 1 : 0)
+                            .offset(x: mainButtonHidden || reduceMotion ? 0 : 12)
+                            .allowsHitTesting(mainButtonHidden)
+                            .animation(Motion.morph, value: mainButtonHidden)
+                    }
             }
         }
         .confirmationDialog("Stop \(game.profile.title)?", isPresented: $game.confirmingStop) {
@@ -41,23 +70,55 @@ struct GameDetailView: View {
         }
     }
 
-    private var hero: some View {
+    private func hero(collapse: CGFloat) -> some View {
         ZStack(alignment: .bottomLeading) {
-            // The art dissolves into the window's backdrop instead of ending at an edge.
+            // Expanded, the art dissolves into the window's backdrop. Collapsed, it turns
+            // into a frosted bar in the game's own colors with a crisp bottom edge.
             ArtImage(url: game.profile.artwork.hero, focus: game.profile.heroFocus, drift: true)
-                .mask(LinearGradient(stops: [.init(color: .black, location: 0.55), .init(color: .clear, location: 1)],
+                .blur(radius: 24 * collapse)
+                .mask(LinearGradient(stops: [.init(color: .black, location: 0.55 + 0.45 * collapse),
+                                             .init(color: .black.opacity(collapse), location: 1)],
                                      startPoint: .top, endPoint: .bottom))
+            Rectangle().fill(.ultraThinMaterial).opacity(collapse)
+            Rectangle().fill(.black.opacity(0.35 * collapse))
             ArtFit(url: game.profile.artwork.logo)
-                .frame(maxWidth: 360, maxHeight: 150, alignment: .bottomLeading)
-                .shadow(color: .black.opacity(0.6), radius: 18, y: 6)
+                // Logo PNGs carry wide transparent margins, so the collapsed size stays generous.
+                .frame(maxWidth: 360 - 150 * collapse, maxHeight: 150 - 94 * collapse, alignment: .bottomLeading)
+                .shadow(color: .black.opacity(0.6 - 0.25 * collapse), radius: 18 - 12 * collapse, y: 6 - 5 * collapse)
                 .padding(.leading, Space.page - 12)
-                .padding(.bottom, Space.l)
+                .padding(.bottom, Space.l - 6 * collapse)
                 .opacity(logoIn ? 1 : 0)
                 .offset(y: logoIn || reduceMotion ? 0 : 22)
                 .accessibilityLabel(game.profile.title)
         }
+        .overlay(alignment: .bottom) {
+            Rectangle().fill(.white.opacity(0.1)).frame(height: 1).opacity(collapse)
+        }
         .clipped()
+        .shadow(color: .black.opacity(0.35 * collapse), radius: 14, y: 6)
         .onAppear { withAnimation(.spring(duration: 0.7, bounce: 0.2).delay(0.12)) { logoIn = true } }
+    }
+}
+
+/// The main action in a small size, shown in the collapsed header.
+private struct CompactPlay: View {
+    let game: GameModel
+
+    var body: some View {
+        Button(action: game.primaryAction) {
+            HStack(spacing: 6) {
+                Image(systemName: game.state.actionSymbol).contentTransition(.symbolEffect(.replace))
+                Text(game.state.actionTitle)
+            }
+            .font(.system(size: 13, weight: .bold))
+            .padding(.horizontal, Space.l)
+            .frame(height: 32)
+            .background(Capsule().fill(game.state == .running ? Color.white.opacity(0.16) : game.profile.accent))
+            .foregroundStyle(game.state == .running ? Color.white : game.profile.onAccent)
+            .contentShape(Capsule())
+        }
+        .buttonStyle(PressableStyle())
+        .disabled(game.locked)
     }
 }
 
