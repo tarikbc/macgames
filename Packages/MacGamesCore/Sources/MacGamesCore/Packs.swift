@@ -3,20 +3,22 @@ import Foundation
 /// Release packs: large or environment-only parts of the runtime, downloaded on
 /// first setup of the environment that needs them.
 public enum Packs {
-    static let release = "https://github.com/tarikbc/macgames/releases/download/packs-1/"
+    static let releases = "https://github.com/tarikbc/macgames/releases/download/"
+    /// The release that holds each pack; packs not listed here are in packs-1.
+    static let release: [String: String] = ["overwatch-recall": "packs-2"]
 
     /// Pinned archives: name -> SHA-256.
     public static let pinned: [String: String] = [
         "apple-d3dmetal-4.0b2": "209a9203864a0618d686096162f75ce506838fcfe3a715b997f87759dbbee02e",
         "battlenet": "a9e262f72a1fe7ff0b133a9c531b8661170efae5aebcebf4347ba9d6c06a6d15",
         "gta5": "bc8d15d5ad6713e6a192de6d78e0534a2925db886d7a9225efdf52c25fcc7499",
-        "overwatch": "b987bf1540b66b09369ec95124a09df066050db21f5a7a6f0376978241e91c37",
+        "overwatch-recall": "9dfc4f87855efd51ac58feb4f42bc98a063a7909097db6c1a99757af3c94806c",
         "rockstar": "6757715792fe378758ef880ee9a433882ab6083044928ba1befbdda6f8598639",
         "skyrim": "0ebee3d52cef5d4055e7f4139b3064092907c4abcf6fdf1523a38b7b1e2a1205",
     ]
 
     public static func download(_ name: String, pins: [String: String] = pinned) -> Download {
-        Download(url: URL(string: release + "macgames-pack-\(name).tar.xz")!, sha256: pins[name],
+        Download(url: URL(string: releases + (release[name] ?? "packs-1") + "/macgames-pack-\(name).tar.xz")!, sha256: pins[name],
                  fileName: "macgames-pack-\(name).tar.xz")
     }
 

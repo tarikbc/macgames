@@ -41,6 +41,12 @@ public struct GameEnvironment: Sendable, Hashable, Identifiable {
     public let d3dmetalPack: String?
     /// Runs the WineBus registry step that routes controllers through SDL.
     public let sdlControllers: Bool
+    /// A pack whose `Engine` folder is this environment's whole engine, in place of the app's
+    /// runtime. It brings its own libraries, so it needs no template and no dependency links.
+    public var enginePack: String? = nil
+
+    /// Downloads the Sikarugir template for the engine's libraries and D3DMetal.
+    public var usesTemplate: Bool { enginePack == nil }
 
     public var games: [GameProfile] { GameProfile.all.filter { $0.environment == id } }
 
@@ -54,10 +60,11 @@ public struct GameEnvironment: Sendable, Hashable, Identifiable {
         engineOverlays: ["skyrim", "controllers"], packs: ["skyrim"],
         prefixDLLs: [.engineDXMT], rootDrives: ["y", "z"], d3dmetalPack: nil, sdlControllers: true)
 
+    /// Recall's Wine and DXMT, built for Overwatch, with the game started through Battle.net.
     public static let overwatch = GameEnvironment(
-        id: "overwatch", title: "Overwatch", group: "Overwatch", launcher: .steam,
-        engineOverlays: ["overwatch", "controllers"], packs: ["overwatch"],
-        prefixDLLs: [.winemetal], rootDrives: [], d3dmetalPack: nil, sdlControllers: true)
+        id: "overwatch", title: "Overwatch", group: "Overwatch", launcher: .battleNet,
+        engineOverlays: [], packs: ["overwatch-recall"],
+        prefixDLLs: [], rootDrives: [], d3dmetalPack: nil, sdlControllers: false, enginePack: "overwatch-recall")
 
     public static let battlenet = GameEnvironment(
         id: "battlenet", title: "Battle.net", group: "Battle.net", launcher: .battleNet,

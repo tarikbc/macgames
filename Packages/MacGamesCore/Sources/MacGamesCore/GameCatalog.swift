@@ -82,8 +82,8 @@ extension GameProfile {
 
     public static let overwatch = GameProfile(
         id: "overwatch", title: "Overwatch", steamAppID: "2357570",
-        installFolder: "Overwatch", executableRelativePath: "Overwatch.exe", environment: "overwatch", graphics: .dxmt,
-        presentation: Presentation(accentHex: "F99E1A", heroFocus: p(0.6, 0.4)))
+        installFolder: "Overwatch", executableRelativePath: "_retail_/Overwatch.exe", environment: "overwatch", graphics: .dxmt,
+        launch: .battleNet, battleNetProduct: "Pro", presentation: Presentation(accentHex: "F99E1A", heroFocus: p(0.6, 0.4)))
 
     public static let diablo4BattleNet = GameProfile(
         id: "diablo4-battlenet", title: "Diablo IV (Battle.net)", steamAppID: "2344520",

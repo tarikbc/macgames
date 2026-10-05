@@ -27,12 +27,15 @@ public enum WineEnvironment {
             "MTL_HUD_ENABLED": hud ? "1" : "0",
             "D3DM_ENABLE_METALFX": "0",
             "MVK_CONFIG_LOG_LEVEL": "1",
-            "DYLD_FALLBACK_LIBRARY_PATH": "\(fw):\(gst):/usr/lib",
-            "GST_PLUGIN_PATH": "\(gst)/gstreamer-1.0",
-            "GST_REGISTRY": paths.root.appendingPathComponent("gstreamer-registry.bin").path,
             "AOELAB_STEAM_SINGLEPROCESS": "1",
             "SDL_JOYSTICK_ALLOW_BACKGROUND_EVENTS": "1",
         ]) { $1 }
+        // A self-contained engine finds its own libraries; the template's are not there.
+        if paths.environment.usesTemplate {
+            env["DYLD_FALLBACK_LIBRARY_PATH"] = "\(fw):\(gst):/usr/lib"
+            env["GST_PLUGIN_PATH"] = "\(gst)/gstreamer-1.0"
+            env["GST_REGISTRY"] = paths.root.appendingPathComponent("gstreamer-registry.bin").path
+        }
 
         let engineDLLs = paths.engine.appendingPathComponent("lib/wine").path
         switch profile.graphics {

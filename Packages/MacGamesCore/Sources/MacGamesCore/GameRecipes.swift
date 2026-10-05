@@ -61,12 +61,22 @@ public enum GameRecipes {
                 overrides: baseOverrides + "dxgi,d3d11,d3d10core,winemetal=b;xaudio2_6,xaudio2_7,x3daudio1_6,x3daudio1_7=n,b;nvapi64,nvngx=",
                 set: ["DXMT_SHADER_CACHE_PATH": paths.gameData.path + "/shader-cache", "DXMT_LOG_PATH": logs], sandbox: .xdg)
         case "overwatch":
+            // Recall 1.1's settings for its own Wine and DXMT (docs/candidate-parity-contract.json there).
+            let data = paths.gameData.path
             return EnvironmentEdits(
-                overrides: baseOverrides + "dxgi,d3d11,d3d10core,winemetal=b;d3d12,d3d12core=;nvapi64,nvngx=",
-                set: ["DXMT_OWT_EARLY_COMPILE": "0", "DXMT_LOG_PATH": logs, "DXMT_LOG_LEVEL": "warn",
-                      "DXMT_SHADER_CACHE_PATH": graphics + "/shader-cache",
-                      "DXMT_OWT_PIPELINE_CACHE": graphics + "/game-archives", "DXMT_OWT_RECIPE_DIR": graphics + "/recipes"],
-                libd3dshared: true)
+                overrides: baseOverrides + "d3d11,dxgi,d3d10core,winemetal=b;d3d12=",
+                set: ["WINE_SIMULATE_WRITECOPY": "1", "CX_ACTIVE_GRAPHICS_BACKEND": "dxmt", "CX_GRAPHICS_BACKEND": "dxmt",
+                      "DXMT_CANVAS_DRAWABLES": "3", "DXMT_CANVAS_OVERLAY": "0", "DXMT_USE_DEFAULT_METAL_CACHE": "1",
+                      "DXMT_PIPELINE_CACHE_NAMESPACE": "ow2-source-v1", "DXMT_PIPELINE_CACHE_PREWARM_MS": "10000",
+                      "DXMT_PIPELINE_CACHE_PREWARM_LIMIT": "128", "DXMT_PIPELINE_CACHE_PREFER_EXPENSIVE": "1",
+                      "WINEMAC_MOUSELOOK": "Overwatch.exe", "WINE_GAME_MODE": "Overwatch.exe", "DXMT_PREPARE_SHADERS": "1",
+                      "WINEARCH": "win64", "DXMT_LOG_LEVEL": "error", "DXMT_LOG_PATH": "none",
+                      "CX_APPLEGPTK_LIBD3DSHARED_PATH": paths.engine.appendingPathComponent("lib/external/libd3dshared.dylib").path,
+                      "DXMT_SHADER_CACHE_PATH": data + "/cache/shaders", "DXMT_PIPELINE_CACHE_PATH": data + "/cache/pipelines",
+                      "DXMT_CONFIG_FILE": "Z:" + OverwatchDisplay.config(paths).path.replacingOccurrences(of: "/", with: "\\"),
+                      // Retina mode halves Battle.net's window; it scales itself back up. The game ships no Qt.
+                      "QT_SCALE_FACTOR": "2"],
+                unset: ["AOELAB_STEAM_SINGLEPROCESS"], sandbox: .full)
         case "diablo4-battlenet", "diablo2-resurrected":
             return battleNetEdits
         case "rdr2":
@@ -83,6 +93,16 @@ public enum GameRecipes {
                                     sandbox: .full, libd3dshared: true)
         default:
             return EnvironmentEdits()
+        }
+    }
+
+    /// Options for the Battle.net client of an environment.
+    public static func battleNetFlags(for environment: GameEnvironment) -> [String] {
+        switch environment.id {
+        // Recall's: Chromium draws on the CPU, at twice the size to make up for Retina mode.
+        case "overwatch": ["--disable-gpu-compositing", "--from-launcher", "--in-process-gpu", "--use-gl=angle",
+                           "--use-angle=swiftshader", "--force-device-scale-factor=2"]
+        default: ["--in-process-gpu", "--use-gl=angle", "--use-angle=d3d11"]
         }
     }
 
@@ -112,6 +132,8 @@ public enum GameRecipes {
                 } + extra
         }
         switch profile.id {
+        // Recall's fullscreen canvas needs Wine's Retina mode for the whole prefix.
+        case "overwatch": return [R(key: #"HKEY_CURRENT_USER\Software\Wine\Mac Driver"#, name: "RetinaMode", value: .string("Y"))]
         case "aoe3":
             let key = #"HKEY_CURRENT_USER\Software\Microsoft\Microsoft Games\Age of Empires III DE"#
             return [R(key: key, name: "IgnoreUnsupportedSystem", value: .string("1")),

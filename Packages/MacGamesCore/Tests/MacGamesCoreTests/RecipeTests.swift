@@ -44,10 +44,8 @@ import Testing
         #expect(e["SteamGameId"] == nil)
     }
 
-    @Test func skyrimAndOverwatchUseTheirOwnDXMTOverrides() {
+    @Test func skyrimUsesItsOwnDXMTOverrides() {
         #expect(env(.skyrim)["WINEDLLOVERRIDES"]?.contains("xaudio2_6,xaudio2_7,x3daudio1_6,x3daudio1_7=n,b") == true)
-        #expect(env(.overwatch)["WINEDLLOVERRIDES"]?.contains("d3d12,d3d12core=;") == true)
-        #expect(env(.overwatch)["DXMT_OWT_RECIPE_DIR"] == "/r/games/overwatch/graphics/recipes")
     }
 
     @Test func sandboxFoldersMatchTheEnvironment() {

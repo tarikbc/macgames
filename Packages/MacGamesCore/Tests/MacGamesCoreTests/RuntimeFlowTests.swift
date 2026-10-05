@@ -45,6 +45,15 @@ struct FakeEnvironment {
     exit 0
     """#
 
+    /// Recall's graphics tool: logs its call, and fails when a flag file asks it to.
+    static let pipelineTool = #"""
+    #!/bin/sh
+    root="$(cd "$(dirname "$0")/../../.." && pwd)"
+    printf 'ow2-pipeline %s\n' "$*" >> "$root/calls.log"
+    [ -e "$root/fail-ow2-pipeline" ] && exit 1
+    exit 0
+    """#
+
     init(_ profile: GameProfile) throws {
         dir = try makeTempDir("flow")
         let res = dir.appendingPathComponent("Runtime")
@@ -66,6 +75,21 @@ struct FakeEnvironment {
         // Packs count as installed, so no test downloads one.
         for pack in profile.gameEnvironment.packs {
             try write(Packs.pinned[pack] ?? pack, to: runtime.paths.pack(pack).appendingPathComponent(".macgames-pack"))
+        }
+        // An engine pack brings the same stand-in engine, a DXMT profile and Recall's graphics tool.
+        if let pack = profile.gameEnvironment.enginePack {
+            let folder = runtime.paths.pack(pack)
+            for script in ["wine", "wineserver"] {
+                let target = folder.appendingPathComponent("Engine/bin/\(script)")
+                try write(script == "wine" ? Self.wine : Self.wineserver, to: target)
+                try FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: target.path)
+            }
+            try write("[Overwatch.exe]\ndxgi.fullscreenCanvasWidth = 1920\ndxgi.fullscreenCanvasHeight = 1200\n",
+                      to: folder.appendingPathComponent("Engine/config/dxmt.conf"))
+            try write("<plist/>", to: folder.appendingPathComponent("Engine/lib/wine/game-mode/Overwatch.app/Contents/Info.plist"))
+            let tool = folder.appendingPathComponent("Helpers/ow2-pipeline")
+            try write(Self.pipelineTool, to: tool)
+            try FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: tool.path)
         }
         try EngineInstaller(runtime: runtime.runtime).install(for: runtime.paths)
         runtime.startupGrace = 0.2

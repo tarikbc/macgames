@@ -15,7 +15,9 @@ public struct EngineInstaller: Sendable {
         let packs = paths.environment.packs.map { name in
             (try? String(contentsOf: paths.pack(name).appendingPathComponent(".macgames-pack"), encoding: .utf8)) ?? name
         }
-        return ([try runtime.version()] + paths.environment.engineOverlays + packs).joined(separator: "+")
+        // An engine pack brings the whole engine, so the app's runtime version does not matter.
+        let base = paths.environment.enginePack == nil ? try runtime.version() : "pack"
+        return ([base] + paths.environment.engineOverlays + packs).joined(separator: "+")
     }
 
     public func isCurrent(for paths: GamePaths) -> Bool {
@@ -35,14 +37,21 @@ public struct EngineInstaller: Sendable {
         let stage = paths.root.appendingPathComponent("engine-staging-\(UUID().uuidString)")
         defer { try? fm.removeItem(at: stage) }
 
-        try ditto(runtime.engine, stage)
+        if let pack = paths.environment.enginePack {
+            let engine = paths.pack(pack).appendingPathComponent("Engine")
+            guard fm.fileExists(atPath: engine.path) else { throw SetupError("The \(pack) pack has no engine.") }
+            try clone(engine, stage)
+        } else {
+            try ditto(runtime.engine, stage)
+        }
         for name in paths.environment.engineOverlays {
             guard let overlay = overlay(name, for: paths) else {
                 throw SetupError("The runtime is missing the \(name) overlay.")
             }
             try ditto(overlay, stage)
         }
-        let links = try JSONDecoder().decode([String: String].self, from: Data(contentsOf: runtime.dependencyLinks))
+        let links = paths.environment.enginePack == nil
+            ? try JSONDecoder().decode([String: String].self, from: Data(contentsOf: runtime.dependencyLinks)) : [:]
         for (relative, target) in links.sorted(by: { $0.key < $1.key }) {
             let link = stage.appendingPathComponent(relative)
             // An overlay that ships the file itself owns that path.
@@ -97,13 +106,22 @@ public struct EngineInstaller: Sendable {
     }
 
     func ditto(_ source: URL, _ destination: URL) throws {
+        try copy("/usr/bin/ditto", ["--noextattr", "--norsrc", source.path, destination.path], source)
+    }
+
+    /// Copies a folder as clones where the volume allows it, so a large engine takes no extra space.
+    func clone(_ source: URL, _ destination: URL) throws {
+        try copy("/bin/cp", ["-cR", source.path, destination.path], source)
+    }
+
+    func copy(_ tool: String, _ arguments: [String], _ source: URL) throws {
         let process = Process()
-        process.executableURL = URL(fileURLWithPath: "/usr/bin/ditto")
-        process.arguments = ["--noextattr", "--norsrc", source.path, destination.path]
+        process.executableURL = URL(fileURLWithPath: tool)
+        process.arguments = arguments
         try process.run()
         process.waitUntilExit()
         guard process.terminationStatus == 0 else {
-            throw SetupError("Could not copy \(source.lastPathComponent) (ditto exit \(process.terminationStatus)).")
+            throw SetupError("Could not copy \(source.lastPathComponent) (\(URL(fileURLWithPath: tool).lastPathComponent) exit \(process.terminationStatus)).")
         }
     }
 }

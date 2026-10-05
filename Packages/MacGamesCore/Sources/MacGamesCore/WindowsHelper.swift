@@ -78,26 +78,6 @@ extension GameRuntime {
         waitForSteam(since: since)
     }
 
-    /// Builds Overwatch's recorded pipelines into Metal archives before launch, so the game
-    /// finds them ready. A failure here only costs stutter, so it never stops the launch.
-    func preparePipelines() {
-        let recipes = paths.graphics.appendingPathComponent("recipes")
-        let names = (try? fm.contentsOfDirectory(atPath: recipes.path)) ?? []
-        guard names.contains(where: { $0.hasSuffix(".recipe") }), fm.fileExists(atPath: helper("prepare-pipelines").path) else { return }
-        progress("Preparing Overwatch's graphics pipelines…")
-        do {
-            // Not runWine: a timeout here must end only this tool, never Steam's session.
-            let output = try runner.run(paths.wine, [try stage(helper("prepare-pipelines")), recipes.path,
-                                                     paths.graphics.appendingPathComponent("shader-cache").path],
-                                        environment: joined(try launchEnvironment()), timeout: 900, allowedStatuses: [0, 1])
-            if let summary = output.split(whereSeparator: \.isNewline).last(where: { $0.contains("\"complete\"") }) {
-                progress("Pipelines: \(summary)")
-            }
-        } catch {
-            progress("Pipeline preparation skipped: \(error)")
-        }
-    }
-
     /// Raises a running program's main window; `false` when it has none.
     func showWindow(of program: String) -> Bool {
         guard fm.fileExists(atPath: helper("show-window").path), let path = try? stage(helper("show-window")) else { return false }

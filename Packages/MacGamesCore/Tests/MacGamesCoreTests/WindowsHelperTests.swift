@@ -60,7 +60,7 @@ import Testing
         try write("exe", to: p.gameExe)
         // Rockstar games need their launcher; a stand-in keeps the test off the network.
         try write("", to: p.prefix.appendingPathComponent("drive_c/Program Files/Rockstar Games/Launcher/Launcher.exe"))
-        for name in ["gpu-sync", "fit-window", "dismiss-dialog", "show-window", "display-mode", "prepare-pipelines"] {
+        for name in ["gpu-sync", "fit-window", "dismiss-dialog", "show-window", "display-mode"] {
             try write(name, to: env.runtime.runtime.windowsHelpers.appendingPathComponent("\(name).exe"))
         }
     }
@@ -111,27 +111,6 @@ import Testing
         try env.runtime.play(LaunchContext(width: 1512, height: 982))
         #expect(env.calls.contains { $0.contains("-applaunch 3240220") })
         #expect(env.events.all.contains { $0.contains("dismiss-dialog") })
-    }
-
-    @Test func overwatchPreparesRecordedPipelinesBeforeItStarts() throws {
-        let env = try FakeEnvironment(.overwatch); defer { env.cleanUp() }
-        try installGame(env)
-        let graphics = env.runtime.paths.graphics
-        try write("recipe", to: graphics.appendingPathComponent("recipes/abc.recipe"))
-        try env.runtime.play(LaunchContext(width: 1512, height: 982))
-        let calls = env.calls
-        let prepare = try #require(calls.firstIndex {
-            $0 == #"wine C:\macgames\prepare-pipelines.exe "# + graphics.appendingPathComponent("recipes").path + " "
-                + graphics.appendingPathComponent("shader-cache").path })
-        let game = try #require(calls.firstIndex { $0.contains("-applaunch 2357570") })
-        #expect(prepare < game)
-    }
-
-    @Test func overwatchWithoutRecipesStartsAtOnce() throws {
-        let env = try FakeEnvironment(.overwatch); defer { env.cleanUp() }
-        try installGame(env)
-        try env.runtime.play(LaunchContext(width: 1512, height: 982))
-        #expect(!env.calls.contains { $0.contains("prepare-pipelines") })
     }
 
     @Test func aRunningBattleNetIsShownInsteadOfStartedAgain() throws {

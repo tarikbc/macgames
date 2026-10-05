@@ -21,6 +21,8 @@ public final class GameRuntime: @unchecked Sendable {
     /// How long a started launcher gets before an early exit counts as a failure.
     var startupGrace: TimeInterval = 2
     var steamStartTimeout: TimeInterval = 90
+    /// The main display's size in points, where a fullscreen game opens; tests replace it.
+    var mainDisplay: @Sendable () -> OverwatchDisplay.Size? = { OverwatchDisplay.mainDisplay() }
 
     public init(profile: GameProfile, root: URL? = nil, runtime: RuntimeLayout,
                 downloadCache: URL = GamePaths.sharedDownloads(),
@@ -92,21 +94,7 @@ public final class GameRuntime: @unchecked Sendable {
         try fm.createDirectory(at: paths.logs, withIntermediateDirectories: true)
 
         stepChanged(.libraries)
-        if !fm.fileExists(atPath: paths.frameworks.path) {
-            progress("Getting the graphics and library package (about 87 MB)…")
-            let archive = try downloader.fetch(.template)
-            progress("Unpacking the graphics and library package…")
-            let stage = paths.root.appendingPathComponent("deps-staging-\(UUID().uuidString)")
-            try fm.createDirectory(at: stage, withIntermediateDirectories: true)
-            defer { try? fm.removeItem(at: stage) }
-            try runner.run(URL(fileURLWithPath: "/usr/bin/tar"), ["-xf", archive.path, "-C", stage.path], timeout: 300)
-            let frameworks = stage.appendingPathComponent("Template-1.0.15.app/Contents/Frameworks")
-            guard fm.fileExists(atPath: frameworks.appendingPathComponent("renderer/d3dmetal/wine/x86_64-unix/d3d12.so").path) else {
-                throw SetupError("The graphics package has an unexpected layout.")
-            }
-            try fm.createDirectory(at: paths.frameworks.deletingLastPathComponent(), withIntermediateDirectories: true)
-            try fm.moveItem(at: frameworks, to: paths.frameworks)
-        }
+        try ensureTemplate()
 
         for pack in paths.environment.packs {
             progress("Getting the \(pack) pack…")
@@ -159,6 +147,26 @@ public final class GameRuntime: @unchecked Sendable {
         try Data(paths.environment.id.utf8).write(to: paths.root.appendingPathComponent(Self.environmentMarker), options: .atomic)
         try Data("runtime-v1\n".utf8).write(to: paths.runtimeReady, options: .atomic)
         progress("The Windows environment is ready.")
+    }
+
+    /// Gets the Sikarugir template: the engine's libraries and D3DMetal. A self-contained engine needs none.
+    func ensureTemplate() throws {
+        guard paths.environment.usesTemplate else { return }
+        if !fm.fileExists(atPath: paths.frameworks.path) {
+            progress("Getting the graphics and library package (about 87 MB)…")
+            let archive = try downloader.fetch(.template)
+            progress("Unpacking the graphics and library package…")
+            let stage = paths.root.appendingPathComponent("deps-staging-\(UUID().uuidString)")
+            try fm.createDirectory(at: stage, withIntermediateDirectories: true)
+            defer { try? fm.removeItem(at: stage) }
+            try runner.run(URL(fileURLWithPath: "/usr/bin/tar"), ["-xf", archive.path, "-C", stage.path], timeout: 300)
+            let frameworks = stage.appendingPathComponent("Template-1.0.15.app/Contents/Frameworks")
+            guard fm.fileExists(atPath: frameworks.appendingPathComponent("renderer/d3dmetal/wine/x86_64-unix/d3d12.so").path) else {
+                throw SetupError("The graphics package has an unexpected layout.")
+            }
+            try fm.createDirectory(at: paths.frameworks.deletingLastPathComponent(), withIntermediateDirectories: true)
+            try fm.moveItem(at: frameworks, to: paths.frameworks)
+        }
     }
 
     /// Installs the environment's launcher client: Steam, plus the Rockstar
@@ -418,7 +426,6 @@ extension Download {
 }
 
 extension GameRuntime {
-    static let battleNetFlags = ["--in-process-gpu", "--use-gl=angle", "--use-angle=d3d11"]
     static let ucrtbaseSHA = "51cbbde17a768930300236facd9738f54b7801e6715771ff8af90bfbe3fad44f"
 
     /// Writes all values in one `.reg` file and imports it with a single Wine start.
@@ -473,23 +480,39 @@ extension GameRuntime {
         guard !battleNetInstallerRunning else { progress("The Battle.net installer is still running."); return }
         progress("Getting the Battle.net installer…")
         let installer = try downloader.fetch(.battleNetSetup)
-        try startDetached([try stage(installer), "--lang=enUS"] + Self.battleNetFlags, environment: try launchEnvironment(),
+        try startDetached([try stage(installer), "--lang=enUS"] + GameRecipes.battleNetFlags(for: paths.environment),
+                          environment: try launchEnvironment(),
                           workingDirectory: driveC, log: "battlenet-session.log")
         progress("The Battle.net installer is open. Sign in when it finishes, then install the game there.")
     }
 
-    public func openBattleNet() throws {
+    /// Opens Battle.net. With `play`, Battle.net also starts the game, for games with a product code.
+    public func openBattleNet(play: Bool = false) throws {
         guard fm.fileExists(atPath: paths.battleNetExe.path) else { try installBattleNet(); return }
-        // Battle.net closes to the notification area; starting it again would not show it.
-        if processes(paths.engine).isRunning(executable: "Battle.net.exe", under: paths.engine), showWindow(of: "Battle.net.exe") {
-            progress("Battle.net is open. Choose Play there.")
-            return
+        let request = play ? profile.battleNetProduct.map { ["--exec=launch \($0)"] } ?? [] : []
+        let client = [paths.windowsPath(paths.battleNetExe)] + GameRecipes.battleNetFlags(for: paths.environment) + request
+        let folder = paths.battleNetExe.deletingLastPathComponent()
+        let live = processes(paths.engine)
+        if live.isRunning(executable: "Battle.net.exe", under: paths.engine) {
+            if !request.isEmpty {
+                // A second start hands the request to the running client, then exits.
+                try startDetached(client, environment: try launchEnvironment(), workingDirectory: folder, log: "battlenet-session.log")
+                progress("Battle.net is starting \(profile.title).")
+                return
+            }
+            // Battle.net closes to the notification area; starting it again would not show it.
+            if showWindow(of: "Battle.net.exe") {
+                progress("Battle.net is open. Choose Play there.")
+                return
+            }
         }
         if !isSessionRunning() { try ensureEngine() }
         try ensureRecipes(environment: environment(optimized: false, hud: false))
-        try startDetached([paths.windowsPath(paths.battleNetExe)] + Self.battleNetFlags, environment: try launchEnvironment(),
-                          workingDirectory: paths.battleNetExe.deletingLastPathComponent(), log: "battlenet-session.log")
-        progress("Battle.net is opening. Choose Play there.")
+        if profile.id == "overwatch", !live.isRunning(executable: profile.executableName, under: paths.engine) {
+            try prepareOverwatch()
+        }
+        try startDetached(client, environment: try launchEnvironment(), workingDirectory: folder, log: "battlenet-session.log")
+        progress(request.isEmpty ? "Battle.net is opening. Choose Play there." : "Battle.net is opening and will start \(profile.title).")
     }
 
     /// Opens the environment's launcher window: Battle.net, or Steam.
@@ -523,7 +546,6 @@ extension GameRuntime {
                                               name: "RetoldNotchSafeFullscreen", value: .string(context.hasNotch ? "y" : "n"))],
                                environment: environment(optimized: false, hud: false))
         case "coh3": try ensureCoH3Runtime()
-        case "overwatch": preparePipelines()
         default: break
         }
         switch profile.launch {
@@ -535,7 +557,7 @@ extension GameRuntime {
             if profile.id == "elden-ring" { try ensureEldenRingPrerequisites() }
             try launchDirect()
         case .battleNet:
-            try openBattleNet()
+            try openBattleNet(play: true)
         }
     }
 

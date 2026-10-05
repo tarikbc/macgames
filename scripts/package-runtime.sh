@@ -34,7 +34,7 @@ Overlays/ntdllfix/ ntdll with the NtQueryDirectoryObject BOOLEAN fix, LGPL 2.1+
 Overlays/aomretold/  winemac with notch-safe fullscreen for Age of Mythology: Retold, LGPL 2.1+
 Games/             cnc-ddraw (MIT) for Heroes III and Red Alert 2, the Witcher 3 FidelityFX proxy (MIT)
 WindowsHelpers/    MacGames' own Windows helpers (source in the repository's WindowsHelpers/, PolyForm
-                   Noncommercial); prepare-pipelines also contains DXMT code (MIT, DXMT-LICENSE.txt)
+                   Noncommercial)
 Helpers/x87sidecar Fast x87 math under Rosetta 2, MIT
 Sources/           Corresponding source code for Wine, x87sidecar and DXMT
 Licenses/          License texts

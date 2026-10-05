@@ -49,17 +49,19 @@ public struct GameProfile: Sendable, Hashable, Identifiable {
     /// The executable build the fixed-address x87sidecar optimization targets.
     /// `nil` means the profile never uses the sidecar.
     public let optimizedExecutableSHA256: String?
+    /// Battle.net's code for the game; Play asks Battle.net to start it (`--exec="launch <code>"`).
+    public let battleNetProduct: String?
 
     public init(id: String, title: String, steamAppID: String, installFolder: String, executableRelativePath: String,
                 environment: String = "steam", graphics: Graphics = .d3dmetal, launch: Launch = .steam,
                 windowsSteamPath: Bool = false, steamArgs: [String] = [], gameArgs: [String] = [],
                 minimumMacOS: [Int] = [26, 0], online: Online? = nil, optimizedExecutableSHA256: String? = nil,
-                presentation: Presentation = Presentation()) {
+                battleNetProduct: String? = nil, presentation: Presentation = Presentation()) {
         self.id = id; self.title = title; self.steamAppID = steamAppID; self.installFolder = installFolder
         self.executableRelativePath = executableRelativePath; self.environment = environment; self.graphics = graphics
         self.launch = launch; self.windowsSteamPath = windowsSteamPath; self.steamArgs = steamArgs; self.gameArgs = gameArgs
         self.minimumMacOS = minimumMacOS; self.online = online; self.optimizedExecutableSHA256 = optimizedExecutableSHA256
-        self.presentation = presentation
+        self.battleNetProduct = battleNetProduct; self.presentation = presentation
     }
 
     /// How the launcher shows the game. Art comes from Steam, so a new
