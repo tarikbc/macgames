@@ -39,7 +39,8 @@ if git rev-parse -q --verify "refs/tags/v$VERSION" >/dev/null; then
 fi
 # Installed apps update only to a higher build number than the feed's current one.
 BUILD_NUMBER="$(sed -n 's/^ *CURRENT_PROJECT_VERSION: "\{0,1\}\([0-9]*\)"\{0,1\}$/\1/p' project.yml | head -1)"
-PUBLISHED="$(curl -fsL "https://github.com/$REPO/releases/download/appcast/appcast.xml" 2>/dev/null \
+# No feed yet (the first release) means nothing to compare with.
+PUBLISHED="$({ curl -fsL "https://github.com/$REPO/releases/download/appcast/appcast.xml" 2>/dev/null || true; } \
   | sed -n 's:.*<sparkle\:version>\([0-9]*\)</sparkle\:version>.*:\1:p' | head -1)"
 [ -z "$PUBLISHED" ] || [ "$BUILD_NUMBER" -gt "$PUBLISHED" ] \
   || { echo "error: CURRENT_PROJECT_VERSION ($BUILD_NUMBER) must be higher than the published build ($PUBLISHED)." >&2; exit 1; }
