@@ -20,6 +20,7 @@ public final class GameRuntime: @unchecked Sendable {
     var processes: @Sendable (URL) -> ProcessSnapshot = { ProcessSnapshot.take(under: $0) }
     /// How long a started launcher gets before an early exit counts as a failure.
     var startupGrace: TimeInterval = 2
+    var steamStartTimeout: TimeInterval = 90
 
     public init(profile: GameProfile, root: URL? = nil, runtime: RuntimeLayout,
                 downloadCache: URL = GamePaths.sharedDownloads(),
@@ -155,6 +156,7 @@ public final class GameRuntime: @unchecked Sendable {
             }
             if firstTime { fm.createFile(atPath: gamePaths.gameData.appendingPathComponent("display-pending").path, contents: nil) }
         }
+        try Data(paths.environment.id.utf8).write(to: paths.root.appendingPathComponent(Self.environmentMarker), options: .atomic)
         try Data("runtime-v1\n".utf8).write(to: paths.runtimeReady, options: .atomic)
         progress("The Windows environment is ready.")
     }
@@ -511,6 +513,7 @@ extension GameRuntime {
         if let blocker = Self.playBlocker(state(), title: profile.title) { throw SetupError(blocker) }
         // Red Alert 2 sizes itself to the display that Windows programs see.
         let context = profile.id == "red-alert2" ? windowsDisplay(context) : context
+        restoreKeptSaves()
         for warning in try GameFiles.prepare(profile, paths: paths, runtime: runtime, context: context) { progress(warning) }
         if ["rockstar", "gta5"].contains(paths.environment.id) { try installRockstarLauncher() }
         switch profile.id {
@@ -551,7 +554,7 @@ extension GameRuntime {
     /// Waits until Steam's console log, past `before`, shows that Steam finished starting.
     func waitForSteam(since before: UInt64) {
         progress("Waiting for Steam to start…")
-        let deadline = Date().addingTimeInterval(90)
+        let deadline = Date().addingTimeInterval(steamStartTimeout)
         while Date() < deadline {
             if let handle = try? FileHandle(forReadingFrom: steamConsole) {
                 let size = (try? handle.seekToEnd()) ?? 0

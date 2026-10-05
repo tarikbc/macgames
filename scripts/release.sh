@@ -33,8 +33,20 @@ grep -q "^## $VERSION " CHANGELOG.md || { echo "error: CHANGELOG.md has no '## $
 [ -z "$(git status --porcelain)" ] || { echo "error: commit or stash your changes first." >&2; exit 1; }
 gh auth status >/dev/null 2>&1 || { echo "error: gh is not signed in." >&2; exit 1; }
 
+if git rev-parse -q --verify "refs/tags/v$VERSION" >/dev/null; then
+  [ "$(git rev-parse "v$VERSION^{commit}")" = "$(git rev-parse HEAD)" ] \
+    || { echo "error: tag v$VERSION exists on another commit." >&2; exit 1; }
+fi
+# Installed apps update only to a higher build number than the feed's current one.
+BUILD_NUMBER="$(sed -n 's/^ *CURRENT_PROJECT_VERSION: "\{0,1\}\([0-9]*\)"\{0,1\}$/\1/p' project.yml | head -1)"
+PUBLISHED="$(curl -fsL "https://github.com/$REPO/releases/download/appcast/appcast.xml" 2>/dev/null \
+  | sed -n 's:.*<sparkle\:version>\([0-9]*\)</sparkle\:version>.*:\1:p' | head -1)"
+[ -z "$PUBLISHED" ] || [ "$BUILD_NUMBER" -gt "$PUBLISHED" ] \
+  || { echo "error: CURRENT_PROJECT_VERSION ($BUILD_NUMBER) must be higher than the published build ($PUBLISHED)." >&2; exit 1; }
+
 step "Building MacGames $VERSION (Release)"
-[ -f Vendor/SHA256SUMS ] || scripts/fetch-runtime.sh
+# Always the pinned runtime: a local test build of a helper never ships by accident.
+scripts/fetch-runtime.sh
 xcodegen generate >/dev/null
 rm -rf "$BUILD" && mkdir -p "$BUILD"
 xcodebuild -project MacGames.xcodeproj -scheme MacGames -configuration Release -derivedDataPath "$BUILD/DerivedData" \
@@ -46,7 +58,8 @@ step "Signing inside out with the Developer ID and the hardened runtime"
 sign() { codesign --force --timestamp --options runtime --sign "$DEVELOPER_ID" "$@"; }
 # Sparkle's nested helpers first, then the framework.
 FW="$APP/Contents/Frameworks/Sparkle.framework/Versions/B"
-for xpc in "$FW"/XPCServices/*.xpc; do [ -e "$xpc" ] && sign "$xpc"; done
+# Sparkle's XPC services carry entitlements of their own, which re-signing must keep.
+for xpc in "$FW"/XPCServices/*.xpc; do [ -e "$xpc" ] && sign --preserve-metadata=entitlements "$xpc"; done
 sign "$FW/Updater.app" "$FW/Autoupdate"
 sign "$APP/Contents/Frameworks/Sparkle.framework"
 # Our own helpers. x87sidecar and the Wine runtime keep the signatures they ship with:
@@ -77,7 +90,8 @@ spctl -a -t open --context context:primary-signature -vv "$DMG"
 step "Signing the update for Sparkle"
 ditto -c -k --keepParent "$APP" "$ZIP"
 SIGNATURE="$("$SPARKLE_BIN/sign_update" --account macgames "$ZIP")"
-BUILD_NUMBER="$(/usr/libexec/PlistBuddy -c 'Print CFBundleVersion' "$APP/Contents/Info.plist")"
+[ "$(/usr/libexec/PlistBuddy -c 'Print CFBundleVersion' "$APP/Contents/Info.plist")" = "$BUILD_NUMBER" ] \
+  || { echo "error: the built app's CFBundleVersion is not $BUILD_NUMBER." >&2; exit 1; }
 cat > "$BUILD/appcast.xml" <<XML
 <?xml version="1.0" encoding="utf-8"?>
 <rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle">
@@ -101,7 +115,7 @@ XML
 step "Publishing"
 NOTES="$BUILD/notes.md"
 awk -v v="$VERSION" '$0 ~ "^## " v " " {on=1; next} /^## / {on=0} on' CHANGELOG.md > "$NOTES"
-git tag -a "v$VERSION" -m "MacGames $VERSION" 2>/dev/null || true
+git rev-parse -q --verify "refs/tags/v$VERSION" >/dev/null || git tag -a "v$VERSION" -m "MacGames $VERSION"
 git push origin "v$VERSION"
 gh release create "v$VERSION" "$DMG" "$ZIP" -R "$REPO" --title "MacGames $VERSION" --notes-file "$NOTES" --latest
 # The feed has its own release, so runtime and pack releases never move it.

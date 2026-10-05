@@ -22,9 +22,17 @@ struct FakeEnvironment {
     root="$(cd "$(dirname "$0")/../.." && pwd)"
     printf 'wine %s\n' "$*" >> "$root/calls.log"
     steam="$WINEPREFIX/drive_c/Program Files (x86)/Steam"
+    # A flag file makes one helper exit at once with an error.
+    for helper in dismiss-dialog gpu-sync fit-window; do
+      case "$1" in *"$helper.exe") [ -e "$root/fail-$helper" ] && exit 10 ;; esac
+    done
     case "$*" in
       *"/S"*) mkdir -p "$steam" && : > "$steam/steam.exe" ;;
-      *steam.exe*) mkdir -p "$steam/logs" && printf 'System startup time: 1\n' > "$steam/logs/console_log.txt" ;;
+      *steam.exe*)
+        # Steam appends to its log; flag files make it start a fresh log, or never finish starting.
+        mkdir -p "$steam/logs"
+        [ -e "$root/steam-truncates" ] && : > "$steam/logs/console_log.txt"
+        [ -e "$root/steam-never-starts" ] || printf 'System startup time: 1\n' >> "$steam/logs/console_log.txt" ;;
       "reg import "*) cp "$WINEPREFIX/drive_c/$(basename "$(printf '%s' "$3" | tr '\\' '/')")" "$root/imported.reg" ;;
     esac
     exit 0
@@ -55,11 +63,16 @@ struct FakeEnvironment {
                               runtime: RuntimeLayout(resources: res, helpers: dir.appendingPathComponent("Helpers")),
                               downloadCache: dir.appendingPathComponent("downloads"),
                               events: { if case .progress(let line) = $0 { log.add(line) } })
+        // Packs count as installed, so no test downloads one.
+        for pack in profile.gameEnvironment.packs {
+            try write(Packs.pinned[pack] ?? pack, to: runtime.paths.pack(pack).appendingPathComponent(".macgames-pack"))
+        }
         try EngineInstaller(runtime: runtime.runtime).install(for: runtime.paths)
         runtime.startupGrace = 0.2
         runtime.processes = { _ in ProcessSnapshot(entries: []) }
         try FileManager.default.createDirectory(at: runtime.paths.prefix.appendingPathComponent("drive_c"), withIntermediateDirectories: true)
         try write("runtime-v1", to: runtime.paths.runtimeReady)
+        try write(profile.environment, to: runtime.paths.root.appendingPathComponent("macgames-environment"))
     }
 
     func installSteam() throws { try write("", to: runtime.paths.steamExe) }
@@ -116,6 +129,7 @@ struct FakeEnvironment {
         try env.installSteam()
         // An older, longer log: the fresh one is shorter than the old offset.
         try write(String(repeating: "old line\n", count: 2000), to: env.runtime.paths.steamDir.appendingPathComponent("logs/console_log.txt"))
+        try write("", to: env.dir.appendingPathComponent("root/steam-truncates"))
         let start = Date()
         try env.runtime.ensureSteamReady()
         #expect(Date().timeIntervalSince(start) < 20)

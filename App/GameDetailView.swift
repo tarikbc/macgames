@@ -84,7 +84,7 @@ struct GameDetailView: View {
 
     private var removalTitle: String {
         switch game.removal {
-        case .removeSetup: "Remove the \(game.profile.gameEnvironment.group) setup?"
+        case .removeSetup: "Remove the \(game.profile.gameEnvironment.title) setup?"
         default: "Uninstall \(game.profile.title)?"
         }
     }
@@ -98,7 +98,7 @@ struct GameDetailView: View {
                 : "Blizzard's uninstaller opens to delete the game's files (\(size)). Your saves and Battle.net account stay."
         case .removeSetup(let bytes):
             let size = ByteCountFormatter.string(fromByteCount: Int64(bytes), countStyle: .file)
-            return "MacGames deletes \(game.launcherName), its sign-in and the Windows files of \(game.profile.gameEnvironment.group) (\(size)). "
+            return "MacGames deletes \(game.launcherName), its sign-in and the Windows files of \(game.profile.gameEnvironment.title) (\(size)). "
                 + "Saves kept only in those files go too. You can set it up again later."
         }
     }
@@ -318,7 +318,7 @@ private struct SettingsSection: View {
                 .modifier(Card())
                 .padding(.top, Space.s)
             } else if game.canRemoveSetup {
-                row("Remove setup", detail: "Deletes \(game.launcherName) and the Windows files of \(game.profile.gameEnvironment.group).") {
+                row("Remove setup", detail: "Deletes \(game.launcherName) and the Windows files of \(game.profile.gameEnvironment.title).") {
                     Button("Remove…", role: .destructive, action: game.requestRemoveSetup)
                 }
                 .modifier(Card())

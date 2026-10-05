@@ -44,6 +44,15 @@ kill -0 $dialog 2>/dev/null; check "dismiss-dialog leaves another message alone"
 "$WINE" 'C:\t\dismiss-dialog.exe' --program fixture-dialog.exe --title "$TITLE" --text "  Please update   your graphics driver. " --wait-seconds 20 >/dev/null 2>&1
 wait $dialog; check "dismiss-dialog presses OK on the exact dialog" $? 1
 
+"$WINE" 'C:\t\fixture-dialog.exe' "$TITLE" "$TEXT" >/dev/null 2>&1 & dialog=$!
+sleep 4
+"$WINE" 'C:\t\dismiss-dialog.exe' --program fixture-dialog.exe --title "$TITLE" --text "Another message." --wait-seconds 60 >/dev/null 2>&1 & watcher=$!
+sleep 3
+kill $dialog 2>/dev/null; wait $dialog 2>/dev/null
+for _ in $(seq 20); do kill -0 $watcher 2>/dev/null || break; sleep 0.5; done
+kill -0 $watcher 2>/dev/null; check "dismiss-dialog exits when its program exits" $? 1
+kill $watcher 2>/dev/null
+
 "$WINE" 'C:\t\show-window.exe' fixture-window.exe >/dev/null 2>&1; check "show-window without the program" $? 2
 read -r mw mh <<<"$mode"
 "$WINE" 'C:\t\fixture-window.exe' 8 > "$WORK/window.txt" 2>/dev/null & window=$!

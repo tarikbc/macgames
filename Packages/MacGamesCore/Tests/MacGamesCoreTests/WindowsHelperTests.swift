@@ -58,6 +58,8 @@ import Testing
         }
         """, to: p.appManifest)
         try write("exe", to: p.gameExe)
+        // Rockstar games need their launcher; a stand-in keeps the test off the network.
+        try write("", to: p.prefix.appendingPathComponent("drive_c/Program Files/Rockstar Games/Launcher/Launcher.exe"))
         for name in ["gpu-sync", "fit-window", "dismiss-dialog", "show-window", "display-mode", "prepare-pipelines"] {
             try write(name, to: env.runtime.runtime.windowsHelpers.appendingPathComponent("\(name).exe"))
         }
@@ -74,6 +76,41 @@ import Testing
         let game = try #require(calls.firstIndex { $0.contains("-applaunch 1934680") })
         #expect(steam < gpu && gpu < game && fit < game)
         #expect(!calls.contains("wineserver -k"), "the game's launch reuses the Steam the watchers joined")
+    }
+
+    @Test func watchersStartAfterARestartAndSurviveTheLaunch() throws {
+        let env = try FakeEnvironment(.aomRetold); defer { env.cleanUp() }
+        try installGame(env)
+        try SteamSession.begin(fingerprint: "old settings", paths: env.runtime.paths, environment: [:])
+        env.live()
+        try env.runtime.play(LaunchContext(width: 1512, height: 982, hasNotch: true, topInset: 32))
+        let calls = env.calls
+        let kill = try #require(calls.firstIndex(of: "wineserver -k"))
+        let gpu = try #require(calls.firstIndex { $0.contains("gpu-sync.exe") })
+        let game = try #require(calls.firstIndex { $0.contains("-applaunch 1934680") })
+        #expect(kill < gpu && gpu < game)
+        #expect(calls.lastIndex(of: "wineserver -k")! < gpu, "nothing restarts Steam after the watchers start")
+    }
+
+    @Test func aRestartedSteamIsAwaitedPastItsOldStartLine() throws {
+        let env = try FakeEnvironment(.aomRetold); defer { env.cleanUp() }
+        try installGame(env)
+        try write("System startup time: an earlier start\n", to: env.runtime.steamConsole)
+        try write("", to: env.dir.appendingPathComponent("root/steam-never-starts"))
+        try SteamSession.begin(fingerprint: "old settings", paths: env.runtime.paths, environment: [:])
+        env.live()
+        env.runtime.steamStartTimeout = 1
+        try env.runtime.ensureSteamSession()
+        #expect(env.events.all.contains { $0.contains("taking long") }, "the old line must not count")
+    }
+
+    @Test func aWatcherThatFailsDoesNotStopTheGame() throws {
+        let env = try FakeEnvironment(.gta5); defer { env.cleanUp() }
+        try installGame(env)
+        try write("#!/bin/sh\nexit 10\n", to: env.dir.appendingPathComponent("root/fail-dismiss-dialog"))
+        try env.runtime.play(LaunchContext(width: 1512, height: 982))
+        #expect(env.calls.contains { $0.contains("-applaunch 3240220") })
+        #expect(env.events.all.contains { $0.contains("dismiss-dialog") })
     }
 
     @Test func overwatchPreparesRecordedPipelinesBeforeItStarts() throws {

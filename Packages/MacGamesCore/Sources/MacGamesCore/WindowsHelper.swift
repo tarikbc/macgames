@@ -56,9 +56,14 @@ extension GameRuntime {
         guard !available.isEmpty else { return }
         try ensureSteamSession()
         let env = try launchEnvironment()
+        // A watcher is a help, not a requirement: one that fails is reported and the game starts anyway.
         for watcher in available {
-            try startDetached([try stage(helper(watcher.name))] + watcher.arguments, environment: env,
-                              workingDirectory: driveC, log: "helpers.log")
+            do {
+                try startDetached([try stage(helper(watcher.name))] + watcher.arguments, environment: env,
+                                  workingDirectory: driveC, log: "helpers.log")
+            } catch {
+                progress("The \(watcher.name) helper did not start: \(error)")
+            }
         }
     }
 
@@ -69,7 +74,8 @@ extension GameRuntime {
         if running && matches { return }
         let since = steamConsoleSize()
         try startSteam(.background)
-        waitForSteam(since: running ? 0 : since)
+        // Steam appends to its log, so only lines past the old end tell about this start.
+        waitForSteam(since: since)
     }
 
     /// Builds Overwatch's recorded pipelines into Metal archives before launch, so the game
@@ -80,8 +86,10 @@ extension GameRuntime {
         guard names.contains(where: { $0.hasSuffix(".recipe") }), fm.fileExists(atPath: helper("prepare-pipelines").path) else { return }
         progress("Preparing Overwatch's graphics pipelines…")
         do {
-            let output = try runWine([try stage(helper("prepare-pipelines")), recipes.path, paths.graphics.appendingPathComponent("shader-cache").path],
-                                     environment: joined(try launchEnvironment()), timeout: 1800, allowedStatuses: [0, 1])
+            // Not runWine: a timeout here must end only this tool, never Steam's session.
+            let output = try runner.run(paths.wine, [try stage(helper("prepare-pipelines")), recipes.path,
+                                                     paths.graphics.appendingPathComponent("shader-cache").path],
+                                        environment: joined(try launchEnvironment()), timeout: 900, allowedStatuses: [0, 1])
             if let summary = output.split(whereSeparator: \.isNewline).last(where: { $0.contains("\"complete\"") }) {
                 progress("Pipelines: \(summary)")
             }

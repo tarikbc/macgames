@@ -130,6 +130,15 @@ public enum GameRecipes {
     }
 
     /// Folders that a sandboxed environment points at; they must exist before Wine starts.
+    /// Saves and settings that a game keeps in its own install folder, which an uninstall must not lose.
+    public static func savesInInstallFolder(for profile: GameProfile) -> [String] {
+        switch profile.id {
+        case "heroes3": ["Games"]
+        case "red-alert2": ["Saved Games", "RA2MD.INI"]
+        default: []
+        }
+    }
+
     public static func sandboxFolders(for profile: GameProfile, paths: GamePaths) -> [URL] {
         switch environmentEdits(for: profile, paths: paths).sandbox {
         case .none: []

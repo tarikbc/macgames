@@ -4,7 +4,7 @@
  * player would. Games such as GTA V show a graphics driver advisory that does not
  * apply under Apple's graphics layer. The title and message must match after runs of
  * white space become one space; any other dialog is left alone. The helper exits after
- * it presses OK, or after N seconds (600 by default).
+ * it presses OK, when the program exits, or after N seconds (600 by default).
  * Exit codes: 0 pressed or timed out, 10 usage. */
 #include "helpers.h"
 
@@ -63,8 +63,11 @@ int wmain(int argc, wchar_t **argv) {
     if (!t.program || !t.title || !t.text) return 10;
     DWORD deadline = GetTickCount() + wait_seconds(argc, argv, 600) * 1000;
     say("Watching %ls for \"%ls\".", t.program, t.title);
+    int seen = 0;
     while (!t.pressed && (LONG)(deadline - GetTickCount()) > 0) {
         EnumWindows(check, (LPARAM)&t);
+        if (program_running(t.program)) seen = 1;
+        else if (seen) { say("%ls exited.", t.program); break; }
         Sleep(250);
     }
     return 0;

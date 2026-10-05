@@ -1,9 +1,26 @@
 import Foundation
 
 extension GameRuntime {
+    /// Saves from the install folder wait here between an uninstall and the next install.
+    var keptSaves: URL { paths.gameData.appendingPathComponent("kept-saves") }
+
+    /// Moves saves kept by an uninstall back into a new install, without replacing newer files.
+    func restoreKeptSaves() {
+        guard Self.exists(keptSaves), Self.exists(paths.installDir) else { return }
+        for item in GameRecipes.savesInInstallFolder(for: profile) {
+            let kept = keptSaves.appendingPathComponent(item), target = paths.installDir.appendingPathComponent(item)
+            guard Self.exists(kept), !Self.exists(target) else { continue }
+            try? fm.createDirectory(at: target.deletingLastPathComponent(), withIntermediateDirectories: true)
+            if (try? fm.moveItem(at: kept, to: target)) != nil { progress("Restored \(item) from before the uninstall.") }
+        }
+        if ((try? fm.contentsOfDirectory(atPath: keptSaves.path)) ?? []).isEmpty { try? fm.removeItem(at: keptSaves) }
+    }
+
     /// Steam's per-game files besides the install folder and the manifest.
     var steamLeftovers: [URL] {
         let id = profile.steamAppID
+        // Without an ID these would be the shared folders of every game.
+        guard !id.isEmpty else { return [] }
         return ["shadercache/\(id)", "workshop/content/\(id)", "workshop/appworkshop_\(id).acf", "downloading/\(id)", "temp/\(id)"]
             .map { paths.steamapps.appendingPathComponent($0) }
     }
@@ -22,11 +39,13 @@ extension GameRuntime {
     /// goes through Blizzard's own uninstaller.
     public func uninstall() throws {
         if let playing = runningGameTitle() { throw SetupError("Close \(playing) first.") }
+        guard !profile.installFolder.isEmpty else { throw SetupError("\(profile.title) has no install folder to delete.") }
         if profile.launch == .battleNet { try uninstallThroughBattleNet(); return }
         if isSessionRunning() {
             progress("Closing Steam…")
             try stop()
         }
+        try keepSaves()
         progress("Deleting \(profile.title)…")
         for item in [paths.installDir, paths.appManifest] + steamLeftovers where Self.exists(item) {
             try fm.removeItem(at: item)
@@ -35,6 +54,17 @@ extension GameRuntime {
         // The online clients live in the install folder, so their setup starts over.
         if Self.exists(cncnetReady) { try fm.removeItem(at: cncnetReady) }
         progress("Uninstalled \(profile.title).")
+    }
+
+    /// Moves the saves a game keeps in its install folder into MacGames' own data for this game.
+    func keepSaves() throws {
+        for item in GameRecipes.savesInInstallFolder(for: profile) {
+            let source = paths.installDir.appendingPathComponent(item), kept = keptSaves.appendingPathComponent(item)
+            guard Self.exists(source) else { continue }
+            if Self.exists(kept) { try fm.removeItem(at: kept) }
+            try fm.createDirectory(at: kept.deletingLastPathComponent(), withIntermediateDirectories: true)
+            try fm.moveItem(at: source, to: kept)
+        }
     }
 
     /// Deletes shader caches built for the old install, and keeps the folders DXMT writes into.
@@ -56,7 +86,6 @@ extension GameRuntime {
             return
         }
         try startDetached(command, environment: try launchEnvironment(), workingDirectory: driveC, log: "battlenet-session.log")
-        try clearCaches()
         progress("Blizzard's uninstaller is open. Confirm there to delete \(profile.title).")
     }
 
@@ -68,17 +97,53 @@ extension GameRuntime {
         }
     }
 
-    /// The environment is set up and none of its games is installed.
-    public var canRemoveEnvironment: Bool { Self.exists(paths.runtimeReady) && installedGame == nil }
+    static let environmentMarker = "macgames-environment"
+
+    /// The root holds this environment: its marker says so, or, for setups made before the
+    /// marker existed, the folder carries the environment's name.
+    var ownsRoot: Bool {
+        if let marker = try? String(contentsOf: paths.root.appendingPathComponent(Self.environmentMarker), encoding: .utf8) {
+            return marker.trimmingCharacters(in: .whitespacesAndNewlines) == paths.environment.id
+        }
+        return paths.root.lastPathComponent == paths.environment.id
+    }
+
+    /// A game outside the catalog that the user installed through this environment's launcher.
+    var otherInstalledGame: String? {
+        let catalog = Set(paths.environment.games.map(\.steamAppID))
+        // Steamworks Common Redistributables stay after their games; they are no game.
+        let ignored: Set<String> = ["228980"]
+        let manifests = ((try? fm.contentsOfDirectory(atPath: paths.steamapps.path)) ?? [])
+            .filter { $0.hasPrefix("appmanifest_") && $0.hasSuffix(".acf") }.sorted()
+        for file in manifests {
+            let id = String(file.dropFirst("appmanifest_".count).dropLast(".acf".count))
+            guard !catalog.contains(id), !ignored.contains(id) else { continue }
+            return AppManifest(contentsOf: paths.steamapps.appendingPathComponent(file))?["name"] ?? "Steam app \(id)"
+        }
+        let registry = (try? String(contentsOf: paths.prefix.appendingPathComponent("system.reg"), encoding: .utf8)) ?? ""
+        let catalogNames = Set(paths.environment.games.map(\.installFolder))
+        return UninstallEntry.blizzardGames(inSystemRegistry: registry).first { !catalogNames.contains($0) }
+    }
+
+    /// The environment is set up here, and none of its games is installed.
+    public var canRemoveEnvironment: Bool {
+        Self.exists(paths.runtimeReady) && ownsRoot && installedGame == nil && otherInstalledGame == nil
+    }
 
     /// Deletes the environment's folder: its launcher, Windows files, engine and packs.
     /// Every game of the environment must be uninstalled first, so no game is lost by accident.
     public func removeEnvironment() throws {
-        if let installed = installedGame { throw SetupError("Uninstall \(installed.title) first. Removing the setup deletes every game in \(paths.environment.group).") }
+        let name = paths.environment.title
+        guard ownsRoot, Self.exists(paths.runtimeReady) else {
+            throw SetupError("\(paths.root.path) is not the \(name) setup of MacGames.")
+        }
+        if let installed = installedGame?.title ?? otherInstalledGame {
+            throw SetupError("Uninstall \(installed) first. Removing the setup deletes every game in the \(name) setup.")
+        }
         if isSessionRunning() { try stop() }
-        progress("Removing the \(paths.environment.group) setup…")
-        if Self.exists(paths.root) { try fm.removeItem(at: paths.root) }
-        progress("Removed the \(paths.environment.group) setup.")
+        progress("Removing the \(name) setup…")
+        try fm.removeItem(at: paths.root)
+        progress("Removed the \(name) setup.")
     }
 
     static func exists(_ url: URL) -> Bool {
@@ -122,8 +187,27 @@ public enum UninstallEntry {
         return nil
     }
 
+    /// Display names of the games Blizzard's agent installed, from their uninstall entries.
+    public static func blizzardGames(inSystemRegistry text: String) -> [String] {
+        var names: [String] = [], inUninstall = false, name: String?, blizzard = false
+        func flush() { if inUninstall, blizzard, let name { names.append(name) } }
+        for line in text.split(whereSeparator: \.isNewline) {
+            if line.hasPrefix("[") {
+                flush()
+                inUninstall = line.contains(#"\\Windows\\CurrentVersion\\Uninstall\\"#)
+                name = nil; blizzard = false
+                continue
+            }
+            guard inUninstall else { continue }
+            if let v = value(line, named: "DisplayName") { name = v }
+            if let v = value(line, named: "UninstallString"), v.contains("Blizzard Uninstaller.exe") { blizzard = true }
+        }
+        flush()
+        return names
+    }
+
     static func normalized(_ path: String) -> String {
-        var p = path.lowercased()
+        var p = path.lowercased().replacingOccurrences(of: "/", with: "\\")
         while p.hasSuffix("\\") { p.removeLast() }
         return p
     }

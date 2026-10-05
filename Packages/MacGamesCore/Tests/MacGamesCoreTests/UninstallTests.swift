@@ -105,3 +105,75 @@ import Testing
         #expect(!env.runtime.canRemoveEnvironment, "nothing is left to remove")
     }
 }
+
+@Suite(.serialized) struct UninstallSafetyTests {
+    let fm = FileManager.default
+
+    func installed(_ profile: GameProfile) throws -> FakeEnvironment {
+        let env = try FakeEnvironment(profile)
+        let p = env.runtime.paths
+        try env.installSteam()
+        try write("\"AppState\"\n{\n\t\"appid\"\t\t\"\(profile.steamAppID)\"\n\t\"installdir\"\t\t\"\(profile.installFolder)\"\n\t\"StateFlags\"\t\t\"4\"\n}\n", to: p.appManifest)
+        try write("exe", to: p.gameExe)
+        return env
+    }
+
+    @Test func otherGamesAndUserFilesStay() throws {
+        let env = try installed(.cs2); defer { env.cleanUp() }
+        let p = env.runtime.paths
+        let others = [p.steamapps.appendingPathComponent("shadercache/731/cache.bin"),
+                      p.steamapps.appendingPathComponent("common/Age of Empires IV/RelicCardinal.exe"),
+                      p.prefix.appendingPathComponent("drive_c/users/crossover/Documents/save.dat")]
+        for file in others { try write("keep", to: file) }
+        try env.runtime.uninstall()
+        for file in others { #expect(read(file) == "keep", "\(file.path)") }
+    }
+
+    @Test func savesInsideTheGameFolderAreKeptAndComeBack() throws {
+        let env = try installed(.heroes3); defer { env.cleanUp() }
+        let p = env.runtime.paths
+        try write("castle", to: p.installDir.appendingPathComponent("Games/MyCampaign.CGM"))
+        try env.runtime.uninstall()
+        #expect(!fm.fileExists(atPath: p.installDir.path))
+        // Steam installs the game again; the next launch brings the saves back.
+        try write("exe", to: p.gameExe)
+        env.runtime.restoreKeptSaves()
+        #expect(read(p.installDir.appendingPathComponent("Games/MyCampaign.CGM")) == "castle")
+    }
+
+    @Test func redAlert2KeepsItsSavesAndSettings() {
+        #expect(GameRecipes.savesInInstallFolder(for: .redAlert2) == ["Saved Games", "RA2MD.INI"])
+        #expect(GameRecipes.savesInInstallFolder(for: .heroes3) == ["Games"])
+        #expect(GameRecipes.savesInInstallFolder(for: .cs2).isEmpty)
+    }
+
+    @Test func aProfileWithoutAnAppIDHasNoSteamLeftovers() throws {
+        let env = try FakeEnvironment(GameProfile(id: "x", title: "X", steamAppID: "", installFolder: "X", executableRelativePath: "x.exe"))
+        defer { env.cleanUp() }
+        #expect(env.runtime.steamLeftovers.isEmpty)
+    }
+
+    @Test func removingASetupNeedsTheEnvironmentsOwnRoot() throws {
+        let env = try FakeEnvironment(.rdr2); defer { env.cleanUp() }
+        // A root that another environment marked as its own.
+        try write("battlenet", to: env.runtime.paths.root.appendingPathComponent("macgames-environment"))
+        #expect(throws: SetupError.self) { try env.runtime.removeEnvironment() }
+        #expect(fm.fileExists(atPath: env.runtime.paths.root.path))
+        // A folder that is no MacGames setup at all.
+        let stranger = try FakeEnvironment(.rdr2); defer { stranger.cleanUp() }
+        try fm.removeItem(at: stranger.runtime.paths.root.appendingPathComponent("macgames-environment"))
+        #expect(throws: SetupError.self) { try stranger.runtime.removeEnvironment() }
+    }
+
+    @Test func gamesOutsideTheCatalogBlockRemovalButSteamsRuntimesDoNot() throws {
+        let env = try FakeEnvironment(.rdr2); defer { env.cleanUp() }
+        try env.installSteam()
+        let steamapps = env.runtime.paths.steamapps
+        try write("\"AppState\"\n{\n\t\"appid\"\t\t\"228980\"\n\t\"name\"\t\t\"Steamworks Common Redistributables\"\n}\n",
+                  to: steamapps.appendingPathComponent("appmanifest_228980.acf"))
+        #expect(env.runtime.canRemoveEnvironment)
+        try write("\"AppState\"\n{\n\t\"appid\"\t\t\"620\"\n\t\"name\"\t\t\"Portal 2\"\n}\n", to: steamapps.appendingPathComponent("appmanifest_620.acf"))
+        #expect(!env.runtime.canRemoveEnvironment)
+        #expect(throws: SetupError.self) { try env.runtime.removeEnvironment() }
+    }
+}
