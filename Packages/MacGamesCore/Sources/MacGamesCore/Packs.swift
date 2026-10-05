@@ -12,7 +12,7 @@ public enum Packs {
         "apple-d3dmetal-4.0b2": "209a9203864a0618d686096162f75ce506838fcfe3a715b997f87759dbbee02e",
         "battlenet": "a9e262f72a1fe7ff0b133a9c531b8661170efae5aebcebf4347ba9d6c06a6d15",
         "gta5": "bc8d15d5ad6713e6a192de6d78e0534a2925db886d7a9225efdf52c25fcc7499",
-        "overwatch-recall": "9dfc4f87855efd51ac58feb4f42bc98a063a7909097db6c1a99757af3c94806c",
+        "overwatch-recall": "22a177f136149428f911b74c2a67458f35dcca35a6f2b81b084524910c3dafe3",
         "rockstar": "6757715792fe378758ef880ee9a433882ab6083044928ba1befbdda6f8598639",
         "skyrim": "0ebee3d52cef5d4055e7f4139b3064092907c4abcf6fdf1523a38b7b1e2a1205",
     ]

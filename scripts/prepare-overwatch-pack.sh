@@ -1,9 +1,9 @@
 #!/bin/bash
 # Maintainer tool: builds the overwatch-recall pack from Recall's signed release, byte for byte,
 # and gathers the source archives that go next to it in the packs-2 release.
-# Usage: scripts/prepare-overwatch-pack.sh [--sources]
-#   Writes dist/macgames-pack-overwatch-recall.tar.xz (through scripts/package-pack.sh);
-#   with --sources, also dist/overwatch-recall-sources/ with every source archive and SOURCES.md.
+# Usage: scripts/prepare-overwatch-pack.sh            writes dist/macgames-pack-overwatch-recall.tar.xz
+#        scripts/prepare-overwatch-pack.sh --sources  writes dist/overwatch-recall-sources/ and SOURCES.md
+# Each pack build has new file times inside, so its SHA-256 changes: pin the archive you publish.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -12,6 +12,7 @@ DMG_URL="https://github.com/AsherJN/recall/releases/download/v1.1.0/Recall-1.1.0
 DMG_SHA="26da5978c1c7a3d665434b46d6abeed7dfb72a8b1efc1bf631b4850f2d2e01b0"
 RUNTIME_SHA="a7e85b29d959d8432af32d4763a40eee869edf92f6e15323ecc5450edbdee8ac"
 
+pack() {
 mkdir -p "$WORK"
 DMG="$WORK/Recall-1.1.0.dmg"
 [ -f "$DMG" ] || curl -fL --retry 3 -o "$DMG" "$DMG_URL"
@@ -71,8 +72,9 @@ https://github.com/tarikbc/macgames, with a list in SOURCES.md.
 EOF
 
 "$ROOT/scripts/package-pack.sh" overwatch-recall "$PACK"
+}
 
-[ "${1:-}" = "--sources" ] || exit 0
+sources() {
 SOURCES="$ROOT/dist/overwatch-recall-sources"
 mkdir -p "$SOURCES"
 fetch() { [ -f "$SOURCES/$1" ] || curl -fL --retry 3 -o "$SOURCES/$1" "$2"; }
@@ -109,3 +111,6 @@ fetch wine-mono-10.4.1-src.tar.xz https://github.com/wine-mono/wine-mono/release
   echo "Apple's libd3dshared.dylib is under Apple's license, in Engine/licenses/apple."
 } > "$SOURCES/SOURCES.md"
 ls -la "$SOURCES"
+}
+
+if [ "${1:-}" = "--sources" ]; then sources; else pack; fi

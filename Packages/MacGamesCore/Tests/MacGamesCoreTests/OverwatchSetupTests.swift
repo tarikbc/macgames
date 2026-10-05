@@ -53,12 +53,21 @@ import Testing
             "CX_APPLEGPTK_LIBD3DSHARED_PATH": "/r/engine/lib/external/libd3dshared.dylib",
             "DXMT_SHADER_CACHE_PATH": "/r/games/overwatch/cache/shaders",
             "DXMT_PIPELINE_CACHE_PATH": "/r/games/overwatch/cache/pipelines",
-            "DXMT_CONFIG_FILE": #"Z:\r\games\overwatch\dxmt.conf"#,
+            "DXMT_CONFIG_FILE": #"Z:\r\engine\config\dxmt.conf"#,
             "HOME": "/r/games/overwatch/home",
         ]
         for (key, value) in expected { #expect(e[key] == value, "\(key)") }
         #expect(e["WINEDLLOVERRIDES"] == WineEnvironment.baseOverrides + "d3d11,dxgi,d3d10core,winemetal=b;d3d12=")
         #expect(e["TMPDIR"]?.hasPrefix("/r/games/overwatch/tmp") == true)
+    }
+
+    @Test func dxmtReadsTheLaunchsProfileOnceMacGamesWroteIt() throws {
+        let dir = try makeTempDir("owconf"); defer { try? FileManager.default.removeItem(at: dir) }
+        let paths = GamePaths(profile: .overwatch, root: dir)
+        try write("[Overwatch.exe]\n", to: paths.gameData.appendingPathComponent("dxmt.conf"))
+        let e = WineEnvironment.make(profile: .overwatch, paths: paths, inherited: [:], optimized: false, hud: false,
+                                     bridge: URL(fileURLWithPath: "/b"))
+        #expect(e["DXMT_CONFIG_FILE"] == "Z:" + paths.gameData.appendingPathComponent("dxmt.conf").path.replacingOccurrences(of: "/", with: "\\"))
     }
 
     @Test func aSelfContainedEngineGetsNoTemplateLibraryPaths() {

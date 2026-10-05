@@ -13,6 +13,20 @@ public enum OverwatchDisplay {
         return Size(width: mode.width, height: mode.height)
     }
 
+    /// The displays as a new Wine session takes them in: each online display, which one is main,
+    /// where it sits, and its size in points and pixels. `nil` when they cannot be read.
+    static func displaySignature() -> String? {
+        var ids = [CGDirectDisplayID](repeating: 0, count: 16)
+        var count: UInt32 = 0
+        guard CGGetOnlineDisplayList(16, &ids, &count) == .success, count > 0 else { return nil }
+        return ids.prefix(Int(count)).map { id -> String in
+            let bounds = CGDisplayBounds(id)
+            let mode = CGDisplayCopyDisplayMode(id)
+            return "\(id)\(CGDisplayIsMain(id) != 0 ? " main" : "") \(Int(bounds.minX)),\(Int(bounds.minY))"
+                + " \(Int(bounds.width))x\(Int(bounds.height)) \(mode?.pixelWidth ?? 0)x\(mode?.pixelHeight ?? 0) m\(CGDisplayMirrorsDisplay(id))"
+        }.sorted().joined(separator: "; ")
+    }
+
     /// The game's settings file in the prefix's one Windows user folder: the file that exists, or
     /// where the game will make it. `nil` when there is more than one user folder to choose from.
     static func settingsFile(_ paths: GamePaths) -> URL? {

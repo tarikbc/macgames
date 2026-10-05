@@ -63,6 +63,9 @@ public enum GameRecipes {
         case "overwatch":
             // Recall 1.1's settings for its own Wine and DXMT (docs/candidate-parity-contract.json there).
             let data = paths.gameData.path
+            // MacGames writes the launch's own profile; until then DXMT reads the engine's.
+            let config = FileManager.default.fileExists(atPath: OverwatchDisplay.config(paths).path)
+                ? OverwatchDisplay.config(paths) : paths.engine.appendingPathComponent("config/dxmt.conf")
             return EnvironmentEdits(
                 overrides: baseOverrides + "d3d11,dxgi,d3d10core,winemetal=b;d3d12=",
                 set: ["WINE_SIMULATE_WRITECOPY": "1", "CX_ACTIVE_GRAPHICS_BACKEND": "dxmt", "CX_GRAPHICS_BACKEND": "dxmt",
@@ -73,7 +76,7 @@ public enum GameRecipes {
                       "WINEARCH": "win64", "DXMT_LOG_LEVEL": "error", "DXMT_LOG_PATH": "none",
                       "CX_APPLEGPTK_LIBD3DSHARED_PATH": paths.engine.appendingPathComponent("lib/external/libd3dshared.dylib").path,
                       "DXMT_SHADER_CACHE_PATH": data + "/cache/shaders", "DXMT_PIPELINE_CACHE_PATH": data + "/cache/pipelines",
-                      "DXMT_CONFIG_FILE": "Z:" + OverwatchDisplay.config(paths).path.replacingOccurrences(of: "/", with: "\\"),
+                      "DXMT_CONFIG_FILE": "Z:" + config.path.replacingOccurrences(of: "/", with: "\\"),
                       // Retina mode halves Battle.net's window; it scales itself back up. The game ships no Qt.
                       "QT_SCALE_FACTOR": "2"],
                 unset: ["AOELAB_STEAM_SINGLEPROCESS"], sandbox: .full)

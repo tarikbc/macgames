@@ -26,7 +26,10 @@ struct FakeEnvironment {
     for helper in dismiss-dialog gpu-sync fit-window; do
       case "$1" in *"$helper.exe") [ -e "$root/fail-$helper" ] && exit 10 ;; esac
     done
+    # A flag file makes Battle.net's handoff of a play request exit with an error, as a client may.
+    case "$*" in *"--exec=launch"*) [ -e "$root/handoff-exits-1" ] && exit 1 ;; esac
     case "$*" in
+      "wineboot "*) mkdir -p "$WINEPREFIX/drive_c/windows/system32" && : > "$WINEPREFIX/system.reg" ;;
       *"/S"*) mkdir -p "$steam" && : > "$steam/steam.exe" ;;
       *steam.exe*)
         # Steam appends to its log; flag files make it start a fresh log, or never finish starting.
@@ -94,6 +97,7 @@ struct FakeEnvironment {
         try EngineInstaller(runtime: runtime.runtime).install(for: runtime.paths)
         runtime.startupGrace = 0.2
         runtime.processes = { _ in ProcessSnapshot(entries: []) }
+        runtime.displaySignature = { "test displays" }
         try FileManager.default.createDirectory(at: runtime.paths.prefix.appendingPathComponent("drive_c"), withIntermediateDirectories: true)
         try write("runtime-v1", to: runtime.paths.runtimeReady)
         try write(profile.environment, to: runtime.paths.root.appendingPathComponent("macgames-environment"))

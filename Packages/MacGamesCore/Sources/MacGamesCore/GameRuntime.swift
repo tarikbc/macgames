@@ -23,6 +23,8 @@ public final class GameRuntime: @unchecked Sendable {
     var steamStartTimeout: TimeInterval = 90
     /// The main display's size in points, where a fullscreen game opens; tests replace it.
     var mainDisplay: @Sendable () -> OverwatchDisplay.Size? = { OverwatchDisplay.mainDisplay() }
+    /// The displays as a new Wine session takes them in; tests replace it.
+    var displaySignature: @Sendable () -> String? = { OverwatchDisplay.displaySignature() }
 
     public init(profile: GameProfile, root: URL? = nil, runtime: RuntimeLayout,
                 downloadCache: URL = GamePaths.sharedDownloads(),
@@ -144,6 +146,8 @@ public final class GameRuntime: @unchecked Sendable {
             }
             if firstTime { fm.createFile(atPath: gamePaths.gameData.appendingPathComponent("display-pending").path, contents: nil) }
         }
+        // Battle.net's installer opens the client in this environment, and the game may start from there.
+        if profile.id == "overwatch" { try prepareOverwatch(pipelines: false) }
         try Data(paths.environment.id.utf8).write(to: paths.root.appendingPathComponent(Self.environmentMarker), options: .atomic)
         try Data("runtime-v1\n".utf8).write(to: paths.runtimeReady, options: .atomic)
         progress("The Windows environment is ready.")
@@ -438,7 +442,10 @@ extension GameRuntime {
     }
 
     /// Starts a process that keeps running after this call, with its output appended to `log`.
-    func startDetached(_ arguments: [String], environment: [String: String], workingDirectory: URL, log name: String) throws {
+    /// With `mustKeepRunning` false, a quick exit with an error is not a failure: such a program
+    /// hands its work to one that already runs.
+    func startDetached(_ arguments: [String], environment: [String: String], workingDirectory: URL, log name: String,
+                       mustKeepRunning: Bool = true) throws {
         try fm.createDirectory(at: paths.logs, withIntermediateDirectories: true)
         let log = paths.logs.appendingPathComponent(name)
         let handle = try ProcessRunner.appendHandle(for: log)
@@ -453,7 +460,7 @@ extension GameRuntime {
         try process.run()
         try handle.close()
         Thread.sleep(forTimeInterval: startupGrace)
-        if !process.isRunning && process.terminationStatus != 0 {
+        if mustKeepRunning && !process.isRunning && process.terminationStatus != 0 {
             throw SetupError("\(arguments.first ?? "The program") exited at once (exit \(process.terminationStatus)). Log: \(log.path)")
         }
     }
@@ -493,10 +500,20 @@ extension GameRuntime {
         let client = [paths.windowsPath(paths.battleNetExe)] + GameRecipes.battleNetFlags(for: paths.environment) + request
         let folder = paths.battleNetExe.deletingLastPathComponent()
         let live = processes(paths.engine)
-        if live.isRunning(executable: "Battle.net.exe", under: paths.engine) {
+        var clientRunning = live.isRunning(executable: "Battle.net.exe", under: paths.engine)
+        let gameRunning = live.isRunning(executable: profile.executableName, under: paths.engine)
+        if profile.id == "overwatch", !gameRunning, isSessionRunning(using: live), displaysChanged(clientRunning: clientRunning) {
+            // Wine keeps the displays its session started with; a game started in an older one
+            // may find no usable display. Battle.net's update agent can keep that session alive.
+            progress("The displays changed since Battle.net started, so it starts again.")
+            try stop()
+            clientRunning = false
+        }
+        if clientRunning {
             if !request.isEmpty {
                 // A second start hands the request to the running client, then exits.
-                try startDetached(client, environment: try launchEnvironment(), workingDirectory: folder, log: "battlenet-session.log")
+                try startDetached(client, environment: try launchEnvironment(), workingDirectory: folder, log: "battlenet-session.log",
+                                  mustKeepRunning: false)
                 progress("Battle.net is starting \(profile.title).")
                 return
             }
@@ -508,10 +525,13 @@ extension GameRuntime {
         }
         if !isSessionRunning() { try ensureEngine() }
         try ensureRecipes(environment: environment(optimized: false, hud: false))
-        if profile.id == "overwatch", !live.isRunning(executable: profile.executableName, under: paths.engine) {
+        if profile.id == "overwatch", !gameRunning {
             try prepareOverwatch()
         }
         try startDetached(client, environment: try launchEnvironment(), workingDirectory: folder, log: "battlenet-session.log")
+        if profile.id == "overwatch", let displays = displaySignature() {
+            try? Data(displays.utf8).write(to: sessionDisplays, options: .atomic)
+        }
         progress(request.isEmpty ? "Battle.net is opening. Choose Play there." : "Battle.net is opening and will start \(profile.title).")
     }
 
