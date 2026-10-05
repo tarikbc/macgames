@@ -19,6 +19,9 @@ struct ArtImage: View {
             .animation(Motion.reveal, value: ArtworkStore.shared.images[url] != nil)
         }
         .clipped()
+        // The cropped image extends past this frame. `clipped()` hides it but
+        // does not stop it from taking clicks meant for views beside it.
+        .allowsHitTesting(false)
     }
 }
 
@@ -61,5 +64,6 @@ struct ArtFit: View {
             }
         }
         .animation(Motion.reveal, value: ArtworkStore.shared.images[url] != nil)
+        .allowsHitTesting(false)
     }
 }
