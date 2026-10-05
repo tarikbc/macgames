@@ -56,5 +56,16 @@ check "fit-window moves a fullscreen window below the inset" "$(tr -d '\r' < "$W
 "$WINE" 'C:\t\gpu-sync.exe' >/dev/null 2>&1; check "gpu-sync finds the DirectX key of the adapter" $? 0
 "$WINE" 'C:\t\gpu-sync.exe' --watch nothing.exe --wait-seconds 2 >/dev/null 2>&1; check "gpu-sync --watch gives up on a program that never starts" $? 4
 
+# prepare-pipelines needs the Overwatch build of DXMT that scripts/build-windows-helpers.sh unpacked.
+OW="$ROOT/build/dxmt-overwatch/overwatch/Overlays/overwatch/lib/wine"
+if [ -d "$OW" ]; then
+  mkdir -p "$WORK/ow/recipes" "$WORK/ow/archives" "$WORK/ow/shaders"
+  run() { WINEDLLPATH="$OW:$ENV_ROOT/engine/lib/wine" DXMT_OWT_PIPELINE_CACHE="$WORK/ow/archives" \
+          "$WINE" 'C:\t\prepare-pipelines.exe' "$WORK/ow/recipes" "$WORK/ow/shaders" 2>/dev/null | tr -d '\r'; }
+  run > "$WORK/ow/out.txt"; grep -q '"stage":"complete","done":0,"failed":0' "$WORK/ow/out.txt"; check "prepare-pipelines finds Metal and an empty recipe folder" $? 0
+  head -c 3000 /dev/urandom > "$WORK/ow/recipes/0000.recipe"
+  run > "$WORK/ow/out.txt"; grep -q '"reason":"invalid-recipe"' "$WORK/ow/out.txt"; check "prepare-pipelines rejects a damaged recipe" $? 0
+fi
+
 echo "$failures failure(s)"
 exit $((failures > 0))
