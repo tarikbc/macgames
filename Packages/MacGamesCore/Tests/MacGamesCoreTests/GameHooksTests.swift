@@ -106,6 +106,27 @@ import Testing
         let out = INIFile.set(in: "Resolution = 800 600\n", section: nil, key: "Resolution", value: "1728 1117", separator: " = ")
         #expect(out == "Resolution = 1728 1117\n")
     }
+
+    @Test func aByteOrderMarkDoesNotHideTheFirstSection() {
+        let out = INIFile.set(in: "\u{FEFF}[Video]\r\nScreenWidth=1024\r\n", section: "Video", key: "ScreenWidth", value: "1728")
+        #expect(out == "\u{FEFF}[Video]\r\nScreenWidth=1728\r\n")
+    }
+
+    @Test func aCommentAfterTheHeaderKeepsTheSection() {
+        let out = INIFile.set(in: "[Video] ; display\nScreenWidth=1024\n", section: "Video", key: "ScreenWidth", value: "1728")
+        #expect(out == "[Video] ; display\nScreenWidth=1728\n")
+    }
+
+    @Test func mixedLineEndingsStayAndSectionsAreStillFound() {
+        let text = "[Game]\r\nA=1\n[Video]\nScreenWidth=1024\r\n"
+        #expect(INIFile.set(in: text, section: "Video", key: "ScreenWidth", value: "1728") == "[Game]\r\nA=1\n[Video]\nScreenWidth=1728\r\n")
+        #expect(INIFile.set(in: text, section: "Game", key: "B", value: "2") == "[Game]\r\nA=1\nB=2\r\n[Video]\nScreenWidth=1024\r\n")
+    }
+
+    @Test func aBracketInsideAValueIsNotASection() {
+        let text = "[Video]\nName=[x]y\nScreenWidth=1024\n"
+        #expect(INIFile.set(in: text, section: "Video", key: "ScreenWidth", value: "1728") == "[Video]\nName=[x]y\nScreenWidth=1728\n")
+    }
 }
 
 @Suite struct HeroesAudioTests {
