@@ -10,6 +10,8 @@ public final class GameRuntime: @unchecked Sendable {
     public let downloader: Downloader
     public let runner: ProcessRunner
     public var progress: @Sendable (String) -> Void
+    /// Called when setup enters a new stage.
+    public var stepChanged: @Sendable (SetupStep) -> Void = { _ in }
 
     public init(profile: GameProfile, root: URL? = nil, runtime: RuntimeLayout,
                 downloadCache: URL = GamePaths.sharedDownloads(),
@@ -60,11 +62,13 @@ public final class GameRuntime: @unchecked Sendable {
     }
 
     public func prepare() throws {
+        stepChanged(.checkMac)
         progress("Checking this Mac…")
         try check()
         guard !isSessionRunning() else { throw SetupError("Close \(profile.title) and its Steam window before setup.") }
         try fm.createDirectory(at: paths.logs, withIntermediateDirectories: true)
 
+        stepChanged(.libraries)
         if !fm.fileExists(atPath: paths.frameworks.path) {
             progress("Getting the graphics and library package (about 87 MB)…")
             let archive = try downloader.fetch(.template)
@@ -81,12 +85,14 @@ public final class GameRuntime: @unchecked Sendable {
             try fm.moveItem(at: frameworks, to: paths.frameworks)
         }
 
+        stepChanged(.engine)
         progress("Installing the Wine engine…")
         try ensureEngine()
         let plain = environment(optimized: false, hud: false)
         progress(try runner.run(paths.wine, ["--version"], environment: plain, timeout: 60).trimmingCharacters(in: .whitespacesAndNewlines))
         try runner.run(paths.wineserver, ["--version"], environment: plain, timeout: 60)
 
+        stepChanged(.windows)
         let systemReg = paths.prefix.appendingPathComponent("system.reg")
         if !fm.fileExists(atPath: systemReg.path) {
             progress("Creating a new Windows environment…")
@@ -99,6 +105,7 @@ public final class GameRuntime: @unchecked Sendable {
               fm.fileExists(atPath: paths.prefix.appendingPathComponent("drive_c/windows/system32").path) else {
             throw SetupError("Wine did not finish creating the Windows environment. Logs: \(paths.logs.path)")
         }
+        stepChanged(.configure)
         progress("Configuring Windows 10, graphics and controllers…")
         try runner.run(paths.wine, ["winecfg", "-v", "win10"], environment: plain, timeout: 120)
         try PrefixSetup.replaceUserLinks(prefix: paths.prefix)
@@ -120,6 +127,7 @@ public final class GameRuntime: @unchecked Sendable {
 
     public func installSteam() throws {
         guard fm.fileExists(atPath: paths.runtimeReady.path) else { throw SetupError("Set up the Windows environment first.") }
+        stepChanged(.steam)
         if !fm.fileExists(atPath: paths.steamExe.path) {
             progress("Getting the official Steam installer…")
             let installer = try downloader.fetch(.steamSetup)
