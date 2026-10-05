@@ -16,6 +16,10 @@ public final class GameRuntime: @unchecked Sendable {
     public let runner: ProcessRunner
     /// Receives progress lines and setup stages. Set once, at creation.
     let events: @Sendable (RuntimeEvent) -> Void
+    /// Reads the live Wine processes under a folder; tests replace it.
+    var processes: @Sendable (URL) -> ProcessSnapshot = { ProcessSnapshot.take(under: $0) }
+    /// How long a started launcher gets before an early exit counts as a failure.
+    var startupGrace: TimeInterval = 2
 
     public init(profile: GameProfile, root: URL? = nil, runtime: RuntimeLayout,
                 downloadCache: URL = GamePaths.sharedDownloads(),
@@ -61,7 +65,7 @@ public final class GameRuntime: @unchecked Sendable {
 
     /// The game's stage; pass one `snapshot` to answer many games from a single process scan.
     public func state(using snapshot: ProcessSnapshot? = nil) -> GameState {
-        let live = snapshot ?? ProcessSnapshot.take(under: paths.engine)
+        let live = snapshot ?? processes(paths.engine)
         return GameState.derive(paths, sessionRunning: isSessionRunning(using: live),
                                 gameProcessRunning: live.isRunning(executable: profile.executableName, under: paths.engine))
     }
@@ -216,7 +220,7 @@ public final class GameRuntime: @unchecked Sendable {
 
     /// The title of a game of this environment that runs now, Steam-tracked or not.
     func runningGameTitle() -> String? {
-        let live = ProcessSnapshot.take(under: paths.engine)
+        let live = processes(paths.engine)
         for game in paths.environment.games {
             let gamePaths = GamePaths(profile: game, root: paths.root)
             if GameRecipes.processNames(for: game).contains(where: { live.isRunning(executable: $0, under: paths.engine) })
@@ -260,7 +264,7 @@ public final class GameRuntime: @unchecked Sendable {
     /// prefix needs its server, so the server's lifetime is the session's.
     public func isSessionRunning(using snapshot: ProcessSnapshot? = nil) -> Bool {
         let server = paths.wineserver.resolvingSymlinksInPath().path
-        return (snapshot ?? ProcessSnapshot.take(under: paths.engine)).paths(under: paths.engine).contains { $0.path == server }
+        return (snapshot ?? processes(paths.engine)).paths(under: paths.engine).contains { $0.path == server }
     }
 
     public func startSteam(_ mode: SteamLaunch.Mode) throws {
@@ -287,8 +291,8 @@ public final class GameRuntime: @unchecked Sendable {
         let log = paths.logs.appendingPathComponent("steam-session.log")
         try fm.createDirectory(at: paths.logs, withIntermediateDirectories: true)
         if !running { fm.createFile(atPath: log.path, contents: nil) }
-        let handle = try FileHandle(forWritingTo: log)
-        try handle.seekToEnd()
+        // A Steam that its installer started has no log yet.
+        let handle = try ProcessRunner.appendHandle(for: log)
         let process = Process()
         process.executableURL = paths.wine
         process.arguments = SteamLaunch.arguments(paths, mode)
@@ -299,7 +303,7 @@ public final class GameRuntime: @unchecked Sendable {
         process.standardInput = FileHandle.nullDevice
         try process.run()
         try handle.close()
-        Thread.sleep(forTimeInterval: 2)
+        Thread.sleep(forTimeInterval: startupGrace)
         if !process.isRunning && process.terminationStatus != 0 {
             throw SetupError("Steam exited before it opened (exit \(process.terminationStatus)). Log: \(log.path)")
         }
@@ -434,7 +438,7 @@ extension GameRuntime {
         process.standardInput = FileHandle.nullDevice
         try process.run()
         try handle.close()
-        Thread.sleep(forTimeInterval: 2)
+        Thread.sleep(forTimeInterval: startupGrace)
         if !process.isRunning && process.terminationStatus != 0 {
             throw SetupError("\(arguments.first ?? "The program") exited at once (exit \(process.terminationStatus)). Log: \(log.path)")
         }
@@ -455,7 +459,7 @@ extension GameRuntime {
 
     // MARK: Battle.net
 
-    var battleNetInstallerRunning: Bool { LiveProcesses.isRunning(executable: "Battle.net-Setup.exe", under: paths.engine) }
+    var battleNetInstallerRunning: Bool { processes(paths.engine).isRunning(executable: "Battle.net-Setup.exe", under: paths.engine) }
 
     func installBattleNet() throws {
         guard !fm.fileExists(atPath: paths.battleNetExe.path) else { return }
