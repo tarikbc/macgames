@@ -1,0 +1,269 @@
+/* MacGames site. The look follows the app icon and the installer window: a navy-to-violet
+   field, the icon's amber glow with an ember edge, heavy condensed type, and HUD panels
+   with cut corners and amber corner brackets. */
+
+@font-face {
+  font-family: "Barlow Condensed";
+  font-style: italic;
+  font-weight: 800;
+  font-display: swap;
+  src: url("../fonts/barlow-condensed-800-italic.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Barlow Condensed";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("../fonts/barlow-condensed-700.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Barlow Condensed";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("../fonts/barlow-condensed-600.woff2") format("woff2");
+}
+
+:root {
+  --navy: #141a33;
+  --violet: #331c54;
+  --deep: #1e1238;
+  --amber: #e8a33a;
+  --amber-hi: #f3b85a;
+  --ember: #c7403a;
+  --grid: #b07cff;
+  --ink: #f4f1ff;
+  --muted: rgba(244, 241, 255, 0.68);
+  --faint: rgba(244, 241, 255, 0.12);
+  --glass: rgba(255, 255, 255, 0.045);
+  --display: "Barlow Condensed", "SF Pro Display", "Arial Narrow", sans-serif;
+  --body: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Inter, Roboto, sans-serif;
+  --cut: 14px;
+  --gutter: 24px;
+  --max: 1160px;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: 84px; }
+body {
+  margin: 0;
+  font: 17px/1.6 var(--body);
+  color: var(--ink);
+  background: var(--navy);
+  background-image:
+    radial-gradient(ellipse 70% 40% at 50% 0%, rgba(232, 163, 58, 0.16), transparent 70%),
+    linear-gradient(180deg, var(--navy) 0%, #1b1840 38%, var(--deep) 100%);
+  background-attachment: fixed;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+img { max-width: 100%; height: auto; display: block; }
+a { color: var(--amber-hi); text-underline-offset: 3px; }
+a:hover { color: var(--ink); }
+:focus-visible { outline: 2px solid var(--amber); outline-offset: 3px; }
+.wrap { width: min(var(--max), 100% - 2 * var(--gutter)); margin-inline: auto; }
+
+/* Header */
+.site-header {
+  position: sticky; top: 0; z-index: 10;
+  background: rgba(20, 26, 51, 0.72);
+  backdrop-filter: blur(18px) saturate(1.4);
+  -webkit-backdrop-filter: blur(18px) saturate(1.4);
+  border-bottom: 1px solid var(--faint);
+}
+.site-header .wrap { display: flex; align-items: center; gap: 28px; height: 64px; }
+.brand {
+  display: inline-flex; align-items: center; gap: 10px;
+  font: italic 800 26px/1 var(--display); color: var(--ink); text-decoration: none; letter-spacing: 0.01em;
+}
+.brand img { border-radius: 7px; }
+.nav { display: flex; gap: 24px; margin-left: auto; }
+.nav a { color: var(--muted); text-decoration: none; font-size: 15px; font-weight: 500; }
+.nav a:hover { color: var(--ink); }
+.header-cta { display: flex; align-items: center; gap: 16px; }
+.gh { color: var(--muted); display: inline-flex; }
+.gh:hover { color: var(--ink); }
+
+/* Buttons: cut corners, like the installer's panel */
+.btn {
+  display: inline-flex; align-items: center; gap: 10px;
+  padding: 14px 26px;
+  font: 700 20px/1 var(--display); letter-spacing: 0.02em; text-decoration: none;
+  clip-path: polygon(var(--cut) 0, 100% 0, 100% calc(100% - var(--cut)), calc(100% - var(--cut)) 100%, 0 100%, 0 var(--cut));
+  transition: background-color 0.2s, color 0.2s, transform 0.2s;
+}
+.btn-primary { background: var(--amber); color: #1a1030; }
+.btn-primary:hover { background: var(--amber-hi); color: #1a1030; transform: translateY(-1px); }
+.btn-ghost { background: var(--faint); color: var(--ink); }
+.btn-ghost:hover { background: rgba(244, 241, 255, 0.2); color: var(--ink); }
+.btn-small { padding: 10px 18px; font-size: 17px; --cut: 10px; }
+
+/* Hero: a title screen over a grid floor */
+.hero { position: relative; padding: 88px 0 72px; isolation: isolate; }
+.hero-copy { text-align: center; position: relative; }
+.marquee {
+  margin: 0;
+  font: italic 800 clamp(76px, 15vw, 168px)/0.9 var(--display);
+  letter-spacing: 0.005em;
+  color: #fff;
+  text-shadow: 0.035em 0.035em 0 var(--ember), 0 0 46px rgba(232, 163, 58, 0.55);
+}
+.marquee.small { font-size: clamp(56px, 10vw, 112px); }
+.tagline { margin: 18px 0 0; font: 600 clamp(24px, 3.4vw, 34px)/1.2 var(--display); color: var(--ink); letter-spacing: 0.01em; }
+.lead { max-width: 640px; margin: 18px auto 0; color: var(--muted); font-size: 19px; }
+.hero-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 14px; margin-top: 34px; }
+.hero-meta { margin: 18px 0 0; color: var(--muted); font-size: 14px; }
+
+.floor {
+  position: absolute; inset: auto 0 0 0; height: 70%; z-index: -1;
+  perspective: 420px; perspective-origin: 50% 0%; overflow: hidden;
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 45%);
+  mask-image: linear-gradient(to bottom, transparent 0%, #000 45%);
+}
+.floor-grid {
+  position: absolute; left: -50%; right: -50%; top: 0; height: 200%;
+  transform: rotateX(62deg); transform-origin: 50% 0%;
+  background-image:
+    linear-gradient(to right, rgba(176, 124, 255, 0.28) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(176, 124, 255, 0.28) 1px, transparent 1px);
+  background-size: 64px 64px;
+  animation: floor 3.2s linear infinite;
+}
+@keyframes floor { to { background-position: 0 64px; } }
+
+.hero-shot { margin-top: 64px; }
+
+/* HUD panels: cut corners and amber brackets. Screenshots carry their own window shadow,
+   so around them only the brackets show. */
+.hud { position: relative; margin: 0; padding: 14px; }
+figure.hud { padding: 0; }
+figure.hud::before { display: none; }
+.hud::before {
+  content: ""; position: absolute; inset: 0; z-index: -1;
+  background: var(--glass); border: 1px solid var(--faint);
+  clip-path: polygon(22px 0, calc(100% - 22px) 0, 100% 22px, 100% calc(100% - 22px), calc(100% - 22px) 100%, 22px 100%, 0 calc(100% - 22px), 0 22px);
+}
+.corner { position: absolute; width: 30px; height: 30px; border: 3px solid var(--amber); filter: drop-shadow(0 0 6px rgba(232, 163, 58, 0.6)); }
+.corner.tl { top: -2px; left: -2px; border-right: 0; border-bottom: 0; }
+.corner.tr { top: -2px; right: -2px; border-left: 0; border-bottom: 0; }
+.corner.bl { bottom: -2px; left: -2px; border-right: 0; border-top: 0; }
+.corner.br { bottom: -2px; right: -2px; border-left: 0; border-top: 0; }
+.hud img { border-radius: 10px; }
+
+/* Sections */
+.section { padding: 112px 0 0; }
+.section-head { max-width: 720px; margin-bottom: 40px; }
+.section-head h2, .group-row + .fineprint { margin: 0; }
+h2 { font: 700 clamp(40px, 6vw, 64px)/1 var(--display); letter-spacing: 0.005em; margin: 0; }
+.section-head p { color: var(--muted); font-size: 18px; margin: 18px 0 0; }
+h3 { font: 700 26px/1.1 var(--display); letter-spacing: 0.01em; margin: 0; }
+
+/* Games, grouped like the app's sidebar */
+.group { margin-top: 28px; }
+.group-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 16px; margin-bottom: 14px; }
+.group-head p { margin: 0; color: var(--muted); font-size: 15px; }
+.games { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+.games li {
+  position: relative; display: grid; gap: 2px; padding: 14px 16px 14px 20px; min-height: 78px; align-content: start;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--accent) 22%, transparent), var(--glass) 60%);
+  border-left: 4px solid var(--accent);
+  clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 0 100%);
+}
+.games strong { font-size: 16px; font-weight: 600; line-height: 1.3; }
+.games span { color: var(--muted); font-size: 14px; }
+.badge {
+  justify-self: start; margin-top: 8px;
+  font: italic 800 14px/1 var(--display); letter-spacing: 0.03em; color: var(--ink);
+  padding: 4px 8px 3px; background: var(--faint);
+}
+.badge.tested { color: #1a1030; background: var(--amber); }
+.group-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0 28px; }
+.group-row .games { grid-template-columns: 1fr; }
+.fineprint { margin-top: 28px; color: var(--muted); font-size: 14px; }
+
+/* How it works: the install bar runs through the steps */
+.split { display: grid; grid-template-columns: 1fr 1.15fr; gap: 64px; align-items: center; }
+.split.reverse { grid-template-columns: 1fr 1fr; }
+.steps { list-style: none; margin: 0; padding: 0; counter-reset: step; }
+.steps li { position: relative; padding: 0 0 30px 64px; counter-increment: step; }
+.steps li::before {
+  content: counter(step); position: absolute; left: 0; top: -4px; width: 44px; height: 44px;
+  display: grid; place-items: center; font: italic 800 26px/1 var(--display); color: #1a1030; background: var(--amber);
+  clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+}
+.steps li:not(:last-child)::after {
+  /* Segments of the installer's bar, from amber to ember. */
+  content: ""; position: absolute; left: 19px; top: 50px; bottom: 6px; width: 6px;
+  background: repeating-linear-gradient(to bottom, var(--amber) 0 10px, transparent 10px 16px);
+  -webkit-mask-image: linear-gradient(to bottom, #000, rgba(0, 0, 0, 0.45));
+  mask-image: linear-gradient(to bottom, #000, rgba(0, 0, 0, 0.45));
+}
+.steps li:nth-child(2)::before { background: #dc7a3a; }
+.steps li:nth-child(3)::before { background: var(--ember); color: #fff; }
+.steps h3 { margin-bottom: 6px; }
+.steps p { margin: 0; color: var(--muted); }
+
+/* Tuned for each game */
+.loadout { list-style: none; margin: 0 0 56px; padding: 0; display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; border-top: 1px solid var(--faint); }
+.loadout li { padding: 22px 22px 24px 0; border-bottom: 1px solid var(--faint); }
+.loadout li:not(:nth-child(4n)) { margin-right: 22px; }
+.loadout h3 { font-size: 23px; color: var(--amber-hi); margin-bottom: 6px; }
+.loadout p { margin: 0; color: var(--muted); font-size: 15px; }
+.shot-wide { max-width: 980px; margin-inline: auto; }
+
+/* Install */
+.installer { margin: 0; }
+.install-steps { margin: 0 0 30px; padding-left: 22px; color: var(--muted); }
+.install-steps li { margin-bottom: 8px; }
+.install-steps li::marker { color: var(--amber); font-weight: 700; }
+.needs { margin: 36px 0 0; display: grid; gap: 12px; }
+.needs div { display: grid; grid-template-columns: 96px 1fr; gap: 16px; padding-top: 12px; border-top: 1px solid var(--faint); }
+.needs dt { font: 700 19px/1.4 var(--display); color: var(--ink); }
+.needs dd { margin: 0; color: var(--muted); font-size: 15px; line-height: 1.6; }
+
+/* Open source */
+.contribute { padding: 36px; }
+.contribute p { color: var(--muted); }
+.contribute .hero-actions { justify-content: flex-start; margin-top: 22px; }
+
+/* Closing band */
+.cta-band { margin-top: 128px; padding: 96px 0 104px; text-align: center; position: relative; overflow: hidden; border-top: 1px solid var(--faint); }
+.cta-band::before {
+  content: ""; position: absolute; inset: 0; z-index: -1;
+  background: radial-gradient(ellipse 50% 70% at 50% 100%, rgba(199, 64, 58, 0.25), transparent 70%);
+}
+.cta-band p { color: var(--muted); font-size: 19px; margin: 14px 0 30px; }
+
+/* Footer */
+.site-footer { border-top: 1px solid var(--faint); padding: 36px 0 48px; color: var(--muted); font-size: 14px; }
+.footer-top { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px; }
+.site-footer nav { display: flex; flex-wrap: wrap; gap: 22px; }
+.site-footer nav a { color: var(--muted); text-decoration: none; }
+.site-footer nav a:hover { color: var(--ink); }
+.site-footer p { margin: 22px 0 0; }
+
+@media (max-width: 980px) {
+  .group-row { grid-template-columns: 1fr; }
+  .loadout { grid-template-columns: repeat(2, 1fr); }
+  .loadout li:not(:nth-child(4n)) { margin-right: 0; }
+  .loadout li:nth-child(odd) { margin-right: 22px; }
+  .split, .split.reverse { grid-template-columns: 1fr; gap: 48px; }
+}
+@media (max-width: 720px) {
+  :root { --gutter: 16px; }
+  .nav { display: none; }
+  .header-cta { margin-left: auto; }
+  .hero { padding-top: 60px; }
+  .section { padding-top: 84px; }
+  .loadout { grid-template-columns: 1fr; }
+  .loadout li:nth-child(odd) { margin-right: 0; }
+  .needs div { grid-template-columns: 1fr; gap: 2px; }
+  .contribute { padding: 26px 22px; }
+  .games { grid-template-columns: 1fr; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .floor-grid { animation: none; }
+  html { scroll-behavior: auto; }
+  .btn { transition: none; }
+}

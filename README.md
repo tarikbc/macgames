@@ -17,7 +17,7 @@
 </p>
 
 <p align="center">
-  <img src="docs/images/library-aoe4.jpg" width="820" alt="The MacGames library with Age of Empires IV selected">
+  <img src="docs/assets/img/library-aoe4.webp" width="820" alt="The MacGames library with Age of Empires IV selected, ready to play">
 </p>
 
 ## What it does
@@ -111,7 +111,7 @@ To build MacGames yourself, use Xcode.
 3. Choose **Play**. The Steam card in the sidebar shows downloads and lets you open or stop Steam.
 
 <p align="center">
-  <img src="docs/images/library-cs2.jpg" width="820" alt="Counter-Strike 2 downloading, with progress in the Steam card">
+  <img src="docs/assets/img/setup-rdr2.webp" width="820" alt="Red Dead Redemption 2 in the Rockstar group, with its setup steps">
 </p>
 
 Settings for each game are on its page: the Metal performance HUD, the x87 optimization for

@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MacGames: Windows games on your Mac</title>
+  <meta name="description" content="MacGames sets up Steam, Battle.net and twenty Windows games on Apple silicon Macs. It picks the right Wine engine and graphics layer for each game, so you can press Play. Free and open source.">
+  <meta name="theme-color" content="#141A33">
+  <link rel="icon" href="assets/img/favicon-32.png" sizes="32x32">
+  <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+  <link rel="preload" href="assets/fonts/barlow-condensed-800-italic.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="assets/fonts/barlow-condensed-700.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="assets/css/style.css">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="MacGames: Windows games on your Mac">
+  <meta property="og:description" content="Steam, Battle.net and twenty Windows games on Apple silicon, set up in one click. Free and open source.">
+  <meta property="og:url" content="https://tarikbc.github.io/macgames/">
+  <meta property="og:image" content="https://tarikbc.github.io/macgames/assets/img/og-image.jpg">
+  <meta name="twitter:card" content="summary_large_image">
+</head>
+<body>
+
+  <header class="site-header">
+    <div class="wrap">
+      <a class="brand" href="#top">
+        <img src="assets/img/icon-64.png" width="30" height="30" alt="">
+        MacGames
+      </a>
+      <nav class="nav" aria-label="Sections">
+        <a href="#games">Games</a>
+        <a href="#how">How it works</a>
+        <a href="#install">Install</a>
+        <a href="#source">Open source</a>
+      </nav>
+      <div class="header-cta">
+        <a class="gh" href="https://github.com/tarikbc/macgames" aria-label="MacGames on GitHub" title="GitHub">
+          <svg width="22" height="22" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+        </a>
+        <a class="btn btn-primary btn-small" href="https://github.com/tarikbc/macgames/releases/latest" data-download>Download</a>
+      </div>
+    </div>
+  </header>
+
+  <main id="top">
+    <section class="hero">
+      <div class="floor" aria-hidden="true"><div class="floor-grid"></div></div>
+      <div class="wrap hero-copy">
+        <h1 class="marquee">MacGames</h1>
+        <p class="tagline">Windows games on your Mac.</p>
+        <p class="lead">MacGames sets up Steam, Battle.net and twenty Windows games on Apple silicon. It picks the right Wine engine and graphics layer for each game, so all you do is press Play.</p>
+        <div class="hero-actions">
+          <a class="btn btn-primary" href="https://github.com/tarikbc/macgames/releases/latest" data-download>
+            <svg width="14" height="16" viewBox="0 0 14 16" aria-hidden="true"><path d="M1 1.5v13l12-6.5z" fill="currentColor"/></svg>
+            Download for Mac
+          </a>
+          <a class="btn btn-ghost" href="https://github.com/tarikbc/macgames">View the source</a>
+        </div>
+        <p class="hero-meta">Free and open source. Needs macOS 26 on Apple silicon. <span data-version></span></p>
+      </div>
+      <div class="wrap">
+        <figure class="hud hero-shot">
+          <span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span>
+          <img src="assets/img/library-aoe4.webp" width="1800" height="1179" alt="The MacGames library: Age of Empires IV is selected and ready to play, with the other games in the sidebar.">
+        </figure>
+      </div>
+    </section>
+
+    <section class="section" id="games">
+      <div class="wrap">
+        <div class="section-head">
+          <h2>Twenty games, one library.</h2>
+          <p>Every game comes with its own recipe: the renderer, the Windows settings and the fixes it needs. Two are tested on a Mac so far. The others are complete recipes that wait for your test report.</p>
+        </div>
+
+        <div class="group">
+          <div class="group-head">
+            <h3>Steam library</h3>
+            <p>One Steam client for all of these, so you sign in once.</p>
+          </div>
+          <ul class="games">
+            <li style="--accent:#C8403B"><strong>Age of Empires IV</strong><span>D3DMetal and fast x87 math</span><em class="badge tested">Tested</em></li>
+            <li style="--accent:#E9A23B"><strong>Counter-Strike 2</strong><span>DXMT with early shader compile</span><em class="badge tested">Tested</em></li>
+            <li style="--accent:#2F6DB5"><strong>Age of Empires III: Definitive Edition</strong><span>D3DMetal</span></li>
+            <li style="--accent:#C9A227"><strong>Age of Mythology: Retold</strong><span>D3DMetal, fullscreen below the notch</span></li>
+            <li style="--accent:#8A9A5B"><strong>Company of Heroes 3</strong><span>D3DMetal, Microsoft's runtime for multiplayer</span></li>
+            <li style="--accent:#6B8E23"><strong>Command &amp; Conquer: Generals Zero Hour</strong><span>Wine D3D8</span><em class="badge">Play Online</em></li>
+            <li style="--accent:#C0392B"><strong>Command &amp; Conquer: Red Alert 2</strong><span>cnc-ddraw</span><em class="badge">Play Online</em></li>
+            <li style="--accent:#C2A049"><strong>Heroes of Might and Magic III</strong><span>cnc-ddraw and a sound fix</span></li>
+            <li style="--accent:#B3261E"><strong>Diablo IV</strong><span>D3DMetal</span></li>
+            <li style="--accent:#A8342A"><strong>Path of Exile 2</strong><span>D3DMetal, DirectX 12</span></li>
+            <li style="--accent:#B08D57"><strong>Hogwarts Legacy</strong><span>D3DMetal</span></li>
+            <li style="--accent:#B8322A"><strong>The Witcher 3: Wild Hunt</strong><span>D3DMetal and a FidelityFX fix</span></li>
+            <li style="--accent:#C8A951"><strong>Elden Ring</strong><span>D3DMetal, offline play</span></li>
+          </ul>
+        </div>
+
+        <div class="group-row">
+          <div class="group">
+            <div class="group-head">
+              <h3>Battle.net</h3>
+              <p>Blizzard's own client, in its own Windows environment.</p>
+            </div>
+            <ul class="games">
+              <li style="--accent:#B3261E"><strong>Diablo IV</strong><span>D3DMetal</span></li>
+              <li style="--accent:#8E1B12"><strong>Diablo II: Resurrected</strong><span>D3DMetal</span></li>
+            </ul>
+          </div>
+          <div class="group">
+            <div class="group-head">
+              <h3>Rockstar</h3>
+              <p>Steam and the Rockstar Games Launcher, set up together.</p>
+            </div>
+            <ul class="games">
+              <li style="--accent:#B22222"><strong>Red Dead Redemption 2</strong><span>D3DMetal</span></li>
+              <li style="--accent:#E67E22"><strong>GTA San Andreas: The Definitive Edition</strong><span>D3DMetal</span></li>
+              <li style="--accent:#2E8B57"><strong>Grand Theft Auto V Enhanced</strong><span>D3DMetal 4.0, story mode</span></li>
+            </ul>
+          </div>
+          <div class="group">
+            <div class="group-head">
+              <h3>On their own</h3>
+              <p>Games that need an engine of their own.</p>
+            </div>
+            <ul class="games">
+              <li style="--accent:#9AA5B1"><strong>The Elder Scrolls V: Skyrim Special Edition</strong><span>DXMT</span></li>
+              <li style="--accent:#F99E1A"><strong>Overwatch</strong><span>DXMT with pipelines prepared before launch</span></li>
+            </ul>
+          </div>
+        </div>
+        <p class="fineprint">You need to own each game. MacGames never includes or downloads games itself. Online play with anti-cheat is at your own risk.</p>
+      </div>
+    </section>
+
+    <section class="section" id="how">
+      <div class="wrap split">
+        <div>
+          <div class="section-head">
+            <h2>From Set up to Play.</h2>
+            <p>Three steps, and only the second one asks anything of you.</p>
+          </div>
+          <ol class="steps">
+            <li>
+              <h3>Set up</h3>
+              <p>MacGames checks your Mac, installs the Wine engine and makes a Windows environment for the game. It takes about a minute.</p>
+            </li>
+            <li>
+              <h3>Install</h3>
+              <p>Steam or Battle.net opens inside that environment. Sign in with your own account and install the game the usual way.</p>
+            </li>
+            <li>
+              <h3>Play</h3>
+              <p>Press Play. The game starts with its renderer, its fixes and your settings. The sidebar shows downloads and what is running.</p>
+            </li>
+          </ol>
+        </div>
+        <figure class="hud shot-side">
+          <span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span>
+          <img src="assets/img/setup-rdr2.webp" width="1400" height="917" loading="lazy" alt="Red Dead Redemption 2 before setup, with the six setup steps listed under the Set up button.">
+        </figure>
+      </div>
+    </section>
+
+    <section class="section" id="tuned">
+      <div class="wrap">
+        <div class="section-head">
+          <h2>Tuned for each game.</h2>
+          <p>There is no single setting that runs everything well. MacGames brings the parts each game needs, and keeps the games that need different ones apart.</p>
+        </div>
+        <ul class="loadout">
+          <li><h3>Apple D3DMetal</h3><p>DirectX 12 and 11 through Metal, for most modern games.</p></li>
+          <li><h3>DXMT</h3><p>DirectX 11 on Metal, with shaders compiled before they are needed.</p></li>
+          <li><h3>x87sidecar</h3><p>Fast x87 math for Age of Empires IV, where Rosetta 2 is slow.</p></li>
+          <li><h3>cnc-ddraw</h3><p>DirectDraw for classics such as Heroes III and Red Alert 2.</p></li>
+          <li><h3>Notch-safe fullscreen</h3><p>Age of Mythology: Retold stays clear of the camera housing.</p></li>
+          <li><h3>Game controllers</h3><p>Controllers work through SDL, also when the window is in the back.</p></li>
+          <li><h3>Online clients</h3><p>GeneralsOnline and CnCNet, set up and started with one button.</p></li>
+          <li><h3>Kept apart</h3><p>Windows has no links into your home folder. Saves and settings stay when you uninstall a game.</p></li>
+        </ul>
+        <figure class="hud shot-wide">
+          <span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span>
+          <img src="assets/img/library-cs2.webp" width="1400" height="917" loading="lazy" alt="Counter-Strike 2 ready to play, with its settings: the performance HUD and the window size.">
+        </figure>
+      </div>
+    </section>
+
+    <section class="section" id="install">
+      <div class="wrap split reverse">
+        <figure class="installer">
+          <img src="assets/img/installer.webp" width="1100" height="883" loading="lazy" alt="The MacGames installer window: drag MacGames into Applications.">
+        </figure>
+        <div>
+          <div class="section-head">
+            <h2>On your Mac in a minute.</h2>
+          </div>
+          <ol class="install-steps">
+            <li>Download the disk image. It is signed and notarized by Apple.</li>
+            <li>Drag MacGames into Applications, then open it from there.</li>
+            <li>Choose a game and press Set up.</li>
+          </ol>
+          <a class="btn btn-primary" href="https://github.com/tarikbc/macgames/releases/latest" data-download>
+            <svg width="14" height="16" viewBox="0 0 14 16" aria-hidden="true"><path d="M1 1.5v13l12-6.5z" fill="currentColor"/></svg>
+            Download for Mac
+          </a>
+          <dl class="needs">
+            <div><dt>Mac</dt><dd>Apple silicon, M1 or later</dd></div>
+            <div><dt>macOS</dt><dd>26 or later, with Rosetta 2</dd></div>
+            <div><dt>Space</dt><dd>About 3 GB, plus your games</dd></div>
+            <div><dt>Updates</dt><dd>MacGames updates itself. You can also choose Check for Updates in the MacGames menu.</dd></div>
+          </dl>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="source">
+      <div class="wrap split">
+        <div class="section-head">
+          <h2>Free to play with, never for sale.</h2>
+          <p>MacGames is open source under the PolyForm Noncommercial license. You can use it, change it and share it for anything that is not commercial. Nobody can sell it.</p>
+          <p>It stands on the work of open-source projects: <a href="https://www.winehq.org">Wine</a>, <a href="https://github.com/3Shain/dxmt">DXMT</a>, <a href="https://github.com/athei/x87sidecar">x87sidecar</a>, <a href="https://github.com/FunkyFr3sh/cnc-ddraw">cnc-ddraw</a>, <a href="https://www.libsdl.org">SDL</a> and <a href="https://sparkle-project.org">Sparkle</a>.</p>
+        </div>
+        <div class="hud contribute">
+          <span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span>
+          <h3>Help a game reach Tested</h3>
+          <p>Try a game you own and tell us what happened, or add a game: each one is a single profile in code.</p>
+          <div class="hero-actions">
+            <a class="btn btn-primary" href="https://github.com/tarikbc/macgames/issues/new/choose">Send a test report</a>
+            <a class="btn btn-ghost" href="https://github.com/tarikbc/macgames/blob/main/CONTRIBUTING.md">Contribute</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="cta-band">
+      <div class="wrap">
+        <h2 class="marquee small">Press Play.</h2>
+        <p>Your Windows library, on the Mac you already have.</p>
+        <a class="btn btn-primary" href="https://github.com/tarikbc/macgames/releases/latest" data-download>
+          <svg width="14" height="16" viewBox="0 0 14 16" aria-hidden="true"><path d="M1 1.5v13l12-6.5z" fill="currentColor"/></svg>
+          Download for Mac
+        </a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <div class="footer-top">
+        <a class="brand" href="#top"><img src="assets/img/icon-64.png" width="26" height="26" alt="">MacGames</a>
+        <nav aria-label="Project">
+          <a href="https://github.com/tarikbc/macgames">GitHub</a>
+          <a href="https://github.com/tarikbc/macgames/releases">Releases</a>
+          <a href="https://github.com/tarikbc/macgames/blob/main/CHANGELOG.md">Changelog</a>
+          <a href="https://github.com/tarikbc/macgames/blob/main/LICENSE">License</a>
+        </nav>
+      </div>
+      <p>MacGames is not affiliated with Valve, Blizzard, Rockstar Games, Microsoft or Apple. Game names and artwork belong to their owners.</p>
+    </div>
+  </footer>
+
+  <script src="assets/js/site.js" defer></script>
+</body>
+</html>
