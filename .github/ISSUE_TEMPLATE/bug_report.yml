@@ -1,0 +1,50 @@
+name: Bug report
+description: Something does not work as it should
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: Thank you for the report. The details below help us reproduce the problem quickly.
+  - type: dropdown
+    id: game
+    attributes:
+      label: Game
+      options: [Age of Empires IV, Counter-Strike 2, Not about one game]
+    validations: { required: true }
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened, and what did you expect?
+      placeholder: I chose Play, Steam opened, but the game closed after the loading screen.
+    validations: { required: true }
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Select Counter-Strike 2
+        2. Choose Play
+    validations: { required: true }
+  - type: input
+    id: mac
+    attributes:
+      label: Mac model and chip
+      placeholder: MacBook Pro 16-inch, M3 Max
+    validations: { required: true }
+  - type: input
+    id: macos
+    attributes:
+      label: macOS version
+      placeholder: "27.0.1"
+    validations: { required: true }
+  - type: textarea
+    id: status
+    attributes:
+      label: Output of the status command
+      description: Run `MacGames.app/Contents/MacOS/MacGames --command status --game <id>` and paste the result.
+      render: text
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: Attach `steam-session.log` and the newest command logs from Settings > Logs. Remove anything private first.

@@ -1,0 +1,27 @@
+name: Game request
+description: Ask for a game, or tell us you are working on one
+labels: [game request]
+body:
+  - type: input
+    id: title
+    attributes:
+      label: Game
+      placeholder: The Witcher 3
+    validations: { required: true }
+  - type: input
+    id: appid
+    attributes:
+      label: Steam app ID
+      description: The number in the game's Steam store URL.
+      placeholder: "292030"
+    validations: { required: true }
+  - type: dropdown
+    id: anticheat
+    attributes:
+      label: Does the game use anti-cheat?
+      options: [No, "Yes (please name it below)", I do not know]
+  - type: textarea
+    id: notes
+    attributes:
+      label: What do you know so far?
+      description: Tests with CrossOver, Whisky, the runtime package or Proton help a lot. Say if you want to build the profile yourself.

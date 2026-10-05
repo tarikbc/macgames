@@ -38,7 +38,7 @@
 | Game | Renderer | Status |
 |---|---|---|
 | Age of Empires IV | Apple D3DMetal, x87sidecar optimization | Tested, runs on an M3 Max |
-| Counter-Strike 2 | DXMT with early shader compile | In testing |
+| Counter-Strike 2 | DXMT with early shader compile | Tested, reaches the main menu on an M3 Max |
 
 You need to own each game on Steam. MacGames never includes or downloads games itself.
 
