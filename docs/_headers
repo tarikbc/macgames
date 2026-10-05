@@ -1,0 +1,18 @@
+# Cloudflare Pages caching headers.
+# Fonts never change under the same name -> cache hard. CSS and JS are version-busted
+# (?v=N, bumped on every change) -> cache hard, immutable. Images reuse their names
+# across updates, so they cache a month, not forever. HTML keeps the platform default
+# (short) so edits go live fast.
+
+/assets/fonts/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/assets/css/*
+  Cache-Control: public, max-age=31536000, immutable
+/assets/js/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/assets/img/*
+  Cache-Control: public, max-age=2592000
+/images/*
+  Cache-Control: public, max-age=2592000

@@ -1,0 +1,3 @@
+# Cloudflare Pages redirects.
+# /download -> the newest release, where the disk image is.
+/download  https://github.com/tarikbc/macgames/releases/latest  302
