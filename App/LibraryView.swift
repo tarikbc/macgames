@@ -1,3 +1,4 @@
+import AppKit
 import MacGamesCore
 import SwiftUI
 
@@ -172,40 +173,100 @@ private struct SteamControl: View {
     var body: some View {
         let game = library.selected
         let running = library.steamRunning
-        HStack(spacing: Space.m) {
-            ZStack {
-                RoundedRectangle(cornerRadius: 8).fill(.white.opacity(0.08))
-                Image(systemName: "gamecontroller.fill")
-                    .font(.system(size: 14))
-                    .foregroundStyle(running ? .white : .secondary)
-                    .symbolEffect(.pulse, isActive: running)
-            }
-            .frame(width: 32, height: 32)
-            VStack(alignment: .leading, spacing: 2) {
-                Text("Steam").font(.system(size: 13, weight: .semibold))
-                Text(running ? "Running" : (game?.steamAvailable == true ? "Not running" : "Not set up"))
-                    .font(.system(size: 11))
-                    .foregroundStyle(.secondary)
-                    .contentTransition(.opacity)
-            }
-            Spacer(minLength: 0)
-            if running {
-                Button { withAnimation(Motion.switchGame) { library.requestStopSteam() } } label: {
-                    Image(systemName: "power").frame(width: 26, height: 26)
+        let installed = game?.steamAvailable == true
+        VStack(alignment: .leading, spacing: Space.m) {
+            HStack(spacing: Space.m) {
+                SteamIcon(image: library.steamIcon, running: running)
+                VStack(alignment: .leading, spacing: 2) {
+                    HStack(spacing: 6) {
+                        Text("Steam").font(.system(size: 14, weight: .bold))
+                        if running {
+                            Circle().fill(.green).frame(width: 6, height: 6)
+                                .transition(.scale.combined(with: .opacity))
+                        }
+                    }
+                    Text(subtitle(running: running, installed: installed))
+                        .font(.system(size: 11))
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                        .contentTransition(.opacity)
                 }
-                    .buttonStyle(PressableStyle())
-                    .help("Stop Steam and every game it runs")
-                    .disabled(game?.locked ?? true)
-                    .transition(.scale.combined(with: .opacity))
+                Spacer(minLength: 0)
             }
-            Button { game?.openSteam() } label: { Image(systemName: "arrow.up.forward.app").frame(width: 26, height: 26) }
+
+            ForEach(library.steam.downloads, id: \.profile.id) { download in
+                VStack(alignment: .leading, spacing: Space.xs) {
+                    Text("Downloading \(download.profile.title)")
+                        .font(.system(size: 11))
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                    DownloadBar(progress: download.progress, accent: download.profile.accent)
+                }
+                .transition(.opacity.combined(with: .move(edge: .bottom)))
+            }
+
+            HStack(spacing: Space.s) {
+                Button { game?.openSteam() } label: {
+                    Label("Open Steam", systemImage: "arrow.up.forward.app")
+                        .font(.system(size: 12, weight: .semibold))
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 30)
+                        .background(Capsule().fill(.white.opacity(0.12)))
+                        .contentShape(Capsule())
+                }
                 .buttonStyle(PressableStyle())
-                .help("Open Steam")
-                .disabled(game?.steamAvailable != true || game?.locked == true)
+                .disabled(!installed || game?.locked == true)
+                .keyboardShortcut("o", modifiers: .command)
+                .help("Open the Steam window (⌘O)")
+
+                if running {
+                    Button { withAnimation(Motion.switchGame) { library.requestStopSteam() } } label: {
+                        Image(systemName: "power")
+                            .font(.system(size: 12, weight: .bold))
+                            .frame(width: 30, height: 30)
+                            .background(Circle().fill(.white.opacity(0.12)))
+                            .contentShape(Circle())
+                    }
+                    .buttonStyle(PressableStyle())
+                    .disabled(game?.locked ?? true)
+                    .help("Stop Steam and every game it runs")
+                    .transition(.scale.combined(with: .opacity))
+                }
+            }
         }
-        .padding(Space.s + 2)
-        .background(RoundedRectangle(cornerRadius: 10).fill(.white.opacity(0.05)))
-        .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(.white.opacity(0.08)))
+        .padding(Space.m)
+        .background(RoundedRectangle(cornerRadius: 12).fill(.white.opacity(0.06)))
+        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(.white.opacity(0.09)))
         .animation(Motion.morph, value: running)
+        .animation(Motion.morph, value: library.steam.downloads.map(\.profile.id))
+    }
+
+    private func subtitle(running: Bool, installed: Bool) -> String {
+        if !installed { return "Set up a game to install Steam" }
+        if let name = library.steam.account?.personaName { return running ? "Signed in as \(name)" : "\(name), not running" }
+        return running ? "Running" : "Not running"
+    }
+}
+
+/// Steam's own round icon from the installed client; a symbol until it exists.
+private struct SteamIcon: View {
+    let image: NSImage?
+    let running: Bool
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    var body: some View {
+        ZStack {
+            if let image {
+                Image(nsImage: image).resizable().interpolation(.high).aspectRatio(contentMode: .fit)
+            } else {
+                Circle().fill(.white.opacity(0.1))
+                Image(systemName: "gamecontroller.fill").font(.system(size: 15)).foregroundStyle(.secondary)
+            }
+        }
+        .frame(width: 36, height: 36)
+        .saturation(running ? 1 : 0.2)
+        .opacity(running ? 1 : 0.75)
+        .shadow(color: running ? Color(red: 0.3, green: 0.55, blue: 0.95).opacity(0.5) : .clear, radius: running && !reduceMotion ? 8 : 0)
+        .animation(.easeInOut(duration: 0.6), value: running)
     }
 }

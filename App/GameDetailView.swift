@@ -66,7 +66,6 @@ private struct ActionBar: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: Space.m) {
-        HStack(alignment: .center, spacing: Space.m) {
             Button(action: game.primaryAction) {
                 HStack(spacing: Space.s) {
                     if game.busy {
@@ -91,50 +90,45 @@ private struct ActionBar: View {
             .animation(Motion.morph, value: game.state)
             .animation(Motion.morph, value: game.busy)
 
-            Button(action: game.openSteam) {
-                Label("Open Steam", systemImage: "arrow.up.forward.app")
-                    .font(.system(size: 13, weight: .semibold))
-                    .padding(.horizontal, Space.l + Space.xs)
-                    .frame(height: 44)
-                    .background(Capsule().fill(.white.opacity(0.1)))
-                    .contentShape(Capsule())
-            }
-            .buttonStyle(PressableStyle())
-            .disabled(!game.steamAvailable || game.locked)
-            .keyboardShortcut("o", modifiers: .command)
-            .help("Open this game's Steam window")
+            Text(game.activity ?? game.state.summary)
+                .font(.system(size: 13))
+                .foregroundStyle(.white.opacity(0.78))
+                .lineLimit(2)
+                .contentTransition(.opacity)
+                .padding(.leading, Space.xs)
+                .animation(Motion.morph, value: game.activity)
 
-            if game.sessionRunning {
-                Button(action: game.requestStop) {
-                    Image(systemName: "power")
-                        .font(.system(size: 14, weight: .bold))
-                        .frame(width: 44, height: 44)
-                        .background(Circle().fill(.white.opacity(0.1)))
-                        .contentShape(Circle())
-                }
-                .buttonStyle(PressableStyle())
-                .disabled(game.locked)
-                .help("Stop Steam and every game it runs")
-                .transition(.scale.combined(with: .opacity))
+            if game.state == .installing, let progress = game.downloadProgress {
+                DownloadBar(progress: progress, accent: game.profile.accent)
+                    .frame(maxWidth: 420)
+                    .padding(.leading, Space.xs)
+                    .transition(.opacity.combined(with: .move(edge: .top)))
             }
-
         }
-            HStack(spacing: Space.s) {
-                Text(game.activity ?? game.state.summary)
-                    .foregroundStyle(.white.opacity(0.78))
-                    .contentTransition(.opacity)
-                if game.sessionRunning && game.state != .running {
-                    Text("Steam is running.")
-                        .foregroundStyle(.secondary)
-                        .transition(.opacity)
+        .animation(Motion.morph, value: game.state)
+    }
+}
+
+/// A thin bar with the percentage, animated as Steam reports bytes.
+struct DownloadBar: View {
+    let progress: Double
+    let accent: Color
+
+    var body: some View {
+        HStack(spacing: Space.s) {
+            GeometryReader { geo in
+                ZStack(alignment: .leading) {
+                    Capsule().fill(.white.opacity(0.12))
+                    Capsule().fill(accent).frame(width: max(4, geo.size.width * progress))
                 }
             }
-            .font(.system(size: 13))
-            .lineLimit(2)
-            .padding(.leading, Space.xs)
-            .animation(Motion.morph, value: game.activity)
+            .frame(height: 5)
+            Text(progress, format: .percent.precision(.fractionLength(0)))
+                .font(.system(size: 11, weight: .medium).monospacedDigit())
+                .foregroundStyle(.secondary)
+                .contentTransition(.numericText(value: progress))
         }
-        .animation(Motion.morph, value: game.sessionRunning)
+        .animation(.easeOut(duration: 0.6), value: progress)
     }
 }
 

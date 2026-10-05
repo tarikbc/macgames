@@ -17,8 +17,10 @@ final class GameModel: Identifiable {
     let profile: GameProfile
     let runtime: GameRuntime
     private(set) var state: GameState = .notSetUp
-    /// This game's Wine session (Steam and the game) is alive.
+    /// The shared Wine session (Steam and any game) is alive.
     private(set) var sessionRunning = false
+    /// 0...1 while Steam installs or updates this game.
+    private(set) var downloadProgress: Double?
     @ObservationIgnored private let gate: OperationGate
     /// This game's task is running.
     var busy: Bool { gate.owner == id }
@@ -51,9 +53,12 @@ final class GameModel: Identifiable {
     func refresh() async {
         guard !locked else { return }
         let r = runtime
-        let (state, live) = await Task.detached { (r.state(), r.isSessionRunning()) }.value
+        let (state, live, download) = await Task.detached {
+            (r.state(), r.isSessionRunning(), SteamStatus.downloadProgress(r.paths))
+        }.value
         self.state = state
         self.sessionRunning = live
+        self.downloadProgress = download
     }
 
     /// The one action that moves this game to its next stage.
@@ -148,9 +153,18 @@ final class LibraryModel {
         selectedID = games[index].id
     }
 
+    private(set) var steam = SteamStatus(account: nil, downloads: [])
+    /// The Steam client's own icon, read from its install once it exists.
+    private(set) var steamIcon: NSImage?
+
     func poll() async {
+        let root = GamePaths.defaultRoot()
         while !Task.isCancelled {
             for game in games { await game.refresh() }
+            steam = await Task.detached { SteamStatus.read(root: root) }.value
+            if steamIcon == nil, let game = games.first {
+                steamIcon = NSImage(contentsOf: game.runtime.paths.steamDir.appendingPathComponent("public/steam_tray.ico"))
+            }
             try? await Task.sleep(for: .seconds(3))
         }
     }
