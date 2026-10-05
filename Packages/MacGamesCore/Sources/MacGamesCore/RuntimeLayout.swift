@@ -19,6 +19,8 @@ public struct RuntimeLayout: Sendable {
 
     public var engine: URL { resources.appendingPathComponent("Engine") }
     public func overlay(_ name: String) -> URL { resources.appendingPathComponent("Overlays/\(name)") }
+    /// Small per-game files shipped with the app, such as wrapper DLLs.
+    public func gameFiles(_ id: String) -> URL { resources.appendingPathComponent("Games/\(id)") }
     public var dependencyLinks: URL { resources.appendingPathComponent("dependency-links.json") }
     public var bridge: URL { helpers.appendingPathComponent("MacGamesBridge") }
     public var sidecar: URL { helpers.appendingPathComponent("x87sidecar") }

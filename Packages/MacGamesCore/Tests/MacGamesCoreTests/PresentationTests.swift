@@ -4,7 +4,7 @@ import Testing
 
 @Suite struct PresentationTests {
     @Test func artworkComesFromTheSteamAppID() {
-        let art = GameProfile.cs2.artwork
+        let art = GameProfile.cs2.artwork!
         #expect(art.hero.absoluteString == "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/730/library_hero.jpg")
         #expect(art.logo.absoluteString.hasSuffix("/apps/730/logo.png"))
         #expect(art.portrait.absoluteString.hasSuffix("/apps/730/library_600x900.jpg"))
@@ -13,6 +13,10 @@ import Testing
     @Test func eachGameKeepsItsArtFocusAndAccent() {
         #expect(GameProfile.cs2.presentation.heroFocus.x > 0.7, "the CS2 figures stand on the right")
         #expect(GameProfile.aoe4.presentation.accentHex != GameProfile.cs2.presentation.accentHex)
+    }
+
+    @Test func gamesSteamDoesNotSellHaveNoArtwork() {
+        #expect(GameProfile.diablo2Resurrected.artwork == nil)
     }
 
     @Test func defaultPresentationIsCentered() {

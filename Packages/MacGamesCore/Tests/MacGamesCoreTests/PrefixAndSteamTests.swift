@@ -16,25 +16,54 @@ import Testing
         #expect(FileManager.default.fileExists(atPath: user.appendingPathComponent("AppData").path))
     }
 
-    @Test func aoe4CopiesTheD3DMetalLibrariesIntoSystem32() {
-        let p = GamePaths(profile: .aoe4, root: URL(fileURLWithPath: "/r"))
-        let copies = PrefixSetup.graphicsCopies(for: p)
-        #expect(copies.map(\.to.lastPathComponent) == ["dxgi.dll", "d3d11.dll", "d3d12.dll", "atidxx64.dll"])
-        #expect(copies.allSatisfy { $0.from.path.hasPrefix("/r/deps/Frameworks/renderer/d3dmetal/wine/x86_64-windows/") })
-        #expect(copies.allSatisfy { $0.to.path.hasPrefix("/r/prefix/drive_c/windows/system32/") })
+    func targets(_ profile: GameProfile) -> [String] {
+        PrefixSetup.graphicsCopies(for: GamePaths(profile: profile, root: URL(fileURLWithPath: "/r")))
+            .map { "\($0.to.deletingLastPathComponent().lastPathComponent)/\($0.to.lastPathComponent)" }
     }
 
-    @Test func cs2CopiesWinemetalForBothArchitectures() {
-        let p = GamePaths(profile: .cs2, root: URL(fileURLWithPath: "/r"))
-        let copies = PrefixSetup.graphicsCopies(for: p)
-        #expect(copies.map(\.from.path) == ["/r/engine/lib/wine/x86_64-windows/winemetal.dll", "/r/engine/lib/wine/i386-windows/winemetal.dll"])
-        #expect(copies.map(\.to.path) == ["/r/prefix/drive_c/windows/system32/winemetal.dll", "/r/prefix/drive_c/windows/syswow64/winemetal.dll"])
+    @Test func sharedSteamGetsD3DMetalAndTheDXMTBridge() {
+        #expect(targets(.aoe4) == ["system32/dxgi.dll", "system32/d3d11.dll", "system32/d3d12.dll", "system32/atidxx64.dll",
+                                   "system32/winemetal.dll", "syswow64/winemetal.dll"])
+        let copies = PrefixSetup.graphicsCopies(for: GamePaths(profile: .cs2, root: URL(fileURLWithPath: "/r")))
+        #expect(copies[0].from.path == "/r/deps/Frameworks/renderer/d3dmetal/wine/x86_64-windows/dxgi.dll")
+        #expect(copies[4].from.path == "/r/engine/lib/wine/x86_64-windows/winemetal.dll")
     }
 
-    @Test func sharedPrefixGetsEveryGamesGraphicsLibraries() {
-        let names = PrefixSetup.libraryGraphicsCopies(root: URL(fileURLWithPath: "/r")).map { "\($0.to.deletingLastPathComponent().lastPathComponent)/\($0.to.lastPathComponent)" }
-        #expect(names == ["system32/dxgi.dll", "system32/d3d11.dll", "system32/d3d12.dll", "system32/atidxx64.dll",
-                          "system32/winemetal.dll", "syswow64/winemetal.dll"])
+    @Test func skyrimGetsTheEnginesDXMTInBothSystemFolders() {
+        #expect(targets(.skyrim).count == 8)
+        #expect(targets(.skyrim).contains("syswow64/d3d10core.dll"))
+    }
+
+    @Test func battleNetAddsThe32BitDXMTClientRenderer() {
+        #expect(targets(.diablo2Resurrected) == ["system32/dxgi.dll", "system32/d3d11.dll", "system32/d3d12.dll", "system32/atidxx64.dll",
+                                                 "syswow64/dxgi.dll", "syswow64/d3d11.dll", "syswow64/d3d10core.dll", "syswow64/winemetal.dll"])
+    }
+
+    @Test func rockstarReplacesD3D11AndDXGIWithWineD3D() {
+        let copies = PrefixSetup.graphicsCopies(for: GamePaths(profile: .rdr2, root: URL(fileURLWithPath: "/r")))
+        let source = Dictionary(uniqueKeysWithValues: copies.map { ($0.to.lastPathComponent, $0.from.path) })
+        #expect(source["d3d11.dll"] == "/r/packs/rockstar/RockstarRenderer/d3d11.dll")
+        #expect(source["dxgi.dll"] == "/r/packs/rockstar/RockstarRenderer/dxgi.dll")
+        #expect(source["d3d12.dll"] == "/r/deps/Frameworks/renderer/d3dmetal/wine/x86_64-windows/d3d12.dll")
+    }
+
+    @Test func gtaVTakesD3DMetalFromApplesPack() {
+        let copies = PrefixSetup.graphicsCopies(for: GamePaths(profile: .gta5, root: URL(fileURLWithPath: "/r")))
+        let source = Dictionary(uniqueKeysWithValues: copies.map { ($0.to.lastPathComponent, $0.from.path) })
+        #expect(source["d3d12.dll"] == "/r/packs/apple-d3dmetal-4.0b2/wine/x86_64-windows/d3d12.dll")
+        #expect(source["atidxx64.dll"] == "/r/deps/Frameworks/renderer/d3dmetal/wine/x86_64-windows/atidxx64.dll")
+    }
+
+    @Test func rootDrivesPointAtTheEnvironment() throws {
+        let dir = try makeTempDir(); defer { try? FileManager.default.removeItem(at: dir) }
+        let p = GamePaths(profile: .rdr2, root: dir)
+        let devices = p.prefix.appendingPathComponent("dosdevices")
+        try FileManager.default.createDirectory(at: devices, withIntermediateDirectories: true)
+        try FileManager.default.createSymbolicLink(atPath: devices.appendingPathComponent("z:").path, withDestinationPath: "/")
+        try PrefixSetup.mapRootDrives(paths: p)
+        for letter in ["y", "z"] {
+            #expect(try FileManager.default.destinationOfSymbolicLink(atPath: devices.appendingPathComponent("\(letter):").path) == dir.path)
+        }
     }
 
     @Test func applyingCopiesReplacesExistingFiles() throws {

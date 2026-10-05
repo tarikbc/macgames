@@ -12,6 +12,8 @@ import Testing
         try write("cs2 d3d11 32", to: res.appendingPathComponent("Overlays/cs2/lib/wine/i386-windows/d3d11.dll"))
         try write("cs2 d3d11 64", to: res.appendingPathComponent("Overlays/cs2/lib/wine/x86_64-windows/d3d11.dll"))
         try write("controller winebus", to: res.appendingPathComponent("Overlays/controllers/lib/wine/x86_64-unix/winebus.so"))
+        try write("fixed ntdll", to: res.appendingPathComponent("Overlays/ntdllfix/lib/wine/x86_64-unix/ntdll.so"))
+        try write("notch winemac", to: res.appendingPathComponent("Overlays/aomretold/lib/wine/x86_64-unix/winemac.so"))
         try write("""
         {"lib/libfreetype.6.dylib": "libfreetype.6.dylib",
          "lib/wine/x86_64-windows/d3d11.dll": "renderer/d3dmetal/wine/x86_64-windows/d3d11.dll"}
@@ -44,7 +46,8 @@ import Testing
         try EngineInstaller(runtime: try fakeRuntime(in: dir)).install(for: paths)
         #expect(read(paths.engine.appendingPathComponent("lib/wine/x86_64-windows/d3d11.dll")) == "cs2 d3d11 64")
         #expect(read(paths.engine.appendingPathComponent("lib/wine/x86_64-unix/winebus.so")) == "controller winebus")
-        #expect(GameProfile.libraryOverlays == ["cs2", "controllers"])
+        #expect(read(paths.engine.appendingPathComponent("lib/wine/x86_64-unix/ntdll.so")) == "fixed ntdll")
+        #expect(GameEnvironment.steam.engineOverlays == ["ntdllfix", "cs2", "aomretold", "controllers"])
     }
 
     @Test func overlayFilesWinOverDependencyLinks() throws {

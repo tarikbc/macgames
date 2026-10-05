@@ -69,21 +69,50 @@ public enum GameProcessLog {
 @_silgen_name("proc_pidpath") private func proc_pidpath(_ pid: Int32, _ buffer: UnsafeMutableRawPointer?, _ size: UInt32) -> Int32
 
 public enum LiveProcesses {
+    /// `true` when a process started from `folder` (a Wine engine) runs a
+    /// Windows program named `executable`. Wine keeps the Windows path in argv[0].
+    public static func isRunning(executable: String, under folder: URL) -> Bool {
+        let want = executable.lowercased()
+        return pids(under: folder).contains { pid in
+            guard let argv0 = firstArgument(pid)?.lowercased() else { return false }
+            let name = argv0.replacingOccurrences(of: "\\", with: "/").split(separator: "/").last.map(String.init) ?? argv0
+            return name == want
+        }
+    }
+
+    static func firstArgument(_ pid: Int32) -> String? {
+        var mib: [Int32] = [CTL_KERN, KERN_PROCARGS2, pid]
+        var size = 0
+        guard sysctl(&mib, 3, nil, &size, nil, 0) == 0, size > MemoryLayout<Int32>.size else { return nil }
+        var buffer = [UInt8](repeating: 0, count: size)
+        guard sysctl(&mib, 3, &buffer, &size, nil, 0) == 0 else { return nil }
+        // Layout: argc, the executable path, padding NULs, then argv[0].
+        var i = MemoryLayout<Int32>.size
+        while i < size, buffer[i] != 0 { i += 1 }
+        while i < size, buffer[i] == 0 { i += 1 }
+        var j = i
+        while j < size, buffer[j] != 0 { j += 1 }
+        return i < j ? String(decoding: buffer[i..<j], as: UTF8.self) : nil
+    }
+
     /// Executable paths of live processes whose binary is inside `folder`.
     public static func paths(under folder: URL) -> [URL] {
+        pids(under: folder).compactMap(path)
+    }
+
+    static func path(_ pid: Int32) -> URL? {
+        var buffer = [CChar](repeating: 0, count: 4096)
+        let length = buffer.withUnsafeMutableBytes { proc_pidpath(pid, $0.baseAddress, 4096) }
+        guard length > 0 else { return nil }
+        return URL(fileURLWithPath: String(decoding: buffer.prefix(Int(length)).map { UInt8(bitPattern: $0) }, as: UTF8.self))
+            .resolvingSymlinksInPath()
+    }
+
+    static func pids(under folder: URL) -> [Int32] {
         var pids = [Int32](repeating: 0, count: 8192)
         let count = pids.withUnsafeMutableBytes { proc_listallpids($0.baseAddress, Int32($0.count)) }
         guard count > 0 else { return [] }
         let prefix = folder.resolvingSymlinksInPath().path + "/"
-        var found: [URL] = []
-        for pid in pids.prefix(Int(min(count, Int32(pids.count)))) where pid > 0 {
-            var buffer = [CChar](repeating: 0, count: 4096)
-            let length = buffer.withUnsafeMutableBytes { proc_pidpath(pid, $0.baseAddress, 4096) }
-            guard length > 0 else { continue }
-            let path = URL(fileURLWithPath: String(decoding: buffer.prefix(Int(length)).map { UInt8(bitPattern: $0) }, as: UTF8.self))
-                .resolvingSymlinksInPath()
-            if path.path.hasPrefix(prefix) { found.append(path) }
-        }
-        return found
+        return pids.prefix(Int(min(count, Int32(pids.count)))).filter { $0 > 0 && (path($0)?.path.hasPrefix(prefix) ?? false) }
     }
 }

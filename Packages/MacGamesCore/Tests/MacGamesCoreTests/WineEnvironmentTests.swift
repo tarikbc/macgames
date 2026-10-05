@@ -106,7 +106,9 @@ import Testing
         #expect(GameProfile.named("aoe4") == .aoe4)
         #expect(GameProfile.named("cs2") == .cs2)
         #expect(GameProfile.named("doom") == nil)
-        #expect(GameProfile.cs2.engineOverlays == ["cs2", "controllers"])
-        #expect(GameProfile.aoe4.engineOverlays == ["controllers"])
+        #expect(GameProfile.cs2.gameEnvironment == .steam)
+        #expect(GameProfile.skyrim.gameEnvironment == .skyrim)
+        #expect(GameEnvironment.battlenet.games.map(\.id) == ["diablo4-battlenet", "diablo2-resurrected"])
+        #expect(Set(GameProfile.all.map(\.id)).count == GameProfile.all.count, "unique IDs")
     }
 }

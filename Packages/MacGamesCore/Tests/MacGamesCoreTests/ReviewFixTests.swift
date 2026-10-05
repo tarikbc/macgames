@@ -73,6 +73,8 @@ func compileSleeper(to url: URL) throws {
             try write(winemetal, to: res.appendingPathComponent("Overlays/cs2/lib/wine/x86_64-windows/winemetal.dll"))
             try write(winemetal + " 32", to: res.appendingPathComponent("Overlays/cs2/lib/wine/i386-windows/winemetal.dll"))
             try write("so", to: res.appendingPathComponent("Overlays/controllers/lib/wine/x86_64-unix/winebus.so"))
+            try write("nt", to: res.appendingPathComponent("Overlays/ntdllfix/lib/wine/x86_64-unix/ntdll.so"))
+            try write("mac", to: res.appendingPathComponent("Overlays/aomretold/lib/wine/x86_64-unix/winemac.so"))
             try write("{}", to: res.appendingPathComponent("dependency-links.json"))
             try write(version, to: res.appendingPathComponent("VERSION"))
             return RuntimeLayout(resources: res, helpers: dir.appendingPathComponent("Helpers"))

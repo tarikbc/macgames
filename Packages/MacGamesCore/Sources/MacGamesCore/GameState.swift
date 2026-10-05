@@ -10,13 +10,20 @@ public enum GameState: String, Sendable, Equatable {
 
     /// Reads the setup stage from disk. `sessionRunning` says whether this
     /// game's Wine session is alive; Steam's log alone can be stale.
-    public static func derive(_ paths: GamePaths, sessionRunning: Bool) -> GameState {
+    public static func derive(_ paths: GamePaths, sessionRunning: Bool, gameProcessRunning: Bool = false) -> GameState {
         let fm = FileManager.default
         guard fm.fileExists(atPath: paths.runtimeReady.path) else { return .notSetUp }
+        if paths.profile.launch == .battleNet {
+            // `.needsSteam` stands for the environment's launcher client.
+            guard fm.fileExists(atPath: paths.battleNetExe.path) else { return .needsSteam }
+            guard fm.fileExists(atPath: paths.gameExe.path) else { return .needsGame }
+            guard fm.fileExists(atPath: paths.installDir.appendingPathComponent(".build.info").path) else { return .installing }
+            return sessionRunning && gameProcessRunning ? .running : .ready
+        }
         guard fm.fileExists(atPath: paths.steamExe.path) else { return .needsSteam }
         guard let manifest = AppManifest(contentsOf: paths.appManifest) else { return .needsGame }
         guard manifest.isFullyInstalled(paths.profile), fm.fileExists(atPath: paths.gameExe.path) else { return .installing }
-        if sessionRunning && GameProcessLog.isRunning(paths.profile, paths: paths) { return .running }
+        if sessionRunning && (gameProcessRunning || GameProcessLog.isRunning(paths.profile, paths: paths)) { return .running }
         return .ready
     }
 }

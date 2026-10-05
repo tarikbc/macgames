@@ -21,30 +21,55 @@ public enum PrefixSetup {
         }
     }
 
+    /// The graphics libraries an environment's prefix needs, in the order they are copied.
     public static func graphicsCopies(for paths: GamePaths) -> [Copy] {
         let windows = paths.prefix.appendingPathComponent("drive_c/windows")
-        switch paths.profile.graphics {
-        case .d3dmetal:
-            let source = paths.frameworks.appendingPathComponent("renderer/d3dmetal/wine/x86_64-windows")
-            return ["dxgi", "d3d11", "d3d12", "atidxx64"].map {
-                Copy(from: source.appendingPathComponent("\($0).dll"), to: windows.appendingPathComponent("system32/\($0).dll"))
+        let lib = paths.engine.appendingPathComponent("lib/wine")
+        func to(_ folder: String, _ name: String) -> URL { windows.appendingPathComponent("\(folder)/\(name).dll") }
+        var copies: [Copy] = []
+        for step in paths.environment.prefixDLLs {
+            switch step {
+            case .d3dmetalSystem32:
+                // An environment that pins its own D3DMetal still takes atidxx64 from the template.
+                let own = paths.d3dmetal.appendingPathComponent("wine/x86_64-windows")
+                let template = paths.frameworks.appendingPathComponent("renderer/d3dmetal/wine/x86_64-windows")
+                for name in ["dxgi", "d3d11", "d3d12"] { copies.append(Copy(from: own.appendingPathComponent("\(name).dll"), to: to("system32", name))) }
+                copies.append(Copy(from: template.appendingPathComponent("atidxx64.dll"), to: to("system32", "atidxx64")))
+            case .winemetal:
+                copies.append(Copy(from: lib.appendingPathComponent("x86_64-windows/winemetal.dll"), to: to("system32", "winemetal")))
+                copies.append(Copy(from: lib.appendingPathComponent("i386-windows/winemetal.dll"), to: to("syswow64", "winemetal")))
+            case .engineDXMT:
+                for name in ["dxgi", "d3d11", "d3d10core", "winemetal"] {
+                    copies.append(Copy(from: lib.appendingPathComponent("x86_64-windows/\(name).dll"), to: to("system32", name)))
+                    copies.append(Copy(from: lib.appendingPathComponent("i386-windows/\(name).dll"), to: to("syswow64", name)))
+                }
+            case .engineDXMT32:
+                for name in ["dxgi", "d3d11", "d3d10core", "winemetal"] {
+                    copies.append(Copy(from: lib.appendingPathComponent("i386-windows/\(name).dll"), to: to("syswow64", name)))
+                }
+            case .rockstarWineD3D:
+                let renderer = paths.pack("rockstar").appendingPathComponent("RockstarRenderer")
+                for name in ["d3d11", "dxgi", "d3d10core"] {
+                    copies.append(Copy(from: renderer.appendingPathComponent("\(name).dll"), to: to("system32", name)))
+                }
             }
-        case .dxmt:
-            let lib = paths.engine.appendingPathComponent("lib/wine")
-            return [Copy(from: lib.appendingPathComponent("x86_64-windows/winemetal.dll"), to: windows.appendingPathComponent("system32/winemetal.dll")),
-                    Copy(from: lib.appendingPathComponent("i386-windows/winemetal.dll"), to: windows.appendingPathComponent("syswow64/winemetal.dll"))]
         }
+        // A later step replaces an earlier one's file; keep the last copy per target.
+        var seen = Set<URL>()
+        return Array(copies.reversed().filter { seen.insert($0.to).inserted }.reversed())
     }
 
-    /// The shared prefix needs the libraries of every game's renderer.
-    public static func libraryGraphicsCopies(root: URL) -> [Copy] {
-        var copies: [Copy] = []
-        for profile in GameProfile.all {
-            for copy in graphicsCopies(for: GamePaths(profile: profile, root: root)) where !copies.contains(where: { $0.to == copy.to }) {
-                copies.append(copy)
+    /// Points the environment's root drives at its own root, so a game sees no Mac files.
+    public static func mapRootDrives(paths: GamePaths) throws {
+        let fm = FileManager.default
+        let devices = paths.prefix.appendingPathComponent("dosdevices")
+        for letter in paths.environment.rootDrives {
+            let link = devices.appendingPathComponent("\(letter):")
+            if (try? fm.destinationOfSymbolicLink(atPath: link.path)) != nil || fm.fileExists(atPath: link.path) {
+                try fm.removeItem(at: link)
             }
+            try fm.createSymbolicLink(atPath: link.path, withDestinationPath: paths.root.path)
         }
-        return copies
     }
 
     public static func apply(_ copies: [Copy]) throws {

@@ -11,13 +11,16 @@ public struct EngineInstaller: Sendable {
 
     public init(runtime: RuntimeLayout) { self.runtime = runtime }
 
-    func wantedMarker(for profile: GameProfile) throws -> String {
-        "\(try runtime.version())+\(GameProfile.libraryOverlays.joined(separator: "+"))"
+    func wantedMarker(for paths: GamePaths) throws -> String {
+        let packs = paths.environment.packs.map { name in
+            (try? String(contentsOf: paths.pack(name).appendingPathComponent(".macgames-pack"), encoding: .utf8)) ?? name
+        }
+        return ([try runtime.version()] + paths.environment.engineOverlays + packs).joined(separator: "+")
     }
 
     public func isCurrent(for paths: GamePaths) -> Bool {
         let marker = paths.engine.appendingPathComponent(Self.markerName)
-        guard let wanted = try? wantedMarker(for: paths.profile),
+        guard let wanted = try? wantedMarker(for: paths),
               let found = try? String(contentsOf: marker, encoding: .utf8) else { return false }
         return found == wanted
     }
@@ -27,16 +30,15 @@ public struct EngineInstaller: Sendable {
     public func install(for paths: GamePaths) throws -> Bool {
         if isCurrent(for: paths) { return false }
         let fm = FileManager.default
-        let marker = try wantedMarker(for: paths.profile)
+        let marker = try wantedMarker(for: paths)
         try fm.createDirectory(at: paths.root, withIntermediateDirectories: true)
         let stage = paths.root.appendingPathComponent("engine-staging-\(UUID().uuidString)")
         defer { try? fm.removeItem(at: stage) }
 
         try ditto(runtime.engine, stage)
-        for name in GameProfile.libraryOverlays {
-            let overlay = runtime.overlay(name)
-            guard fm.fileExists(atPath: overlay.path) else {
-                throw SetupError("The runtime is missing the \(name) overlay at \(overlay.path).")
+        for name in paths.environment.engineOverlays {
+            guard let overlay = overlay(name, for: paths) else {
+                throw SetupError("The runtime is missing the \(name) overlay.")
             }
             try ditto(overlay, stage)
         }
@@ -76,6 +78,12 @@ public struct EngineInstaller: Sendable {
         where ["engine-staging-", "engine-old-", "deps-staging-"].contains(where: name.hasPrefix) {
             try? fm.removeItem(at: root.appendingPathComponent(name))
         }
+    }
+
+    /// An overlay ships inside the app, or inside one of the environment's packs.
+    func overlay(_ name: String, for paths: GamePaths) -> URL? {
+        let candidates = [runtime.overlay(name)] + paths.environment.packs.map { paths.pack($0).appendingPathComponent("Overlays/\(name)") }
+        return candidates.first { FileManager.default.fileExists(atPath: $0.path) }
     }
 
     func isSymlink(_ url: URL) -> Bool {

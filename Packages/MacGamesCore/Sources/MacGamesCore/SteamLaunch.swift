@@ -8,11 +8,13 @@ public enum SteamLaunch {
     }
 
     public static func arguments(_ paths: GamePaths, _ mode: Mode) -> [String] {
-        let base = [paths.steamExe.path, "-cef-disable-gpu"]
+        let profile = paths.profile
+        let steam = profile.windowsSteamPath ? paths.windowsPath(paths.steamExe) : paths.steamExe.path
+        let base = [steam, "-cef-disable-gpu"] + profile.steamArgs
         switch mode {
         case .open: return base
-        case .install: return base + ["steam://install/\(paths.profile.steamAppID)"]
-        case .play(let extra): return base + ["-applaunch", paths.profile.steamAppID] + extra
+        case .install: return base + ["steam://install/\(profile.steamAppID)"]
+        case .play(let extra): return base + ["-applaunch", profile.steamAppID] + profile.gameArgs + extra
         }
     }
 

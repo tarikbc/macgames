@@ -118,7 +118,7 @@ public final class GameRuntime: @unchecked Sendable {
         progress("Configuring Windows 10, graphics and controllers…")
         try runWine(["winecfg", "-v", "win10"], environment: plain, timeout: 120)
         try PrefixSetup.replaceUserLinks(prefix: paths.prefix)
-        try PrefixSetup.apply(PrefixSetup.libraryGraphicsCopies(root: paths.root))
+        try PrefixSetup.apply(PrefixSetup.graphicsCopies(for: paths))
         for command in PrefixSetup.wineBusCommands {
             try runWine(command, environment: plain, timeout: 120)
         }
@@ -162,7 +162,7 @@ public final class GameRuntime: @unchecked Sendable {
     public func ensureEngine() throws {
         guard try EngineInstaller(runtime: runtime).install(for: paths) else { return }
         if fm.fileExists(atPath: paths.prefix.appendingPathComponent("drive_c/windows").path) {
-            try PrefixSetup.apply(PrefixSetup.libraryGraphicsCopies(root: paths.root))
+            try PrefixSetup.apply(PrefixSetup.graphicsCopies(for: paths))
         }
     }
 

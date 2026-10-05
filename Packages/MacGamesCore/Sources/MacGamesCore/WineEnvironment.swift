@@ -37,18 +37,33 @@ public enum WineEnvironment {
         let engineDLLs = paths.engine.appendingPathComponent("lib/wine").path
         switch profile.graphics {
         case .d3dmetal:
-            env["WINEDLLPATH"] = "\(fw)/renderer/d3dmetal/wine:\(engineDLLs)"
+            env["WINEDLLPATH"] = "\(paths.d3dmetal.path)/wine:\(engineDLLs)"
             env["WINEDLLOVERRIDES"] = baseOverrides + "dxgi,d3d11,d3d12,atidxx64=n,b;nvapi64,nvngx="
         case .dxmt:
             env["WINEDLLPATH"] = engineDLLs
             // The shared prefix's system32 holds D3DMetal for other games, so
             // every D3D name is forced to the engine's builtins.
             env["WINEDLLOVERRIDES"] = baseOverrides + "dxgi,d3d11,d3d10core,d3d12,atidxx64,winemetal=b;nvapi64,nvngx="
-            env["DXMT_CS2_EARLY_COMPILE"] = "1"
-            env["DXMT_SHADER_CACHE_PATH"] = paths.graphics.appendingPathComponent("shader-cache").path
-            env["DXMT_CS2_PIPELINE_CACHE"] = paths.graphics.appendingPathComponent("game-archives").path
-            env["DXMT_CS2_RECIPE_DIR"] = paths.graphics.appendingPathComponent("recipes").path
-            env["DXMT_LOG_PATH"] = paths.logs.path
+        case .builtin:
+            env["WINEDLLPATH"] = engineDLLs
+            env["WINEDLLOVERRIDES"] = baseOverrides + "nvapi64,nvngx="
+        }
+
+        let edits = GameRecipes.environmentEdits(for: profile, paths: paths)
+        if let overrides = edits.overrides { env["WINEDLLOVERRIDES"] = overrides }
+        if let extra = edits.appendOverrides { env["WINEDLLOVERRIDES"]! += extra }
+        for key in edits.unset { env[key] = nil }
+        env.merge(edits.set) { $1 }
+        if edits.libd3dshared {
+            env["CX_APPLEGPTK_LIBD3DSHARED_PATH"] = paths.d3dmetal.appendingPathComponent("external/libd3dshared.dylib").path
+        }
+        let data = paths.gameData.path
+        if edits.sandbox == .full { env["HOME"] = data + "/home" }
+        if edits.sandbox != .none {
+            env["XDG_CACHE_HOME"] = data + "/cache"
+            env["XDG_CONFIG_HOME"] = data + "/config"
+            env["XDG_DATA_HOME"] = data + "/share"
+            env["TMPDIR"] = data + "/tmp/"
         }
 
         // The patched ntdll re-execs RelicCardinal.exe through the bridge only
