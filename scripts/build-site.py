@@ -15,7 +15,7 @@ from html.parser import HTMLParser
 from pathlib import Path
 
 DOCS = Path(__file__).resolve().parent.parent / "docs"
-SITE = "https://tarikbc.github.io/macgames/"
+SITE = "https://macgames.app/"
 RELEASES = "https://github.com/tarikbc/macgames/releases/latest"
 REPO = "https://github.com/tarikbc/macgames"
 STYLE, SCRIPT = "assets/css/style.css?v=7", "assets/js/site.js?v=6"
