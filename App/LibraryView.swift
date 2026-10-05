@@ -75,6 +75,8 @@ private struct Sidebar: View {
             }
             .scrollIndicators(.never)
             Spacer(minLength: 0)
+            SteamControl(library: library)
+                .padding(.bottom, Space.l)
         }
         .padding(.horizontal, Space.sidebarInset)
         .background(.ultraThinMaterial.opacity(0.7))
@@ -124,8 +126,8 @@ private struct GameRow: View {
         .contentShape(RoundedRectangle(cornerRadius: 10))
         .onHover { over in withAnimation(.easeOut(duration: 0.15)) { hovering = over } }
         .contextMenu {
-            Button(game.state.actionTitle, action: game.primaryAction).disabled(game.busy)
-            Button("Open Steam", action: game.openSteam).disabled(!game.steamAvailable || game.busy)
+            Button(game.state.actionTitle, action: game.primaryAction).disabled(game.locked)
+            Button("Open Steam", action: game.openSteam).disabled(!game.steamAvailable || game.locked)
             Divider()
             Button("Show logs", action: game.showLogs)
         }
@@ -160,5 +162,50 @@ struct StatusDot: View {
                 }
             }
             .animation(Motion.morph, value: state)
+    }
+}
+
+/// The one Steam client every game shares.
+private struct SteamControl: View {
+    let library: LibraryModel
+
+    var body: some View {
+        let game = library.selected
+        let running = library.steamRunning
+        HStack(spacing: Space.m) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 8).fill(.white.opacity(0.08))
+                Image(systemName: "gamecontroller.fill")
+                    .font(.system(size: 14))
+                    .foregroundStyle(running ? .white : .secondary)
+                    .symbolEffect(.pulse, isActive: running)
+            }
+            .frame(width: 32, height: 32)
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Steam").font(.system(size: 13, weight: .semibold))
+                Text(running ? "Running" : (game?.steamAvailable == true ? "Not running" : "Not set up"))
+                    .font(.system(size: 11))
+                    .foregroundStyle(.secondary)
+                    .contentTransition(.opacity)
+            }
+            Spacer(minLength: 0)
+            if running {
+                Button { withAnimation(Motion.switchGame) { library.requestStopSteam() } } label: {
+                    Image(systemName: "power").frame(width: 26, height: 26)
+                }
+                    .buttonStyle(PressableStyle())
+                    .help("Stop Steam and every game it runs")
+                    .disabled(game?.locked ?? true)
+                    .transition(.scale.combined(with: .opacity))
+            }
+            Button { game?.openSteam() } label: { Image(systemName: "arrow.up.forward.app").frame(width: 26, height: 26) }
+                .buttonStyle(PressableStyle())
+                .help("Open Steam")
+                .disabled(game?.steamAvailable != true || game?.locked == true)
+        }
+        .padding(Space.s + 2)
+        .background(RoundedRectangle(cornerRadius: 10).fill(.white.opacity(0.05)))
+        .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(.white.opacity(0.08)))
+        .animation(Motion.morph, value: running)
     }
 }

@@ -73,5 +73,13 @@ public struct GameProfile: Sendable, Hashable, Identifiable {
 
     public static let all: [GameProfile] = [.aoe4, .cs2]
 
+    /// Every game shares one engine, so it carries every profile's overlays,
+    /// in first-seen order (game overlays before the shared controller one).
+    public static var libraryOverlays: [String] {
+        var seen: [String] = []
+        for name in all.flatMap(\.engineOverlays) where !seen.contains(name) { seen.append(name) }
+        return seen.sorted { a, b in (a == "controllers" ? 1 : 0) < (b == "controllers" ? 1 : 0) }
+    }
+
     public static func named(_ id: String) -> GameProfile? { all.first { $0.id == id } }
 }

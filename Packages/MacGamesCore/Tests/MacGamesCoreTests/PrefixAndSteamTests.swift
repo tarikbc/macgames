@@ -31,6 +31,12 @@ import Testing
         #expect(copies.map(\.to.path) == ["/r/prefix/drive_c/windows/system32/winemetal.dll", "/r/prefix/drive_c/windows/syswow64/winemetal.dll"])
     }
 
+    @Test func sharedPrefixGetsEveryGamesGraphicsLibraries() {
+        let names = PrefixSetup.libraryGraphicsCopies(root: URL(fileURLWithPath: "/r")).map { "\($0.to.deletingLastPathComponent().lastPathComponent)/\($0.to.lastPathComponent)" }
+        #expect(names == ["system32/dxgi.dll", "system32/d3d11.dll", "system32/d3d12.dll", "system32/atidxx64.dll",
+                          "system32/winemetal.dll", "syswow64/winemetal.dll"])
+    }
+
     @Test func applyingCopiesReplacesExistingFiles() throws {
         let dir = try makeTempDir(); defer { try? FileManager.default.removeItem(at: dir) }
         let from = dir.appendingPathComponent("a.dll"), to = dir.appendingPathComponent("sys/a.dll")

@@ -37,7 +37,7 @@ struct GameDetailView: View {
         .confirmationDialog("Stop \(game.profile.title)?", isPresented: $game.confirmingStop) {
             Button("Stop the game and Steam", role: .destructive, action: game.stop)
         } message: {
-            Text("The game closes at once. Progress since your last save is lost.")
+            Text("The game and Steam close at once. Progress since your last save is lost.")
         }
     }
 
@@ -86,7 +86,7 @@ private struct ActionBar: View {
                 .contentShape(Capsule())
             }
             .buttonStyle(PressableStyle())
-            .disabled(game.busy)
+            .disabled(game.locked)
             .keyboardShortcut(.defaultAction)
             .animation(Motion.morph, value: game.state)
             .animation(Motion.morph, value: game.busy)
@@ -100,7 +100,7 @@ private struct ActionBar: View {
                     .contentShape(Capsule())
             }
             .buttonStyle(PressableStyle())
-            .disabled(!game.steamAvailable || game.busy)
+            .disabled(!game.steamAvailable || game.locked)
             .keyboardShortcut("o", modifiers: .command)
             .help("Open this game's Steam window")
 
@@ -113,8 +113,8 @@ private struct ActionBar: View {
                         .contentShape(Circle())
                 }
                 .buttonStyle(PressableStyle())
-                .disabled(game.busy)
-                .help("Stop Steam and the game")
+                .disabled(game.locked)
+                .help("Stop Steam and every game it runs")
                 .transition(.scale.combined(with: .opacity))
             }
 
@@ -194,7 +194,7 @@ private struct SettingsSection: View {
                     }
                 }
                 Divider().opacity(0.3)
-                row("Game data", detail: game.runtime.paths.root.path) {
+                row("Game files", detail: game.dataFolder.path) {
                     HStack {
                         Button("Logs", action: game.showLogs)
                         Button("Show in Finder", action: game.showData)
@@ -209,7 +209,7 @@ private struct SettingsSection: View {
                 .foregroundStyle(.secondary)
                 .padding(.leading, Space.xs)
         }
-        .disabled(game.busy)
+        .disabled(game.locked)
     }
 
     private func row<Control: View>(_ title: String, detail: String, @ViewBuilder control: () -> Control) -> some View {

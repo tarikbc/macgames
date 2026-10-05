@@ -32,14 +32,14 @@ public struct LaunchSettings: Codable, Sendable, Equatable {
         self.hud = hud
     }
 
-    static func url(_ paths: GamePaths) -> URL { paths.root.appendingPathComponent("settings.json") }
+    static func url(_ paths: GamePaths) -> URL { paths.gameData.appendingPathComponent("settings.json") }
 
     public static func load(from paths: GamePaths) -> LaunchSettings {
         (try? JSONDecoder().decode(LaunchSettings.self, from: Data(contentsOf: url(paths)))) ?? LaunchSettings()
     }
 
     public func save(to paths: GamePaths) throws {
-        try FileManager.default.createDirectory(at: paths.root, withIntermediateDirectories: true)
+        try FileManager.default.createDirectory(at: paths.gameData, withIntermediateDirectories: true)
         try JSONEncoder().encode(self).write(to: Self.url(paths), options: .atomic)
     }
 }

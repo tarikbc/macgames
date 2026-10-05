@@ -17,7 +17,7 @@ public final class GameRuntime: @unchecked Sendable {
                 downloadCache: URL = GamePaths.sharedDownloads(),
                 progress: @escaping @Sendable (String) -> Void = { _ in }) {
         self.profile = profile
-        self.paths = GamePaths(profile: profile, root: root ?? GamePaths.defaultRoot(for: profile))
+        self.paths = GamePaths(profile: profile, root: root ?? GamePaths.defaultRoot())
         self.runtime = runtime
         self.downloader = Downloader(cache: downloadCache)
         self.runner = ProcessRunner(logDirectory: paths.logs)
@@ -25,7 +25,7 @@ public final class GameRuntime: @unchecked Sendable {
     }
 
     var fm: FileManager { .default }
-    var cs2DisplayPending: URL { paths.root.appendingPathComponent("cs2-display-pending") }
+    var cs2DisplayPending: URL { paths.gameData.appendingPathComponent("display-pending") }
 
     public var settings: LaunchSettings {
         get { LaunchSettings.load(from: paths) }
@@ -109,17 +109,20 @@ public final class GameRuntime: @unchecked Sendable {
         progress("Configuring Windows 10, graphics and controllers…")
         try runner.run(paths.wine, ["winecfg", "-v", "win10"], environment: plain, timeout: 120)
         try PrefixSetup.replaceUserLinks(prefix: paths.prefix)
-        try PrefixSetup.apply(PrefixSetup.graphicsCopies(for: paths))
+        try PrefixSetup.apply(PrefixSetup.libraryGraphicsCopies(root: paths.root))
         for command in PrefixSetup.wineBusCommands {
             try runner.run(paths.wine, command, environment: plain, timeout: 120)
         }
         try runner.run(paths.wineserver, ["-w"], environment: plain, timeout: 120)
 
-        if profile.graphics == .dxmt {
+        for game in GameProfile.all where game.graphics == .dxmt {
+            let gamePaths = GamePaths(profile: game, root: paths.root)
+            // A game prepared for the first time also gets its window fitted on first launch.
+            let firstTime = !fm.fileExists(atPath: gamePaths.graphics.path)
             for folder in ["shader-cache", "game-archives", "recipes"] {
-                try fm.createDirectory(at: paths.graphics.appendingPathComponent(folder), withIntermediateDirectories: true)
+                try fm.createDirectory(at: gamePaths.graphics.appendingPathComponent(folder), withIntermediateDirectories: true)
             }
-            if !fm.fileExists(atPath: paths.runtimeReady.path) { fm.createFile(atPath: cs2DisplayPending.path, contents: nil) }
+            if firstTime { fm.createFile(atPath: gamePaths.gameData.appendingPathComponent("display-pending").path, contents: nil) }
         }
         try Data("runtime-v1\n".utf8).write(to: paths.runtimeReady, options: .atomic)
         progress("The Windows environment is ready.")
@@ -146,7 +149,7 @@ public final class GameRuntime: @unchecked Sendable {
     public func ensureEngine() throws {
         guard try EngineInstaller(runtime: runtime).install(for: paths) else { return }
         if fm.fileExists(atPath: paths.prefix.appendingPathComponent("drive_c/windows").path) {
-            try PrefixSetup.apply(PrefixSetup.graphicsCopies(for: paths))
+            try PrefixSetup.apply(PrefixSetup.libraryGraphicsCopies(root: paths.root))
         }
     }
 
@@ -170,8 +173,9 @@ public final class GameRuntime: @unchecked Sendable {
         var running = wasRunning
         let matches = SteamSession.load(paths)?.fingerprint == fingerprint
         if SteamLaunch.needsRestart(mode, sessionRunning: running, fingerprintMatches: matches) {
-            guard !GameProcessLog.isRunning(profile, paths: paths) else {
-                throw SetupError("Close \(profile.title) before you change its launch settings.")
+            // Every game shares this Steam; restarting it ends whichever one plays.
+            if let playing = GameProfile.all.first(where: { GameProcessLog.isRunning($0, paths: GamePaths(profile: $0, root: paths.root)) }) {
+                throw SetupError("Close \(playing.title) first. Steam must restart with \(profile.title)'s settings.")
             }
             progress("Restarting Steam with the current settings…")
             try stop()
@@ -216,6 +220,7 @@ public final class GameRuntime: @unchecked Sendable {
 
     /// Asks the next CS2 launch to apply the borderless window size again.
     public func resetDisplay() {
+        try? fm.createDirectory(at: paths.gameData, withIntermediateDirectories: true)
         fm.createFile(atPath: cs2DisplayPending.path, contents: nil)
     }
 

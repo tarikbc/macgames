@@ -36,6 +36,17 @@ public enum PrefixSetup {
         }
     }
 
+    /// The shared prefix needs the libraries of every game's renderer.
+    public static func libraryGraphicsCopies(root: URL) -> [Copy] {
+        var copies: [Copy] = []
+        for profile in GameProfile.all {
+            for copy in graphicsCopies(for: GamePaths(profile: profile, root: root)) where !copies.contains(where: { $0.to == copy.to }) {
+                copies.append(copy)
+            }
+        }
+        return copies
+    }
+
     public static func apply(_ copies: [Copy]) throws {
         let fm = FileManager.default
         for copy in copies {

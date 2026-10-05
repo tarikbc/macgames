@@ -12,7 +12,7 @@ public struct EngineInstaller: Sendable {
     public init(runtime: RuntimeLayout) { self.runtime = runtime }
 
     func wantedMarker(for profile: GameProfile) throws -> String {
-        "\(try runtime.version())+\(profile.engineOverlays.joined(separator: "+"))"
+        "\(try runtime.version())+\(GameProfile.libraryOverlays.joined(separator: "+"))"
     }
 
     public func isCurrent(for paths: GamePaths) -> Bool {
@@ -33,7 +33,7 @@ public struct EngineInstaller: Sendable {
         defer { try? fm.removeItem(at: stage) }
 
         try ditto(runtime.engine, stage)
-        for name in paths.profile.engineOverlays {
+        for name in GameProfile.libraryOverlays {
             let overlay = runtime.overlay(name)
             guard fm.fileExists(atPath: overlay.path) else {
                 throw SetupError("The runtime is missing the \(name) overlay at \(overlay.path).")

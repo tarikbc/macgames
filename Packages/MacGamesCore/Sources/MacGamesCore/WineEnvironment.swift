@@ -41,7 +41,9 @@ public enum WineEnvironment {
             env["WINEDLLOVERRIDES"] = baseOverrides + "dxgi,d3d11,d3d12,atidxx64=n,b;nvapi64,nvngx="
         case .dxmt:
             env["WINEDLLPATH"] = engineDLLs
-            env["WINEDLLOVERRIDES"] = baseOverrides + "dxgi,d3d11,d3d10core,winemetal=b;nvapi64,nvngx="
+            // The shared prefix's system32 holds D3DMetal for other games, so
+            // every D3D name is forced to the engine's builtins.
+            env["WINEDLLOVERRIDES"] = baseOverrides + "dxgi,d3d11,d3d10core,d3d12,atidxx64,winemetal=b;nvapi64,nvngx="
             env["DXMT_CS2_EARLY_COMPILE"] = "1"
             env["DXMT_SHADER_CACHE_PATH"] = paths.graphics.appendingPathComponent("shader-cache").path
             env["DXMT_CS2_PIPELINE_CACHE"] = paths.graphics.appendingPathComponent("game-archives").path

@@ -34,11 +34,17 @@ import Testing
         let dir = try makeTempDir(); defer { try? FileManager.default.removeItem(at: dir) }
         let paths = GamePaths(profile: .aoe4, root: dir.appendingPathComponent("aoe4"))
         try EngineInstaller(runtime: try fakeRuntime(in: dir)).install(for: paths)
-        let fm = FileManager.default
-        #expect(try fm.destinationOfSymbolicLink(atPath: paths.engine.appendingPathComponent("lib/libfreetype.6.dylib").path)
+        #expect(try FileManager.default.destinationOfSymbolicLink(atPath: paths.engine.appendingPathComponent("lib/libfreetype.6.dylib").path)
                 == paths.frameworks.appendingPathComponent("libfreetype.6.dylib").path)
-        #expect(try fm.destinationOfSymbolicLink(atPath: paths.engine.appendingPathComponent("lib/wine/x86_64-windows/d3d11.dll").path)
-                == paths.frameworks.appendingPathComponent("renderer/d3dmetal/wine/x86_64-windows/d3d11.dll").path)
+    }
+
+    @Test func sharedEngineCarriesEveryGamesOverlays() throws {
+        let dir = try makeTempDir(); defer { try? FileManager.default.removeItem(at: dir) }
+        let paths = GamePaths(profile: .aoe4, root: dir.appendingPathComponent("steam"))
+        try EngineInstaller(runtime: try fakeRuntime(in: dir)).install(for: paths)
+        #expect(read(paths.engine.appendingPathComponent("lib/wine/x86_64-windows/d3d11.dll")) == "cs2 d3d11 64")
+        #expect(read(paths.engine.appendingPathComponent("lib/wine/x86_64-unix/winebus.so")) == "controller winebus")
+        #expect(GameProfile.libraryOverlays == ["cs2", "controllers"])
     }
 
     @Test func overlayFilesWinOverDependencyLinks() throws {

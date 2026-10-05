@@ -63,11 +63,11 @@ import Testing
         let p = GamePaths(profile: .cs2, root: URL(fileURLWithPath: "/tmp/mg/cs2"))
         let env = WineEnvironment.make(profile: .cs2, paths: p, inherited: [:], optimized: true, hud: false, bridge: bridge)
         #expect(env["WINEDLLPATH"] == "/tmp/mg/cs2/engine/lib/wine")
-        #expect(env["WINEDLLOVERRIDES"] == "winemenubuilder.exe=;mscoree,mshtml=;gameoverlayrenderer,gameoverlayrenderer64=;dxgi,d3d11,d3d10core,winemetal=b;nvapi64,nvngx=")
+        #expect(env["WINEDLLOVERRIDES"] == "winemenubuilder.exe=;mscoree,mshtml=;gameoverlayrenderer,gameoverlayrenderer64=;dxgi,d3d11,d3d10core,d3d12,atidxx64,winemetal=b;nvapi64,nvngx=")
         #expect(env["DXMT_CS2_EARLY_COMPILE"] == "1")
-        #expect(env["DXMT_SHADER_CACHE_PATH"] == "/tmp/mg/cs2/graphics/shader-cache")
-        #expect(env["DXMT_CS2_PIPELINE_CACHE"] == "/tmp/mg/cs2/graphics/game-archives")
-        #expect(env["DXMT_CS2_RECIPE_DIR"] == "/tmp/mg/cs2/graphics/recipes")
+        #expect(env["DXMT_SHADER_CACHE_PATH"] == "/tmp/mg/cs2/games/cs2/graphics/shader-cache")
+        #expect(env["DXMT_CS2_PIPELINE_CACHE"] == "/tmp/mg/cs2/games/cs2/graphics/game-archives")
+        #expect(env["DXMT_CS2_RECIPE_DIR"] == "/tmp/mg/cs2/games/cs2/graphics/recipes")
         #expect(env["DXMT_LOG_PATH"] == "/tmp/mg/cs2/logs")
         #expect(env["AOELAB_SOFTFAULT_GAME"] == nil)
         #expect(env["AOELAB_SIDECAR_PATH"] == nil)
@@ -89,10 +89,17 @@ import Testing
         #expect(p.gameExe.path == "/r/prefix/drive_c/Program Files (x86)/Steam/steamapps/common/Counter-Strike Global Offensive/game/bin/win64/cs2.exe")
     }
 
-    @Test func defaultRootIsShortAndPerGame() {
+    @Test func defaultRootIsOneSharedSteamLibrary() {
         let home = URL(fileURLWithPath: "/Users/someone")
-        let root = GamePaths.defaultRoot(for: .cs2, home: home)
-        #expect(root.path == "/Users/someone/Library/Application Support/macgames/cs2")
+        #expect(GamePaths.defaultRoot(home: home).path == "/Users/someone/Library/Application Support/macgames/steam")
+    }
+
+    @Test func perGameFilesLiveUnderTheirOwnFolder() {
+        let p = GamePaths(profile: .cs2, root: URL(fileURLWithPath: "/r"))
+        #expect(p.gameData.path == "/r/games/cs2")
+        #expect(p.graphics.path == "/r/games/cs2/graphics")
+        #expect(p.prefix.path == "/r/prefix")
+        #expect(GamePaths(profile: .aoe4, root: URL(fileURLWithPath: "/r")).steamExe == p.steamExe)
     }
 
     @Test func profilesAreLookedUpById() {

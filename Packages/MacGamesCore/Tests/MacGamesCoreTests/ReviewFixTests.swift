@@ -78,6 +78,10 @@ func compileSleeper(to url: URL) throws {
             return RuntimeLayout(resources: res, helpers: dir.appendingPathComponent("Helpers"))
         }
         let root = dir.appendingPathComponent("cs2")
+        // The shared prefix also receives the D3DMetal libraries of other games.
+        for name in ["dxgi", "d3d11", "d3d12", "atidxx64"] {
+            try write(name, to: root.appendingPathComponent("deps/Frameworks/renderer/d3dmetal/wine/x86_64-windows/\(name).dll"))
+        }
         let v1 = GameRuntime(profile: .cs2, root: root, runtime: try runtime("v1", winemetal: "metal v1"), downloadCache: dir)
         try v1.ensureEngine()
         let system32 = v1.paths.prefix.appendingPathComponent("drive_c/windows/system32/winemetal.dll")
