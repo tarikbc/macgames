@@ -53,6 +53,11 @@ rm -rf "$BUILD" && mkdir -p "$BUILD"
 xcodebuild -project MacGames.xcodeproj -scheme MacGames -configuration Release -derivedDataPath "$BUILD/DerivedData" \
   CODE_SIGN_IDENTITY=- build > "$BUILD/xcodebuild.log" 2>&1 || { tail -30 "$BUILD/xcodebuild.log"; exit 1; }
 ditto "$BUILD/DerivedData/Build/Products/Release/MacGames.app" "$APP"
+# Sparkle compares build numbers, and the About window shows the version: check both before notarizing.
+[ "$(/usr/libexec/PlistBuddy -c 'Print CFBundleVersion' "$APP/Contents/Info.plist")" = "$BUILD_NUMBER" ] \
+  || { echo "error: the built app's CFBundleVersion is not $BUILD_NUMBER." >&2; exit 1; }
+[ "$(/usr/libexec/PlistBuddy -c 'Print CFBundleShortVersionString' "$APP/Contents/Info.plist")" = "$VERSION" ] \
+  || { echo "error: the built app's CFBundleShortVersionString is not $VERSION." >&2; exit 1; }
 SPARKLE_BIN="$BUILD/DerivedData/SourcePackages/artifacts/sparkle/Sparkle/bin"
 
 step "Signing inside out with the Developer ID and the hardened runtime"
@@ -91,10 +96,6 @@ spctl -a -t open --context context:primary-signature -vv "$DMG"
 step "Signing the update for Sparkle"
 ditto -c -k --keepParent "$APP" "$ZIP"
 SIGNATURE="$("$SPARKLE_BIN/sign_update" --account macgames "$ZIP")"
-[ "$(/usr/libexec/PlistBuddy -c 'Print CFBundleVersion' "$APP/Contents/Info.plist")" = "$BUILD_NUMBER" ] \
-  || { echo "error: the built app's CFBundleVersion is not $BUILD_NUMBER." >&2; exit 1; }
-[ "$(/usr/libexec/PlistBuddy -c 'Print CFBundleShortVersionString' "$APP/Contents/Info.plist")" = "$VERSION" ] \
-  || { echo "error: the built app's CFBundleShortVersionString is not $VERSION." >&2; exit 1; }
 cat > "$BUILD/appcast.xml" <<XML
 <?xml version="1.0" encoding="utf-8"?>
 <rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle">
