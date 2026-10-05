@@ -75,11 +75,14 @@ final class GameModel: Identifiable {
         Task { optimization = await Self.off(Self.reads) { r.optimizationStatus() } }
     }
 
-    func refresh() async {
+    /// Reads the game's status; the library passes one process `snapshot` to all games of a poll.
+    func refresh(_ snapshot: ProcessSnapshot? = nil) async {
         guard !locked else { return }
         let r = runtime
         let (state, live, download, optimization, online) = await Self.off(Self.reads) {
-            (r.state(), r.isSessionRunning(), SteamStatus.downloadProgress(r.paths), r.optimizationStatus(), r.onlineReady)
+            let processes = snapshot ?? ProcessSnapshot.take(under: r.paths.engine)
+            return (r.state(using: processes), r.isSessionRunning(using: processes), SteamStatus.downloadProgress(r.paths),
+                    r.optimizationStatus(), r.onlineReady)
         }
         self.onlineReady = online
         // An old error no longer describes a game that moved to another stage.
@@ -212,7 +215,8 @@ final class LibraryModel {
 
     func poll() async {
         while !Task.isCancelled {
-            for game in games { await game.refresh() }
+            let snapshot = await Task.detached { ProcessSnapshot.take(under: GamePaths.dataFolder()) }.value
+            for game in games { await game.refresh(snapshot) }
             for env in GameEnvironment.all where env.launcher == .steam {
                 let root = GamePaths.defaultRoot(for: env)
                 guard FileManager.default.fileExists(atPath: root.path) else { continue }

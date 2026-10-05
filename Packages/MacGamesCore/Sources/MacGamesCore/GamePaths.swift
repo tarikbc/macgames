@@ -15,6 +15,11 @@ public struct GamePaths: Sendable {
         self.root = root.standardizedFileURL
     }
 
+    /// The folder that holds every environment; one process scan of it covers all games.
+    public static func dataFolder(home: URL = FileManager.default.homeDirectoryForCurrentUser) -> URL {
+        home.appendingPathComponent("Library/Application Support/macgames")
+    }
+
     /// The root of the shared `steam` environment.
     public static func defaultRoot(home: URL = FileManager.default.homeDirectoryForCurrentUser) -> URL {
         defaultRoot(for: .steam, home: home)

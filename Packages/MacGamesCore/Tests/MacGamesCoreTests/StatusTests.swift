@@ -78,3 +78,30 @@ import Testing
         #expect(LiveProcesses.paths(under: dir).map(\.lastPathComponent) == ["sleep"])
     }
 }
+
+@Suite struct ProcessSnapshotTests {
+    let engine = URL(fileURLWithPath: "/r/steam/engine")
+    var snapshot: ProcessSnapshot {
+        ProcessSnapshot(entries: [
+            .init(pid: 10, path: "/r/steam/engine/bin/wineserver", argv0: "/r/steam/engine/bin/wineserver"),
+            .init(pid: 11, path: "/r/steam/engine/bin/wine-preloader", argv0: #"C:\Program Files (x86)\Steam\steamapps\common\Game\Game.EXE"#),
+            .init(pid: 12, path: "/r/rockstar/engine/bin/wine-preloader", argv0: #"C:\Other\Other.exe"#),
+        ])
+    }
+
+    @Test func queriesFilterOneScanByEngineFolder() {
+        #expect(snapshot.paths(under: engine).map(\.path) == ["/r/steam/engine/bin/wineserver", "/r/steam/engine/bin/wine-preloader"])
+        #expect(snapshot.isRunning(executable: "game.exe", under: engine))
+        #expect(!snapshot.isRunning(executable: "Other.exe", under: engine), "another environment's process")
+    }
+
+    @Test func stateComesFromTheSnapshotWithoutAScan() throws {
+        let dir = try makeTempDir()
+        defer { try? FileManager.default.removeItem(at: dir) }
+        let runtime = GameRuntime(profile: .cs2, root: dir, runtime: RuntimeLayout(resources: dir, helpers: dir))
+        let server = runtime.paths.wineserver.resolvingSymlinksInPath().path
+        let live = ProcessSnapshot(entries: [.init(pid: 1, path: server, argv0: server)])
+        #expect(runtime.isSessionRunning(using: live))
+        #expect(!runtime.isSessionRunning(using: ProcessSnapshot(entries: [])))
+    }
+}

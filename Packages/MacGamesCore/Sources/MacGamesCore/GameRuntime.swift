@@ -59,9 +59,11 @@ public final class GameRuntime: @unchecked Sendable {
         return environment(optimized: optimized, hud: s.hud)
     }
 
-    public func state() -> GameState {
-        GameState.derive(paths, sessionRunning: isSessionRunning(),
-                         gameProcessRunning: LiveProcesses.isRunning(executable: profile.executableName, under: paths.engine))
+    /// The game's stage; pass one `snapshot` to answer many games from a single process scan.
+    public func state(using snapshot: ProcessSnapshot? = nil) -> GameState {
+        let live = snapshot ?? ProcessSnapshot.take(under: paths.engine)
+        return GameState.derive(paths, sessionRunning: isSessionRunning(using: live),
+                                gameProcessRunning: live.isRunning(executable: profile.executableName, under: paths.engine))
     }
 
     // MARK: Setup
@@ -214,10 +216,11 @@ public final class GameRuntime: @unchecked Sendable {
 
     /// The title of a game of this environment that runs now, Steam-tracked or not.
     func runningGameTitle() -> String? {
+        let live = ProcessSnapshot.take(under: paths.engine)
         for game in paths.environment.games {
             let gamePaths = GamePaths(profile: game, root: paths.root)
-            if GameRecipes.processNames(for: game).contains(where: { LiveProcesses.isRunning(executable: $0, under: paths.engine) })
-                || (isSessionRunning() && GameProcessLog.isRunning(game, paths: gamePaths)) {
+            if GameRecipes.processNames(for: game).contains(where: { live.isRunning(executable: $0, under: paths.engine) })
+                || (isSessionRunning(using: live) && GameProcessLog.isRunning(game, paths: gamePaths)) {
                 return game.title
             }
         }
@@ -255,9 +258,9 @@ public final class GameRuntime: @unchecked Sendable {
 
     /// `true` while this game's wineserver is alive. Every Wine process of a
     /// prefix needs its server, so the server's lifetime is the session's.
-    public func isSessionRunning() -> Bool {
+    public func isSessionRunning(using snapshot: ProcessSnapshot? = nil) -> Bool {
         let server = paths.wineserver.resolvingSymlinksInPath().path
-        return LiveProcesses.paths(under: paths.engine).contains { $0.path == server }
+        return (snapshot ?? ProcessSnapshot.take(under: paths.engine)).paths(under: paths.engine).contains { $0.path == server }
     }
 
     public func startSteam(_ mode: SteamLaunch.Mode) throws {

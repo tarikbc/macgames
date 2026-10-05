@@ -68,16 +68,52 @@ public enum GameProcessLog {
 @_silgen_name("proc_listallpids") private func proc_listallpids(_ buffer: UnsafeMutableRawPointer?, _ size: Int32) -> Int32
 @_silgen_name("proc_pidpath") private func proc_pidpath(_ pid: Int32, _ buffer: UnsafeMutableRawPointer?, _ size: UInt32) -> Int32
 
+/// The Wine processes that run at one moment. One snapshot answers every
+/// status question of a refresh, so the process table is read only once.
+public struct ProcessSnapshot: Sendable {
+    public struct Entry: Sendable {
+        public let pid: Int32
+        /// The resolved path of the binary.
+        public let path: String
+        /// Wine keeps the Windows program's path here.
+        public let argv0: String?
+        public init(pid: Int32, path: String, argv0: String?) { self.pid = pid; self.path = path; self.argv0 = argv0 }
+    }
+
+    public let entries: [Entry]
+    public init(entries: [Entry]) { self.entries = entries }
+
+    /// The processes whose binary is inside `folder`, such as the MacGames data folder.
+    public static func take(under folder: URL) -> ProcessSnapshot {
+        ProcessSnapshot(entries: LiveProcesses.pids(under: folder).compactMap { pid in
+            LiveProcesses.path(pid).map { Entry(pid: pid, path: $0.path, argv0: LiveProcesses.firstArgument(pid)) }
+        })
+    }
+
+    func inside(_ folder: URL) -> [Entry] {
+        let prefix = folder.resolvingSymlinksInPath().path + "/"
+        return entries.filter { $0.path.hasPrefix(prefix) }
+    }
+
+    /// Executable paths of the processes whose binary is inside `folder`.
+    public func paths(under folder: URL) -> [URL] { inside(folder).map { URL(fileURLWithPath: $0.path) } }
+
+    /// `true` when a process started from `folder` (a Wine engine) runs a Windows program named `executable`.
+    public func isRunning(executable: String, under folder: URL) -> Bool {
+        let want = executable.lowercased()
+        return inside(folder).contains { entry in
+            guard let argv0 = entry.argv0?.lowercased() else { return false }
+            let name = argv0.replacingOccurrences(of: "\\", with: "/").split(separator: "/").last.map(String.init) ?? argv0
+            return name == want
+        }
+    }
+}
+
 public enum LiveProcesses {
     /// `true` when a process started from `folder` (a Wine engine) runs a
     /// Windows program named `executable`. Wine keeps the Windows path in argv[0].
     public static func isRunning(executable: String, under folder: URL) -> Bool {
-        let want = executable.lowercased()
-        return pids(under: folder).contains { pid in
-            guard let argv0 = firstArgument(pid)?.lowercased() else { return false }
-            let name = argv0.replacingOccurrences(of: "\\", with: "/").split(separator: "/").last.map(String.init) ?? argv0
-            return name == want
-        }
+        ProcessSnapshot.take(under: folder).isRunning(executable: executable, under: folder)
     }
 
     static func firstArgument(_ pid: Int32) -> String? {
@@ -97,7 +133,7 @@ public enum LiveProcesses {
 
     /// Executable paths of live processes whose binary is inside `folder`.
     public static func paths(under folder: URL) -> [URL] {
-        pids(under: folder).compactMap(path)
+        ProcessSnapshot.take(under: folder).paths(under: folder)
     }
 
     static func path(_ pid: Int32) -> URL? {
