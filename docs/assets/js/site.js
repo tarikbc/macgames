@@ -124,6 +124,12 @@
       const status = element("p", d.status ? "spot-status tested" : "spot-status");
       status.append(element("i", "dot"), document.createTextNode(d.status || "Recipe ready. Test it and tell us."));
       card.append(meta, recipe, status);
+      // Each game has its own page; the link is also how search engines find it.
+      if (d.page) {
+        const link = element("a", "spot-link", "How it runs on Mac");
+        link.href = d.page;
+        card.append(link);
+      }
       body.append(card);
       stage.querySelector(".spot-body")?.remove();
       stage.append(body);
