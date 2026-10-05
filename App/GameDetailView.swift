@@ -14,6 +14,8 @@ struct GameDetailView: View {
     var body: some View {
         GeometryReader { geo in
             let expanded = max(300, geo.size.height * 0.54)
+            // On a wide window the page is a centered column; the logo and the header button line up with it.
+            let inset = max(0, (geo.size.width - Space.column - 2 * Space.page) / 2)
             let range = expanded - Self.collapsedHeight
             // 0 with the full art, 1 once it has collapsed into the header.
             let collapse = min(1, max(0, scrolled / range))
@@ -36,8 +38,8 @@ struct GameDetailView: View {
                     .padding(.horizontal, Space.page)
                     .padding(.top, expanded + Space.xl)
                     .padding(.bottom, Space.xxl + Space.l)
-                    .frame(maxWidth: 760 + 2 * Space.page, alignment: .leading)
-                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .frame(maxWidth: Space.column + 2 * Space.page, alignment: .leading)
+                    .frame(maxWidth: .infinity)
                     // Even a short page can scroll the art and the main button under the bar.
                     .frame(minHeight: geo.size.height + expanded, alignment: .top)
                     .animation(Motion.morph, value: game.error)
@@ -50,12 +52,12 @@ struct GameDetailView: View {
 
                 // Shrinks from the full art to a slim header as the page scrolls, and
                 // stretches a little when pulled down past the top.
-                hero(collapse: collapse)
+                hero(collapse: collapse, inset: inset)
                     .frame(height: max(Self.collapsedHeight, expanded - scrolled))
                     .allowsHitTesting(false)
                     .overlay(alignment: .trailing) {
                         CompactPlay(game: game)
-                            .padding(.trailing, Space.page)
+                            .padding(.trailing, inset + Space.page)
                             .opacity(mainButtonHidden ? 1 : 0)
                             .offset(x: mainButtonHidden || reduceMotion ? 0 : 12)
                             .allowsHitTesting(mainButtonHidden)
@@ -103,7 +105,7 @@ struct GameDetailView: View {
         }
     }
 
-    private func hero(collapse: CGFloat) -> some View {
+    private func hero(collapse: CGFloat, inset: CGFloat) -> some View {
         ZStack(alignment: .bottomLeading) {
             // Expanded, the art dissolves into the window's backdrop. Collapsed, it turns
             // into a frosted bar in the game's own colors with a crisp bottom edge.
@@ -118,7 +120,7 @@ struct GameDetailView: View {
                 // Logo PNGs carry wide transparent margins, so the collapsed size stays generous.
                 .frame(maxWidth: 360 - 150 * collapse, maxHeight: 150 - 94 * collapse, alignment: .bottomLeading)
                 .shadow(color: .black.opacity(0.6 - 0.25 * collapse), radius: 18 - 12 * collapse, y: 6 - 5 * collapse)
-                .padding(.leading, Space.page - 12)
+                .padding(.leading, inset + Space.page - 12)
                 .padding(.bottom, Space.l - 6 * collapse)
                 .opacity(logoIn ? 1 : 0)
                 .offset(y: logoIn || reduceMotion ? 0 : 22)
@@ -299,7 +301,7 @@ private struct SettingsSection: View {
                     }
                 }
                 Divider().opacity(0.3)
-                row("Game files", detail: game.dataFolder.path) {
+                row("Game files", detail: (game.dataFolder.path as NSString).abbreviatingWithTildeInPath) {
                     HStack {
                         Button("Logs", action: game.showLogs)
                         Button("Show in Finder", action: game.showData)
