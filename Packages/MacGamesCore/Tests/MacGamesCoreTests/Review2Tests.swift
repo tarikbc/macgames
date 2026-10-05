@@ -127,3 +127,21 @@ import Testing
         #expect(FileManager.default.fileExists(atPath: GamePaths(profile: .witcher3, root: game.paths.root).gameData.appendingPathComponent("home").path))
     }
 }
+
+@Suite struct StagedProgramTests {
+    @Test func programsAreCopiedIntoDriveCAndRunByTheirWindowsPath() throws {
+        let dir = try makeTempDir()
+        defer { try? FileManager.default.removeItem(at: dir) }
+        let runtime = GameRuntime(profile: .rdr2, root: dir.appendingPathComponent("root"),
+                                  runtime: RuntimeLayout(resources: dir, helpers: dir))
+        let installer = dir.appendingPathComponent("SteamSetup.exe")
+        try write("v1", to: installer)
+        let path = try runtime.stage(installer)
+        #expect(path == #"C:\macgames\SteamSetup.exe"#)
+        let staged = runtime.driveC.appendingPathComponent("macgames/SteamSetup.exe")
+        #expect(read(staged) == "v1")
+        try write("v2", to: installer)
+        _ = try runtime.stage(installer)
+        #expect(read(staged) == "v2", "a newer download replaces the staged copy")
+    }
+}

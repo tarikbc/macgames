@@ -172,7 +172,7 @@ public final class GameRuntime: @unchecked Sendable {
             progress("SteamSetup.exe SHA-256 \(try sha256Hex(ofFileAt: installer))")
             progress("Installing Steam…")
             let env = try launchEnvironment()
-            try runWine([installer.path, "/S"], environment: env, timeout: 300)
+            try runWine([try stage(installer), "/S"], environment: env, timeout: 300)
             guard fm.fileExists(atPath: paths.steamExe.path) else {
                 throw SetupError("The Steam installer finished, but steam.exe is missing. Logs: \(paths.logs.path)")
             }
@@ -442,6 +442,17 @@ extension GameRuntime {
 
     var driveC: URL { paths.prefix.appendingPathComponent("drive_c") }
 
+    /// Copies a program into `C:\macgames` and returns its Windows path. Environments that point
+    /// `z:` at their own root reach files outside the prefix only through Wine's fallback for Unix paths.
+    func stage(_ file: URL) throws -> String {
+        let folder = driveC.appendingPathComponent("macgames")
+        try fm.createDirectory(at: folder, withIntermediateDirectories: true)
+        let target = folder.appendingPathComponent(file.lastPathComponent)
+        if fm.fileExists(atPath: target.path) { try fm.removeItem(at: target) }
+        try fm.copyItem(at: file, to: target)
+        return paths.windowsPath(target)
+    }
+
     // MARK: Battle.net
 
     var battleNetInstallerRunning: Bool { LiveProcesses.isRunning(executable: "Battle.net-Setup.exe", under: paths.engine) }
@@ -451,10 +462,7 @@ extension GameRuntime {
         guard !battleNetInstallerRunning else { progress("The Battle.net installer is still running."); return }
         progress("Getting the Battle.net installer…")
         let installer = try downloader.fetch(.battleNetSetup)
-        let staged = driveC.appendingPathComponent("Battle.net-Setup.exe")
-        if fm.fileExists(atPath: staged.path) { try fm.removeItem(at: staged) }
-        try fm.copyItem(at: installer, to: staged)
-        try startDetached([paths.windowsPath(staged), "--lang=enUS"] + Self.battleNetFlags, environment: try launchEnvironment(),
+        try startDetached([try stage(installer), "--lang=enUS"] + Self.battleNetFlags, environment: try launchEnvironment(),
                           workingDirectory: driveC, log: "battlenet-session.log")
         progress("The Battle.net installer is open. Sign in when it finishes, then install the game there.")
     }
@@ -480,7 +488,7 @@ extension GameRuntime {
         guard !fm.fileExists(atPath: launcher.path) else { return }
         progress("Installing the Rockstar Games Launcher…")
         let installer = try downloader.fetch(.rockstarLauncher)
-        try runWine([installer.path, "/s", "/f"], environment: try launchEnvironment(), timeout: 600)
+        try runWine([try stage(installer), "/s", "/f"], environment: try launchEnvironment(), timeout: 600)
     }
 
     // MARK: Launch

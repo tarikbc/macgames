@@ -183,7 +183,7 @@ extension GameRuntime {
                             Self.avalonSoftware], environment: env)
         progress("Finish the GeneralsOnline installer. Keep the folder it suggests.")
         // An interactive wizard: a slow user is not a hang, so a timeout never stops the session.
-        try runner.run(paths.wine, [installer.path, "/DIR=\(dir)", "/NORESTART"], environment: joined(env), timeout: 3600)
+        try runner.run(paths.wine, [try stage(installer), "/DIR=\(dir)", "/NORESTART"], environment: joined(env), timeout: 3600)
         guard fm.fileExists(atPath: generalsOnlineClient.path) else {
             throw SetupError("The GeneralsOnline installer finished, but its client is missing. Run the online setup again.")
         }
@@ -210,7 +210,7 @@ extension GameRuntime {
             patcher = try downloader.fetch(item)
         }
         guard verified(patcher) else { throw SetupError("The GeneralsOnline update did not verify.") }
-        try runWine([patcher.path, "/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART", "/DIR=\(paths.windowsPath(paths.installDir))"],
+        try runWine([try stage(patcher), "/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART", "/DIR=\(paths.windowsPath(paths.installDir))"],
                     environment: env, timeout: 1800)
     }
 
