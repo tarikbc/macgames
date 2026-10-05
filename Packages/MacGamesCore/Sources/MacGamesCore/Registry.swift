@@ -35,11 +35,19 @@ public struct RegistryValue: Sendable, Equatable {
     }
 }
 
-/// Writes registry values as a REGEDIT4 file for `wine reg import`: one Wine
+/// Writes registry values as a `.reg` file for `wine reg import`: one Wine
 /// start for all values instead of one per `reg add`.
+///
+/// Wine reads a REGEDIT4 file in the ANSI code page, which breaks paths with
+/// non-ASCII names, so the file uses the version 5 format in UTF-16LE.
 public enum RegistryFile {
+    /// The file contents: a UTF-16LE byte order mark, then `render`.
+    public static func data(_ values: [RegistryValue]) -> Data {
+        Data([0xFF, 0xFE]) + render(values).data(using: .utf16LittleEndian)!
+    }
+
     public static func render(_ values: [RegistryValue]) -> String {
-        var out = "REGEDIT4\n"
+        var out = "Windows Registry Editor Version 5.00\n"
         var lastKey: String?
         for v in values {
             if v.key != lastKey { out += "\n[\(v.key)]\n"; lastKey = v.key }

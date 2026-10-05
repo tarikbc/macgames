@@ -407,11 +407,11 @@ extension GameRuntime {
     static let battleNetFlags = ["--in-process-gpu", "--use-gl=angle", "--use-angle=d3d11"]
     static let ucrtbaseSHA = "51cbbde17a768930300236facd9738f54b7801e6715771ff8af90bfbe3fad44f"
 
-    /// Writes all values in one REGEDIT4 file and imports it with a single Wine start.
+    /// Writes all values in one `.reg` file and imports it with a single Wine start.
     func importRegistry(_ values: [RegistryValue], environment: [String: String]) throws {
         let file = paths.prefix.appendingPathComponent("drive_c/macgames-registry-\(UUID().uuidString).reg")
         try fm.createDirectory(at: file.deletingLastPathComponent(), withIntermediateDirectories: true)
-        try RegistryFile.render(values).write(to: file, atomically: true, encoding: .utf8)
+        try RegistryFile.data(values).write(to: file, options: .atomic)
         defer { try? fm.removeItem(at: file) }
         try runWine(["reg", "import", paths.windowsPath(file)], environment: joined(environment), timeout: 120)
     }

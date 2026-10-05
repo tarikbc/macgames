@@ -3,14 +3,14 @@ import Testing
 @testable import MacGamesCore
 
 @Suite struct RegistryFileTests {
-    @Test func rendersRegedit4WithStringsAndDwords() {
+    @Test func rendersVersion5WithStringsAndDwords() {
         let text = RegistryFile.render([
             .init(key: #"HKEY_CURRENT_USER\Software\Wine\AppDefaults\RDR2.exe\DllOverrides"#, name: "dxgi", value: .string("builtin")),
             .init(key: #"HKEY_CURRENT_USER\Software\Wine\AppDefaults\RDR2.exe\DllOverrides"#, name: "d3d12", value: .string("")),
             .init(key: #"HKEY_CURRENT_USER\Software\Microsoft\Avalon.Graphics"#, name: "DisableHWAcceleration", value: .dword(1)),
         ])
         #expect(text == """
-        REGEDIT4
+        Windows Registry Editor Version 5.00
 
         [HKEY_CURRENT_USER\\Software\\Wine\\AppDefaults\\RDR2.exe\\DllOverrides]
         "dxgi"="builtin"
@@ -26,6 +26,15 @@ import Testing
         let text = RegistryFile.render([.init(key: #"HKEY_CURRENT_USER\Software\GeneralsOnline"#, name: "InstallPath",
                                               value: .string(#"C:\Games\Zero "Hour""#))])
         #expect(text.contains(#""InstallPath"="C:\\Games\\Zero \"Hour\"""#))
+    }
+
+    @Test func fileIsUTF16SoNonASCIIPathsSurvive() throws {
+        let path = #"C:\users\José\Jogos\Ação"#
+        let data = RegistryFile.data([.init(key: #"HKEY_CURRENT_USER\Software\GeneralsOnline"#, name: "InstallPath", value: .string(path))])
+        #expect(Array(data.prefix(2)) == [0xFF, 0xFE], "Wine reads a version 5 file as UTF-16LE when it starts with a BOM")
+        let text = try #require(String(data: data.dropFirst(2), encoding: .utf16LittleEndian))
+        #expect(text.hasPrefix("Windows Registry Editor Version 5.00"))
+        #expect(text.contains(RegistryFile.escape(path)))
     }
 }
 
