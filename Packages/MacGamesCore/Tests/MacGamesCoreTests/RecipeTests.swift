@@ -88,10 +88,10 @@ import Testing
         let runner = ProcessRunner(logDirectory: dir.appendingPathComponent("logs"))
         try runner.run(URL(fileURLWithPath: "/usr/bin/tar"), ["-cJf", cache.appendingPathComponent("macgames-pack-skyrim.tar.xz").path,
                                                             "-C", dir.appendingPathComponent("src").path, "skyrim"])
-        try Packs.install("skyrim", paths: p, downloader: Downloader(cache: cache), runner: runner)
+        try Packs.install("skyrim", paths: p, downloader: Downloader(cache: cache), runner: runner, pins: [:])
         #expect(read(p.pack("skyrim").appendingPathComponent("Overlays/skyrim/lib/wine/x86_64-windows/d3d11.dll")) == "dxmt")
         try write("touched", to: p.pack("skyrim").appendingPathComponent("Overlays/skyrim/lib/wine/x86_64-windows/d3d11.dll"))
-        try Packs.install("skyrim", paths: p, downloader: Downloader(cache: cache), runner: runner)
+        try Packs.install("skyrim", paths: p, downloader: Downloader(cache: cache), runner: runner, pins: [:])
         #expect(read(p.pack("skyrim").appendingPathComponent("Overlays/skyrim/lib/wine/x86_64-windows/d3d11.dll")) == "touched", "kept, not unpacked again")
     }
 }

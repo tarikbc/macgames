@@ -16,6 +16,7 @@ mkdir -p "$RT" "$HELPERS"
 rsync -a --delete "$VENDOR/Engine/" "$RT/Engine/"
 rsync -a --delete "$VENDOR/Overlays/" "$RT/Overlays/"
 rsync -a --delete "$VENDOR/Licenses/" "$RT/Licenses/"
+rsync -a --delete "$VENDOR/Games/" "$RT/Games/"
 cp "$VENDOR/dependency-links.json" "$RT/dependency-links.json"
 shasum -a 256 "$VENDOR/SHA256SUMS" | cut -c1-16 > "$RT/VERSION"
 

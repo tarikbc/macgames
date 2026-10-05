@@ -9,7 +9,7 @@ VENDOR="$ROOT/Vendor"
 OUT="$ROOT/dist"
 NAME="macgames-runtime-$VERSION"
 
-for part in Engine Overlays Helpers/x87sidecar dependency-links.json Licenses Sources; do
+for part in Engine Overlays Games Helpers/x87sidecar dependency-links.json Licenses Sources; do
   [ -e "$VENDOR/$part" ] || { echo "error: Vendor/$part is missing" >&2; exit 1; }
 done
 codesign --verify --strict "$VENDOR/Engine/bin/wine" "$VENDOR/Engine/bin/wineserver" "$VENDOR/Helpers/x87sidecar"
@@ -18,6 +18,7 @@ STAGE="$(mktemp -d)/$NAME"
 mkdir -p "$STAGE/Helpers"
 ditto "$VENDOR/Engine" "$STAGE/Engine"
 ditto "$VENDOR/Overlays" "$STAGE/Overlays"
+ditto "$VENDOR/Games" "$STAGE/Games"
 ditto "$VENDOR/Helpers/x87sidecar" "$STAGE/Helpers/x87sidecar"
 cp "$VENDOR/dependency-links.json" "$STAGE/"
 ditto "$VENDOR/Licenses" "$STAGE/Licenses"
@@ -28,6 +29,9 @@ MacGames runtime $VERSION
 Engine/            Wine 11 (built from the CrossOver 26.3 open-source release, with patches), LGPL 2.1+
 Overlays/cs2/      DXMT with CS2 early shader compile, MIT
 Overlays/controllers/  winebus with SDL2 game controller support, LGPL 2.1+ and zlib
+Overlays/ntdllfix/ ntdll with the NtQueryDirectoryObject BOOLEAN fix, LGPL 2.1+
+Overlays/aomretold/  winemac with notch-safe fullscreen for Age of Mythology: Retold, LGPL 2.1+
+Games/             cnc-ddraw (MIT) for Heroes III and Red Alert 2, the Witcher 3 FidelityFX proxy (MIT)
 Helpers/x87sidecar Fast x87 math under Rosetta 2, MIT
 Sources/           Corresponding source code for Wine, x87sidecar and DXMT
 Licenses/          License texts

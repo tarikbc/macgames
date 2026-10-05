@@ -4,8 +4,8 @@
 # Usage: scripts/fetch-runtime.sh [path to a local macgames-runtime-*.tar.xz]
 set -euo pipefail
 
-VERSION=1
-SHA256=726138ab555f7a0a125139cae79d7dbfb72c761ac1e033a63d61585bdc7163e0
+VERSION=2
+SHA256=1c18ee16a0cf0f55d2d374755b5605e8f8a65dfbc8c3c09b6ad1ff9c8f3c55df
 URL="https://github.com/tarikbc/macgames/releases/download/runtime-$VERSION/macgames-runtime-$VERSION.tar.xz"
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
