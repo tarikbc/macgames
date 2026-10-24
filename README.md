@@ -93,7 +93,7 @@ MacGames checks for updates itself; you can also choose **MacGames > Check for U
 
 To build MacGames yourself, use Xcode.
 
-1. Install **Xcode 27** and **XcodeGen** (`brew install xcodegen`).
+1. Install **Xcode 27**, **XcodeGen** and **CMake** (`brew install xcodegen cmake`).
 2. Get the runtime: the Wine engine, DXMT and x87sidecar, with their source code and licenses.
 
    ```sh

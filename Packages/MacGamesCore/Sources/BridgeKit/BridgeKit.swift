@@ -30,7 +30,10 @@ public enum Bridge {
         let game = unixPath(for: arguments[3], prefix: prefix, cwd: cwd)
         // The game still starts on the plain loader if the sidecar is missing.
         if isExecutable(sidecar), let pin = environment[pinKey], let actual = try? hash(game), actual == pin {
-            return .exec(path: sidecar, argv: [sidecar] + arguments.dropFirst(), unset: [])
+            // Runtime 4 disables x87 for its old softfault-only decoder.
+            // The rebuilt decoder composes both paths; keep the EXE guard above.
+            let unset = environment["MACGAMES_AOE_COMBINED"] == "1" ? ["X87_ALWAYS_NONE"] : []
+            return .exec(path: sidecar, argv: [sidecar] + arguments.dropFirst(), unset: unset)
         }
         var unset = environment.keys.filter { key in optimizationPrefixes.contains(where: key.hasPrefix) }
         if !unset.contains("WINELOADERNOEXEC") { unset.append("WINELOADERNOEXEC") }

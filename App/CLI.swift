@@ -7,7 +7,7 @@ import MacGamesCore
 enum CLI {
     static let usage = """
     usage: MacGames --command <check|setup|launcher|install|play|stop|uninstall|remove-setup|status|reset-display|settings>
-                    --game <id> [--root <data root>] [--optimized on|off] [--hud on|off]
+                    --game <id> [--root <data root>] [--optimized on|off] [--hud on|off] [--hidpi on|off]
     games: \(GameProfile.all.map(\.id).joined(separator: ", "))
     """
 
@@ -58,8 +58,9 @@ enum CLI {
                 var s = game.settings
                 if let v = value("--optimized", in: args) { s.optimized = v == "on" }
                 if let v = value("--hud", in: args) { s.hud = v == "on" }
+                if let v = value("--hidpi", in: args) { try EnvironmentSettings(hiDPI: v == "on").save(to: game.paths) }
                 game.settings = s
-                print("optimized: \(s.optimized), hud: \(s.hud)")
+                print("optimized: \(s.optimized), hud: \(s.hud), hiDPI: \(game.environmentSettings.hiDPI)")
             default:
                 FileHandle.standardError.write(Data((usage + "\n").utf8))
                 return 64

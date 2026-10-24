@@ -18,7 +18,7 @@ switch decision {
 case .fail(let message):
     fail(message)
 case let .exec(path, argv, unset):
-    if !unset.isEmpty {
+    if unset.contains("AOE_SOFTFAULT_PC") {
         FileHandle.standardError.write(Data("MacGamesBridge: this game build is not the optimized one; using the standard runtime.\n".utf8))
     }
     for key in unset { unsetenv(key) }

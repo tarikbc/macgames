@@ -92,12 +92,12 @@ extension OptimizationStatus {
     /// What the next launch does, in one line.
     var detail: String {
         switch self {
-        case .notApplicable: "Not used by this game."
-        case .off: "Off. The game runs on standard Wine."
-        case .waitingForGame: "Faster x87 math through x87sidecar, once the game is installed."
-        case .otherBuild: "Not used: this game build is not the one it was made for. The game runs on standard Wine."
-        case .unsupportedRosetta: "Not used: x87sidecar does not support this Mac's Rosetta version."
-        case .active: "Active. Faster x87 math through x87sidecar for this game build."
+        case .notApplicable: "Not available for this game."
+        case .off: "Off. The game will run without optimization."
+        case .waitingForGame: "Waiting for the game files."
+        case .otherBuild: "Unavailable: this game build is not supported. Optimization will not be used."
+        case .unsupportedRosetta: "Unavailable: this Mac's Rosetta version is not supported. Optimization will not be used."
+        case .active: "Ready. Optimization will be used for this game build."
         }
     }
 }

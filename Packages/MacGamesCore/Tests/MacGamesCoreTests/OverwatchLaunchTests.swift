@@ -52,7 +52,7 @@ import Testing
         let env = try installed(); defer { env.cleanUp() }
         env.live(["Battle.net.exe"])
         try env.runtime.play(LaunchContext(width: 1512, height: 982))
-        #expect(env.calls.contains(battleNet + " --exec=launch Pro"))
+        #expect(env.waitForCall(containing: battleNet + " --exec=launch Pro"))
         #expect(!env.calls.contains { $0.hasPrefix("ow2-pipeline") })
         #expect(read(settings(env)) == nil)
     }

@@ -22,6 +22,7 @@ ZIP="$BUILD/MacGames-$VERSION.zip"
 step() { printf '\n==> %s\n' "$*"; }
 
 step "Preflight"
+command -v cmake >/dev/null || { echo "error: CMake is required to build x87sidecar (brew install cmake)." >&2; exit 1; }
 if [ -z "${DEVELOPER_ID:-}" ]; then
   DEVELOPER_ID="$(security find-identity -v -p codesigning | sed -n 's/.*"\(Developer ID Application: [^"]*\)".*/\1/p' | head -1)"
 fi
@@ -68,8 +69,9 @@ FW="$APP/Contents/Frameworks/Sparkle.framework/Versions/B"
 for xpc in "$FW"/XPCServices/*.xpc; do [ -e "$xpc" ] && sign --preserve-metadata=entitlements "$xpc"; done
 sign "$FW/Updater.app" "$FW/Autoupdate"
 sign "$APP/Contents/Frameworks/Sparkle.framework"
-# Our own helpers. x87sidecar and the Wine runtime keep the signatures they ship with:
-# Wine's entitlements must stay as they are.
+# The source-built sidecar needs our release signature too. Wine keeps its
+# shipped signature and entitlements.
+sign --entitlements App/x87sidecar.entitlements "$APP/Contents/Helpers/x87sidecar"
 sign --entitlements App/MacGamesBridge.entitlements "$APP/Contents/Helpers/MacGamesBridge"
 sign "$APP/Contents/Helpers/RosettaProbe"
 sign --entitlements App/MacGames.entitlements "$APP"

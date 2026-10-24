@@ -288,9 +288,14 @@ private struct SettingsSection: View {
                 row("Performance HUD", detail: "Shows the Metal frame rate overlay in the game.") {
                     Toggle("", isOn: $game.settings.hud).labelsHidden().toggleStyle(.switch)
                 }
+                Divider().opacity(0.3)
+                row("HiDPI (Retina)", detail: "Applies to all games in \(game.runtime.paths.environment.title). Restart \(game.launcherName) to apply.") {
+                    Toggle("HiDPI (Retina)", isOn: $game.hiDPI)
+                        .labelsHidden().toggleStyle(.switch)
+                }
                 if game.profile.optimizedExecutableSHA256 != nil {
                     Divider().opacity(0.3)
-                    row("x87 optimization", detail: game.optimization.detail) {
+                    row("Rosetta optimization", detail: "Accelerates x87 math, exception handling and translated-code reuse on the supported AoE IV build.", status: game.optimization.detail) {
                         Toggle("", isOn: $game.settings.optimized).labelsHidden().toggleStyle(.switch)
                     }
                 }
@@ -339,11 +344,17 @@ private struct SettingsSection: View {
         }
     }
 
-    private func row<Control: View>(_ title: String, detail: String, @ViewBuilder control: () -> Control) -> some View {
+    private func row<Control: View>(_ title: String, detail: String, status: String? = nil, @ViewBuilder control: () -> Control) -> some View {
         HStack(spacing: Space.l) {
             VStack(alignment: .leading, spacing: 3) {
                 Text(title).font(.system(size: 13, weight: .medium))
                 Text(detail).font(.system(size: 11)).foregroundStyle(.secondary).lineLimit(2).truncationMode(.middle)
+                if let status {
+                    Text("Next launch: \(status)")
+                        .font(.system(size: 11))
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
             }
             Spacer(minLength: 12)
             control()

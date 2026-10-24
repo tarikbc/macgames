@@ -46,6 +46,10 @@ public struct LaunchSettings: Codable, Sendable, Equatable {
     }
 
     public func save(to paths: GamePaths) throws {
+        // Freeze migration before rewriting a legacy per-game HiDPI choice.
+        if !FileManager.default.fileExists(atPath: EnvironmentSettings.url(paths).path) {
+            try EnvironmentSettings.load(from: paths).save(to: paths)
+        }
         try FileManager.default.createDirectory(at: paths.gameData, withIntermediateDirectories: true)
         try JSONEncoder().encode(self).write(to: Self.url(paths), options: .atomic)
     }

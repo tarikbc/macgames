@@ -10,6 +10,17 @@ struct FakeEnvironment {
     var calls: [String] { (read(dir.appendingPathComponent("root/calls.log")) ?? "").split(separator: "\n").map(String.init) }
     let events = EventLog()
 
+    /// Detached launcher handoffs can be delayed by the OS, especially on CI.
+    func waitForCall(containing text: String, timeout: TimeInterval = 2) -> Bool {
+        let deadline = Date().addingTimeInterval(timeout)
+        repeat {
+            if calls.contains(where: { $0.contains(text) }) { return true }
+            Thread.sleep(forTimeInterval: 0.01)
+        } while Date() < deadline
+        return false
+    }
+
+
     final class EventLog: @unchecked Sendable {
         private let lock = NSLock()
         private var lines: [String] = []
@@ -154,7 +165,7 @@ struct FakeEnvironment {
         env.live(["RelicCardinal.exe"])
         try env.runtime.startSteam(.play([]))
         #expect(!env.calls.contains("wineserver -k"))
-        #expect(env.calls.contains { $0.contains("-applaunch 730") })
+        #expect(env.waitForCall(containing: "-applaunch 730"))
     }
 
     @Test func steamReadyFindsTheStartLineInALogThatStartedOver() throws {

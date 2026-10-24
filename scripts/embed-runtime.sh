@@ -24,6 +24,10 @@ rsync -a --delete --delete-excluded --exclude prepare-pipelines.exe --exclude DX
 cp "$VENDOR/dependency-links.json" "$RT/dependency-links.json"
 shasum -a 256 "$VENDOR/SHA256SUMS" | cut -c1-16 > "$RT/VERSION"
 
-ditto "$VENDOR/Helpers/x87sidecar" "$HELPERS/x87sidecar"
+SIDECAR="$("$SRCROOT/scripts/prepare-aoe-runtime.sh")"
+ditto "$SIDECAR" "$HELPERS/x87sidecar"
+printf '2\n' > "$RT/aoe-performance-v2"
+mkdir -p "$RT/Sources"
+cp "$SRCROOT/build/aoe-runtime/sidecar-source-patched.tar.gz" "$RT/Sources/"
 ditto "$BUILT_PRODUCTS_DIR/MacGamesBridge" "$HELPERS/MacGamesBridge"
 ditto "$BUILT_PRODUCTS_DIR/RosettaProbe" "$HELPERS/RosettaProbe"

@@ -121,8 +121,13 @@ public enum GameRecipes {
 
     /// Identifies an environment's registry and sandbox recipes, so a change reaches existing installs.
     static func recipeHash(for environment: GameEnvironment, root: URL) -> String {
-        let registry = environment.games.flatMap(registry(for:)).map { "\($0.key)|\($0.name)|\($0.value)" }
+        let registry = ordinaryRegistry(for: environment).map { "\($0.key)|\($0.name)|\($0.value)" }
         return sha256Hex(Data(registry.joined(separator: "\n").utf8))
+    }
+
+    /// RetinaMode is applied separately because it changes the whole session.
+    static func ordinaryRegistry(for environment: GameEnvironment) -> [RegistryValue] {
+        environment.games.flatMap(registry(for:)).filter { !WineHiDPI.isRetinaMode($0) }
     }
 
     /// Registry values a game needs, scoped to its own executables where possible.
