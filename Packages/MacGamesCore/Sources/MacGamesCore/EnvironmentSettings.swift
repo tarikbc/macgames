@@ -8,7 +8,14 @@ public struct EnvironmentSettings: Codable, Sendable, Equatable {
 
     static func url(_ paths: GamePaths) -> URL { paths.root.appendingPathComponent("environment-settings.json") }
 
+    /// `true` when a game in the environment needs Wine's Retina mode for the whole prefix, as
+    /// Recall's fullscreen canvas does for Overwatch. HiDPI then stays on whatever was saved.
+    public static func requiresHiDPI(_ environment: GameEnvironment) -> Bool {
+        environment.games.contains { GameRecipes.registry(for: $0).contains(WineHiDPI.registryValue(true)) }
+    }
+
     public static func load(from paths: GamePaths) -> EnvironmentSettings {
+        if requiresHiDPI(paths.environment) { return Self(hiDPI: true) }
         if let data = try? Data(contentsOf: url(paths)),
            let saved = try? JSONDecoder().decode(Self.self, from: data) { return saved }
 
@@ -22,10 +29,7 @@ public struct EnvironmentSettings: Codable, Sendable, Equatable {
             return (try? JSONDecoder().decode(Legacy.self, from: data))?.hiDPI
         })
         if choices.count == 1, let choice = choices.first { return Self(hiDPI: choice) }
-        let fallback = paths.environment.games.contains {
-            GameRecipes.registry(for: $0).contains(WineHiDPI.registryValue(true))
-        }
-        return Self(hiDPI: WineHiDPI.currentValue(in: paths.prefix) ?? fallback)
+        return Self(hiDPI: WineHiDPI.currentValue(in: paths.prefix) ?? false)
     }
 
     public func save(to paths: GamePaths) throws {

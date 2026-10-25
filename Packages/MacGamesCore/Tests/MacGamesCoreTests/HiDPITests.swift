@@ -44,22 +44,32 @@ import Testing
         #expect(fixture.calls.filter { $0.hasPrefix("wine reg import") }.count == 2)
     }
 
-    @Test func defaultsRemainCompatibleAndUserCanOverrideAnExistingGameRecipe() throws {
+    @Test func defaultsRemainCompatibleAndThePrefixModeIsRead() throws {
         let plain = try FakeEnvironment(.aoe4)
         defer { plain.cleanUp() }
         #expect(!plain.runtime.environmentSettings.hiDPI)
-        let retinaGame = try FakeEnvironment(.overwatch)
-        defer { retinaGame.cleanUp() }
-        #expect(retinaGame.runtime.environmentSettings.hiDPI)
-        let values = GameRecipes.ordinaryRegistry(for: retinaGame.runtime.paths.environment)
-        #expect(!values.contains(where: WineHiDPI.isRetinaMode), "even the Overwatch default must stay out of ordinary recipes")
+        #expect(!EnvironmentSettings.requiresHiDPI(plain.runtime.paths.environment), "AoW4's per-executable Retina mode is not the prefix's")
         try write(#"""
         [Unrelated]
         "RetinaMode"="Y"
         [Software\\Wine\\Mac Driver] 123
         "RetinaMode"="N"
-        """#, to: retinaGame.runtime.paths.prefix.appendingPathComponent("user.reg"))
-        #expect(!retinaGame.runtime.environmentSettings.hiDPI)
+        """#, to: plain.runtime.paths.prefix.appendingPathComponent("user.reg"))
+        #expect(!plain.runtime.environmentSettings.hiDPI)
+    }
+
+    @Test func overwatchKeepsHiDPIOnWhateverWasSaved() throws {
+        let retinaGame = try FakeEnvironment(.overwatch)
+        defer { retinaGame.cleanUp() }
+        let paths = retinaGame.runtime.paths
+        #expect(EnvironmentSettings.requiresHiDPI(paths.environment))
+        #expect(retinaGame.runtime.environmentSettings.hiDPI)
+        let values = GameRecipes.ordinaryRegistry(for: paths.environment)
+        #expect(!values.contains(where: WineHiDPI.isRetinaMode), "even the Overwatch default must stay out of ordinary recipes")
+        try write("[Software\\\\Wine\\\\Mac Driver]\n\"RetinaMode\"=\"N\"\n", to: paths.prefix.appendingPathComponent("user.reg"))
+        try EnvironmentSettings(hiDPI: false).save(to: paths)
+        #expect(retinaGame.runtime.environmentSettings.hiDPI, "Recall's fullscreen canvas needs Retina mode")
+        #expect(retinaGame.runtime.environment(optimized: false, hud: false)["MACGAMES_HIDPI"] == "1")
     }
 
     @Test func gamesSharingAPrefixReadOnePreferenceAndGameSettingsCannotResetIt() throws {

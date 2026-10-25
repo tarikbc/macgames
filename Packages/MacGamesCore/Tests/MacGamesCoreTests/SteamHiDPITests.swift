@@ -3,6 +3,17 @@ import Testing
 @testable import MacGamesCore
 
 @Suite(.serialized) struct SteamHiDPITests {
+    /// `true` when an imported `.reg` sets the prefix-wide RetinaMode. Per-executable values
+    /// under `AppDefaults\<exe>\Mac Driver`, such as Age of Wonders 4's, do not count.
+    func setsPrefixRetinaMode(_ registry: String) -> Bool {
+        var section = ""
+        for line in registry.components(separatedBy: "\n") {
+            if line.hasPrefix("[") { section = line; continue }
+            if section == "[\(WineHiDPI.key)]", line.hasPrefix(#""RetinaMode"="#) { return true }
+        }
+        return false
+    }
+
     func fixture() throws -> FakeEnvironment {
         let fixture = try FakeEnvironment(.cs2)
         try fixture.installSteam()
@@ -42,7 +53,8 @@ import Testing
         let data = try Data(contentsOf: f.dir.appendingPathComponent("root/imported.reg"))
         let registry = try #require(String(data: data.dropFirst(2), encoding: .utf16LittleEndian))
         #expect(registry.contains("witcher3.exe"), "a real per-executable recipe is applied")
-        #expect(!registry.contains("RetinaMode"), "display changes remain deferred")
+        #expect(registry.contains(#"AOW4.exe\Mac Driver"#), "a per-executable Retina mode is an ordinary recipe")
+        #expect(!setsPrefixRetinaMode(registry), "display changes remain deferred")
         #expect(read(f.runtime.hiDPIApplied) == nil)
         let normalMarker = read(f.runtime.paths.root.appendingPathComponent("recipes-applied"))
         try f.runtime.startSteam(.open)
@@ -52,7 +64,7 @@ import Testing
         #expect(read(f.runtime.paths.root.appendingPathComponent("recipes-applied")) == normalMarker)
         let applied = try Data(contentsOf: f.dir.appendingPathComponent("root/imported.reg"))
         let display = try #require(String(data: applied.dropFirst(2), encoding: .utf16LittleEndian))
-        #expect(display.contains("RetinaMode"))
+        #expect(setsPrefixRetinaMode(display))
         #expect(!display.contains("witcher3.exe"), "already applied ordinary recipes need no second import")
     }
 

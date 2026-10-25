@@ -289,9 +289,14 @@ private struct SettingsSection: View {
                     Toggle("", isOn: $game.settings.hud).labelsHidden().toggleStyle(.switch)
                 }
                 Divider().opacity(0.3)
-                row("HiDPI (Retina)", detail: "Applies to all games in \(game.runtime.paths.environment.title). Restart \(game.launcherName) to apply.") {
+                let environment = game.runtime.paths.environment
+                let hiDPIRequired = EnvironmentSettings.requiresHiDPI(environment)
+                row("HiDPI (Retina)", detail: hiDPIRequired
+                    ? "Always on in \(environment.title): its games need Retina mode to draw fullscreen."
+                    : "Applies to all games in \(environment.title). Restart \(game.launcherName) to apply.") {
                     Toggle("HiDPI (Retina)", isOn: $game.hiDPI)
                         .labelsHidden().toggleStyle(.switch)
+                        .disabled(hiDPIRequired)
                 }
                 if game.profile.optimizedExecutableSHA256 != nil {
                     Divider().opacity(0.3)
