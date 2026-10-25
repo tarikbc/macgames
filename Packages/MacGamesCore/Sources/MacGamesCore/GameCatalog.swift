@@ -64,6 +64,11 @@ extension GameProfile {
         installFolder: "ELDEN RING", executableRelativePath: "Game/eldenring.exe", launch: .direct, windowsSteamPath: true,
         presentation: Presentation(accentHex: "C8A951", heroFocus: p(0.6, 0.4)))
 
+    public static let aow4 = GameProfile(
+        id: "aow4", title: "Age of Wonders 4", steamAppID: "1669000",
+        installFolder: "Age of Wonders 4", executableRelativePath: "AOW4.exe", launch: .direct,
+        presentation: Presentation(accentHex: "7C5CBF", heroFocus: p(0.6, 0.4)))
+
     public static let zeroHour = GameProfile(
         id: "zero-hour", title: "Command & Conquer: Generals Zero Hour", steamAppID: "2732960",
         installFolder: "Command & Conquer Generals - Zero Hour", executableRelativePath: "Generals.exe",
@@ -115,7 +120,7 @@ extension GameProfile {
 
     public static let all: [GameProfile] = [
         .aoe4, .cs2, .aoe3, .aomRetold, .coh3, .zeroHour, .redAlert2, .heroes3,
-        .diablo4, .poe2, .hogwarts, .witcher3, .eldenRing,
+        .diablo4, .poe2, .hogwarts, .witcher3, .eldenRing, .aow4,
         .skyrim, .overwatch, .diablo4BattleNet, .diablo2Resurrected, .rdr2, .sanAndreas, .gta5,
     ]
 }

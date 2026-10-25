@@ -56,6 +56,9 @@ public enum GameRecipes {
         case "elden-ring":
             // Started directly, so it reads its app ID from the environment, not from Steam.
             return EnvironmentEdits(set: ["SteamAppId": "1245620"], unset: ["SteamGameId"], sandbox: .full, libd3dshared: true)
+        case "aow4":
+            // Started directly, so it reads its app ID from the environment, not from Steam.
+            return EnvironmentEdits(set: ["SteamAppId": "1669000"], unset: ["SteamGameId"], libd3dshared: true)
         case "skyrim-se":
             return EnvironmentEdits(
                 overrides: baseOverrides + "dxgi,d3d11,d3d10core,winemetal=b;xaudio2_6,xaudio2_7,x3daudio1_6,x3daudio1_7=n,b;nvapi64,nvngx=",
@@ -146,6 +149,7 @@ public enum GameRecipes {
             let key = #"HKEY_CURRENT_USER\Software\Microsoft\Microsoft Games\Age of Empires III DE"#
             return [R(key: key, name: "IgnoreUnsupportedSystem", value: .string("1")),
                     R(key: key, name: "SystemInitialization", value: .string("1"))]
+        case "aow4": return [R.retinaMode("AOW4.exe")]
         case "witcher3": return [R.windowsVersion("witcher3.exe", "win11")]
         case "heroes3": return [R.windowsVersion("Heroes3.exe", "win11")]
         case "red-alert2":

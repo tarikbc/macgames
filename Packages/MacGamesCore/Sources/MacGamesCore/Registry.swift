@@ -29,6 +29,12 @@ public struct RegistryValue: Sendable, Equatable {
         RegistryValue(key: appDefaults + exe + #"\DllOverrides"#, name: name, value: .string(order))
     }
 
+    /// Wine's Retina mode for one executable, so the game draws at the display's full pixel size
+    /// while the other games in the prefix keep their point-sized desktop.
+    static func retinaMode(_ exe: String) -> RegistryValue {
+        RegistryValue(key: appDefaults + exe + #"\Mac Driver"#, name: "RetinaMode", value: .string("Y"))
+    }
+
     /// The Windows version Wine reports to one executable.
     static func windowsVersion(_ exe: String, _ version: String) -> RegistryValue {
         RegistryValue(key: appDefaults + exe, name: "Version", value: .string(version))

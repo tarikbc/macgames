@@ -44,6 +44,20 @@ import Testing
         #expect(e["SteamGameId"] == nil)
     }
 
+    @Test func ageOfWonders4CarriesItsAppIDForADirectStart() {
+        let e = env(.aow4)
+        #expect(e["SteamAppId"] == "1669000")
+        #expect(e["SteamGameId"] == nil)
+        #expect(GameProfile.aow4.launch == .direct)
+    }
+
+    @Test func ageOfWonders4DrawsAtTheDisplaysFullSizeOnlyForItsOwnExecutable() {
+        let values = GameRecipes.registry(for: .aow4)
+        #expect(values.map(\.key) == [#"HKEY_CURRENT_USER\Software\Wine\AppDefaults\AOW4.exe\Mac Driver"#])
+        #expect(values.map(\.name) == ["RetinaMode"])
+        #expect(values.map(\.value.text) == ["Y"])
+    }
+
     @Test func skyrimUsesItsOwnDXMTOverrides() {
         #expect(env(.skyrim)["WINEDLLOVERRIDES"]?.contains("xaudio2_6,xaudio2_7,x3daudio1_6,x3daudio1_7=n,b") == true)
     }

@@ -200,4 +200,14 @@ import Testing
         #expect(GameState.derive(p, sessionRunning: true, gameProcessRunning: false) == .ready)
         #expect(GameState.derive(p, sessionRunning: true, gameProcessRunning: true) == .running)
     }
+
+    @Test func ageOfWonders4RunsWhenItsProcessRuns() throws {
+        let p = try stage(.aow4); defer { try? FileManager.default.removeItem(at: p.root) }
+        try write("exe", to: p.steamExe)
+        try write("\"AppState\"\n{\n\t\"appid\"\t\t\"1669000\"\n\t\"StateFlags\"\t\t\"4\"\n\t\"installdir\"\t\t\"Age of Wonders 4\"\n}\n", to: p.appManifest)
+        try write("game", to: p.gameExe)
+        #expect(p.gameExe.lastPathComponent == "AOW4.exe")
+        #expect(GameState.derive(p, sessionRunning: true, gameProcessRunning: false) == .ready)
+        #expect(GameState.derive(p, sessionRunning: true, gameProcessRunning: true) == .running)
+    }
 }

@@ -626,7 +626,7 @@ extension GameRuntime {
             try play(displayWidth: context.width, displayHeight: context.height)
         case .direct:
             try ensureSteamReady()
-            if profile.id == "elden-ring" { try ensureEldenRingPrerequisites() }
+            try ensureDirectPrerequisites()
             try launchDirect()
         case .battleNet:
             try openBattleNet(play: true)
@@ -711,14 +711,25 @@ extension GameRuntime {
 
     // MARK: Game prerequisites
 
-    /// Elden Ring started directly skips Steam's first-run installers, so they run here once.
-    func ensureEldenRingPrerequisites() throws {
+    /// A game started directly skips Steam's first-run installers, so they run here once.
+    func ensureDirectPrerequisites() throws {
+        let steps: [(String, [String])]
+        switch profile.id {
+        case "elden-ring":
+            steps = [("vcredist/2019/VC_redist.x86.exe", ["/install", "/quiet", "/norestart"]),
+                     ("vcredist/2019/VC_redist.x64.exe", ["/install", "/quiet", "/norestart"]),
+                     ("DirectX/Jun2010/DXSETUP.exe", ["/silent"])]
+        case "aow4":
+            // The game's install script also runs GameInputRedist.msi. It only adds a Windows service,
+            // which Wine cannot start, so that install rolls back; the game runs without it.
+            steps = [("vcredist/2022/VC_redist.x86.exe", ["/install", "/quiet", "/norestart"]),
+                     ("vcredist/2022/VC_redist.x64.exe", ["/install", "/quiet", "/norestart"])]
+        default:
+            return
+        }
         let done = paths.gameData.appendingPathComponent("prerequisites-done")
         guard !fm.fileExists(atPath: done.path) else { return }
         let common = paths.steamapps.appendingPathComponent("common/Steamworks Shared/_CommonRedist")
-        let steps: [(String, [String])] = [("vcredist/2019/VC_redist.x86.exe", ["/install", "/quiet", "/norestart"]),
-                                           ("vcredist/2019/VC_redist.x64.exe", ["/install", "/quiet", "/norestart"]),
-                                           ("DirectX/Jun2010/DXSETUP.exe", ["/silent"])]
         progress("Installing the game's Windows runtimes…")
         for (file, args) in steps {
             let url = common.appendingPathComponent(file)

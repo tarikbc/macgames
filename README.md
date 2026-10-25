@@ -6,7 +6,7 @@
 
 <p align="center">
   Play your Windows games from Steam and Battle.net on an Apple Silicon Mac.<br>
-  Twenty games, each with graphics and performance settings tuned for it.
+  Twenty-one games, each with graphics and performance settings tuned for it.
 </p>
 
 <p align="center">
@@ -58,6 +58,7 @@
 | [Hogwarts Legacy](https://macgames.app/games/hogwarts-legacy/) | Steam library | D3DMetal |
 | [The Witcher 3: Wild Hunt](https://macgames.app/games/the-witcher-3-wild-hunt/) | Steam library | D3DMetal, FidelityFX proxy |
 | [Elden Ring](https://macgames.app/games/elden-ring/) | Steam library | D3DMetal, offline play only |
+| Age of Wonders 4 | Steam library | D3DMetal, starts without the Paradox Launcher |
 | [The Elder Scrolls V: Skyrim Special Edition](https://macgames.app/games/skyrim-special-edition/) | Skyrim | DXMT 0.72 |
 | [Overwatch](https://macgames.app/games/overwatch/) | Overwatch | Recall 1.1's Wine and DXMT, through Battle.net |
 | [Diablo IV (Battle.net)](https://macgames.app/games/diablo-iv-battle-net/) | Battle.net | D3DMetal, DXMT for the client |
