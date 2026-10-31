@@ -2,6 +2,15 @@
 
 All notable changes to MacGames are listed here.
 
+## 0.1.4 - 2026-10-31
+
+- Age of Empires IV gets the Rosetta optimization again on its current Steam build (17.0.12182).
+  The game update had turned it off, so the game ran on the standard runtime. A game that has not
+  updated yet runs without the optimization until Steam updates it. Thanks to @GamBurGer-bit for
+  the report
+- The optimization's code range now comes with the game's build in MacGames, so the next game
+  update needs no new Wine runtime
+
 ## 0.1.3 - 2026-10-25
 
 - Age of Empires IV stutters much less. Its x87 math and its software exception handling now run
