@@ -255,6 +255,7 @@ def footer(games, home):
         </nav>
       </div>
       <!-- game-links -->{game_links(games, home)}<!-- /game-links -->
+      <p>Also by Tarik Caramanico: <a href="https://sidemount.app/">SideMount, your Android phone in Finder</a>.</p>
       <p>MacGames is not affiliated with Valve, Blizzard, Rockstar Games, Microsoft or Apple. Game names and artwork belong to their owners.</p>
     </div>
   </footer>"""
