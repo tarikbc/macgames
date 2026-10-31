@@ -51,6 +51,20 @@ import Testing
         #expect(GameProfile.aow4.launch == .direct)
     }
 
+    @Test func directGamesListTheWindowsRuntimesSteamWouldInstall() {
+        let quiet = ["/install", "/quiet", "/norestart"]
+        #expect(GameProfile.eldenRing.prerequisites == [
+            .init(file: "vcredist/2019/VC_redist.x86.exe", arguments: quiet),
+            .init(file: "vcredist/2019/VC_redist.x64.exe", arguments: quiet),
+            .init(file: "DirectX/Jun2010/DXSETUP.exe", arguments: ["/silent"])])
+        #expect(GameProfile.aow4.prerequisites == [
+            .init(file: "vcredist/2022/VC_redist.x86.exe", arguments: quiet),
+            .init(file: "vcredist/2022/VC_redist.x64.exe", arguments: quiet)])
+        for profile in GameProfile.all where ![GameProfile.eldenRing.id, GameProfile.aow4.id].contains(profile.id) {
+            #expect(profile.prerequisites.isEmpty, "\(profile.id) has no runtimes of its own")
+        }
+    }
+
     @Test func ageOfWonders4DrawsAtTheDisplaysFullSizeOnlyForItsOwnExecutable() {
         let values = GameRecipes.registry(for: .aow4)
         #expect(values.map(\.key) == [#"HKEY_CURRENT_USER\Software\Wine\AppDefaults\AOW4.exe\Mac Driver"#])

@@ -217,4 +217,44 @@ struct FakeEnvironment {
         let game = try #require(calls.firstIndex { $0.hasPrefix("wine cmd /c") })
         #expect(steam < game)
     }
+
+    func stageRedist(_ env: FakeEnvironment, _ files: [String]) throws {
+        let redist = env.runtime.paths.steamapps.appendingPathComponent("common/Steamworks Shared/_CommonRedist")
+        for file in files { try write("", to: redist.appendingPathComponent(file)) }
+    }
+
+    @Test func aDirectGameInstallsItsWindowsRuntimesOnce() throws {
+        let env = try FakeEnvironment(.aow4); defer { env.cleanUp() }
+        try stageRedist(env, ["vcredist/2022/VC_redist.x86.exe", "vcredist/2022/VC_redist.x64.exe"])
+        try env.runtime.ensureDirectPrerequisites()
+        let installs = env.calls.filter { $0.contains("_CommonRedist") }
+        #expect(installs.count == 2)
+        #expect(installs.first?.hasSuffix(#"vcredist\2022\VC_redist.x86.exe /install /quiet /norestart"#) == true)
+        #expect(installs.last?.hasSuffix(#"vcredist\2022\VC_redist.x64.exe /install /quiet /norestart"#) == true)
+        try env.runtime.ensureDirectPrerequisites()
+        #expect(env.calls.filter { $0.contains("_CommonRedist") }.count == 2, "the receipt stops a second run")
+    }
+
+    @Test func eldenRingAlsoInstallsDirectX() throws {
+        let env = try FakeEnvironment(.eldenRing); defer { env.cleanUp() }
+        try stageRedist(env, ["vcredist/2019/VC_redist.x86.exe", "vcredist/2019/VC_redist.x64.exe", "DirectX/Jun2010/DXSETUP.exe"])
+        try env.runtime.ensureDirectPrerequisites()
+        let installs = env.calls.filter { $0.contains("_CommonRedist") }
+        #expect(installs.count == 3)
+        #expect(installs.last?.hasSuffix(#"DirectX\Jun2010\DXSETUP.exe /silent"#) == true)
+    }
+
+    @Test func aMissingRuntimeInstallerAsksSteamToFinish() throws {
+        let env = try FakeEnvironment(.aow4); defer { env.cleanUp() }
+        try stageRedist(env, ["vcredist/2022/VC_redist.x86.exe"])
+        #expect(throws: SetupError.self) { try env.runtime.ensureDirectPrerequisites() }
+        #expect(!FileManager.default.fileExists(atPath: env.runtime.paths.gameData.appendingPathComponent("prerequisites-done").path))
+    }
+
+    @Test func aGameWithoutRuntimesRunsNoInstaller() throws {
+        let env = try FakeEnvironment(.heroes3); defer { env.cleanUp() }
+        try env.runtime.ensureDirectPrerequisites()
+        #expect(env.calls.allSatisfy { !$0.contains("_CommonRedist") })
+        #expect(!FileManager.default.fileExists(atPath: env.runtime.paths.gameData.appendingPathComponent("prerequisites-done").path))
+    }
 }

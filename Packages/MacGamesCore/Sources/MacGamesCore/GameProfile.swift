@@ -38,6 +38,15 @@ public struct GameProfile: Sendable, Hashable, Identifiable {
         }
     }
 
+    /// A Windows runtime installer from Steam's shared `_CommonRedist` folder.
+    public struct Prerequisite: Sendable, Hashable {
+        /// Path under `steamapps/common/Steamworks Shared/_CommonRedist`.
+        public let file: String
+        public let arguments: [String]
+
+        public init(file: String, arguments: [String]) { self.file = file; self.arguments = arguments }
+    }
+
     public let id: String
     public let title: String
     /// Steam app ID; also used for artwork. Empty for games Steam does not sell.
@@ -61,17 +70,20 @@ public struct GameProfile: Sendable, Hashable, Identifiable {
     public let optimizedBuild: OptimizedBuild?
     /// Battle.net's code for the game; Play asks Battle.net to start it (`--exec="launch <code>"`).
     public let battleNetProduct: String?
+    /// Installers Steam runs on a game's first start. A game MacGames starts itself runs them once.
+    public let prerequisites: [Prerequisite]
 
     public init(id: String, title: String, steamAppID: String, installFolder: String, executableRelativePath: String,
                 environment: String = "steam", graphics: Graphics = .d3dmetal, launch: Launch = .steam,
                 windowsSteamPath: Bool = false, steamArgs: [String] = [], gameArgs: [String] = [],
                 minimumMacOS: [Int] = [26, 0], online: Online? = nil, optimizedBuild: OptimizedBuild? = nil,
-                battleNetProduct: String? = nil, presentation: Presentation = Presentation()) {
+                battleNetProduct: String? = nil, prerequisites: [Prerequisite] = [],
+                presentation: Presentation = Presentation()) {
         self.id = id; self.title = title; self.steamAppID = steamAppID; self.installFolder = installFolder
         self.executableRelativePath = executableRelativePath; self.environment = environment; self.graphics = graphics
         self.launch = launch; self.windowsSteamPath = windowsSteamPath; self.steamArgs = steamArgs; self.gameArgs = gameArgs
         self.minimumMacOS = minimumMacOS; self.online = online; self.optimizedBuild = optimizedBuild
-        self.battleNetProduct = battleNetProduct; self.presentation = presentation
+        self.battleNetProduct = battleNetProduct; self.prerequisites = prerequisites; self.presentation = presentation
     }
 
     /// How the launcher shows the game. Art comes from Steam, so a new
