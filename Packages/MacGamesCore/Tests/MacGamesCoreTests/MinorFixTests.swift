@@ -88,7 +88,7 @@ import Testing
 }
 
 @Suite struct OptimizationStatusTests {
-    let pin = GameProfile.aoe4.optimizedExecutableSHA256!
+    let pin = GameProfile.aoe4.optimizedBuild!.executableSHA256
 
     @Test func everyStateHasAClearAnswer() {
         #expect(OptimizationStatus.evaluate(.cs2, enabled: true, executableSHA256: "x", sidecarSupported: true) == .notApplicable)

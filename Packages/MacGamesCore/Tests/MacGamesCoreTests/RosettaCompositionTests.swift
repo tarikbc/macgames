@@ -6,7 +6,7 @@ import Testing
 @Suite struct RosettaCompositionTests {
     @Test func matchingSteamChildKeepsSoftwareFaultsAndEnablesX87OnlyWithNewHelper() {
         let args = ["/app/Helpers/MacGamesBridge", "--cooperative", "/engine/wine", #"C:\game\RelicCardinal.exe"#, "-arg"]
-        let pin = GameProfile.aoe4.optimizedExecutableSHA256!
+        let pin = GameProfile.aoe4.optimizedBuild!.executableSHA256
         let env = ["WINEPREFIX": "/prefix", Bridge.pinKey: pin, "MACGAMES_AOE_COMBINED": "1",
                    "AOELAB_SOFTFAULT_BRIDGE": "1", "AOELAB_CODE_CACHE_GAME": "1", "X87_ALWAYS_NONE": "1"]
         let result = Bridge.decide(arguments: args, environment: env, cwd: "/", isExecutable: { _ in true }) { _ in pin }

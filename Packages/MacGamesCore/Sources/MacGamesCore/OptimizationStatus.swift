@@ -16,7 +16,7 @@ public enum OptimizationStatus: Sendable, Equatable {
 
     public static func evaluate(_ profile: GameProfile, enabled: Bool, executableSHA256: String?,
                                 sidecarSupported: Bool) -> OptimizationStatus {
-        guard let pin = profile.optimizedExecutableSHA256 else { return .notApplicable }
+        guard let pin = profile.optimizedBuild?.executableSHA256 else { return .notApplicable }
         guard enabled else { return .off }
         guard let actual = executableSHA256 else { return .waitingForGame }
         guard actual == pin else { return .otherBuild }
