@@ -63,11 +63,18 @@ extension GameProfile {
     public static let eldenRing = GameProfile(
         id: "elden-ring", title: "Elden Ring", steamAppID: "1245620",
         installFolder: "ELDEN RING", executableRelativePath: "Game/eldenring.exe", launch: .direct, windowsSteamPath: true,
+        prerequisites: [.init(file: "vcredist/2019/VC_redist.x86.exe", arguments: ["/install", "/quiet", "/norestart"]),
+                        .init(file: "vcredist/2019/VC_redist.x64.exe", arguments: ["/install", "/quiet", "/norestart"]),
+                        .init(file: "DirectX/Jun2010/DXSETUP.exe", arguments: ["/silent"])],
         presentation: Presentation(accentHex: "C8A951", heroFocus: p(0.6, 0.4)))
 
     public static let aow4 = GameProfile(
         id: "aow4", title: "Age of Wonders 4", steamAppID: "1669000",
         installFolder: "Age of Wonders 4", executableRelativePath: "AOW4.exe", launch: .direct,
+        // The game's install script also runs GameInputRedist.msi. It only adds a Windows service,
+        // which Wine cannot start, so that install rolls back; the game runs without it.
+        prerequisites: [.init(file: "vcredist/2022/VC_redist.x86.exe", arguments: ["/install", "/quiet", "/norestart"]),
+                        .init(file: "vcredist/2022/VC_redist.x64.exe", arguments: ["/install", "/quiet", "/norestart"])],
         presentation: Presentation(accentHex: "7C5CBF", heroFocus: p(0.6, 0.4)))
 
     public static let zeroHour = GameProfile(

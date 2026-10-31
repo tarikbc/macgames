@@ -713,31 +713,18 @@ extension GameRuntime {
 
     /// A game started directly skips Steam's first-run installers, so they run here once.
     func ensureDirectPrerequisites() throws {
-        let steps: [(String, [String])]
-        switch profile.id {
-        case "elden-ring":
-            steps = [("vcredist/2019/VC_redist.x86.exe", ["/install", "/quiet", "/norestart"]),
-                     ("vcredist/2019/VC_redist.x64.exe", ["/install", "/quiet", "/norestart"]),
-                     ("DirectX/Jun2010/DXSETUP.exe", ["/silent"])]
-        case "aow4":
-            // The game's install script also runs GameInputRedist.msi. It only adds a Windows service,
-            // which Wine cannot start, so that install rolls back; the game runs without it.
-            steps = [("vcredist/2022/VC_redist.x86.exe", ["/install", "/quiet", "/norestart"]),
-                     ("vcredist/2022/VC_redist.x64.exe", ["/install", "/quiet", "/norestart"])]
-        default:
-            return
-        }
+        guard !profile.prerequisites.isEmpty else { return }
         let done = paths.gameData.appendingPathComponent("prerequisites-done")
         guard !fm.fileExists(atPath: done.path) else { return }
         let common = paths.steamapps.appendingPathComponent("common/Steamworks Shared/_CommonRedist")
         progress("Installing the game's Windows runtimes…")
-        for (file, args) in steps {
-            let url = common.appendingPathComponent(file)
+        for step in profile.prerequisites {
+            let url = common.appendingPathComponent(step.file)
             guard fm.fileExists(atPath: url.path) else {
                 throw SetupError("Let Steam finish downloading Steamworks Common Redistributables, then choose Play again.")
             }
             // 1638: a newer version is already installed; 3010: installed, restart pending.
-            try runner.run(paths.wine, [paths.windowsPath(url)] + args, environment: try launchEnvironment(),
+            try runner.run(paths.wine, [paths.windowsPath(url)] + step.arguments, environment: try launchEnvironment(),
                            timeout: 300, allowedStatuses: [0, 1638, 3010])
         }
         try fm.createDirectory(at: paths.gameData, withIntermediateDirectories: true)
