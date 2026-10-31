@@ -10,12 +10,12 @@ import Testing
         let env = ["WINEPREFIX": "/prefix", Bridge.pinKey: pin, "MACGAMES_AOE_COMBINED": "1",
                    "AOELAB_SOFTFAULT_BRIDGE": "1", "AOELAB_CODE_CACHE_GAME": "1", "X87_ALWAYS_NONE": "1"]
         let result = Bridge.decide(arguments: args, environment: env, cwd: "/", isExecutable: { _ in true }) { _ in pin }
-        guard case let .exec(path, argv, unset) = result else { Issue.record("Expected sidecar"); return }
+        guard case let .exec(path, argv, unset, _) = result else { Issue.record("Expected sidecar"); return }
         #expect(path == "/app/Helpers/x87sidecar")
         #expect(argv.suffix(2) == args.suffix(2))
         #expect(unset == ["X87_ALWAYS_NONE"])
         let rejected = Bridge.decide(arguments: args, environment: env, cwd: "/", isExecutable: { _ in true }) { _ in "changed" }
-        guard case let .exec(loader, _, removed) = rejected else { Issue.record("Expected safe fallback"); return }
+        guard case let .exec(loader, _, removed, _) = rejected else { Issue.record("Expected safe fallback"); return }
         #expect(loader == "/engine/wine")
         #expect(removed.contains("MACGAMES_AOE_COMBINED"))
         #expect(removed.contains("AOELAB_SOFTFAULT_BRIDGE"))

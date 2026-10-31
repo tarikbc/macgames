@@ -34,7 +34,7 @@ import BridgeKit
         try FileManager.default.createDirectory(at: dir.appendingPathComponent("prefix/drive_c/game"), withIntermediateDirectories: true)
         let bridge = dir.appendingPathComponent("MacGamesBridge")
         try FileManager.default.copyItem(at: Self.built, to: bridge)
-        let report = "#!/bin/sh\necho \"$(basename \"$0\") $*\"; env | grep -E '^(AOELAB_|X87_|MACGAMES_|WINELOADERNOEXEC)' | sort\n"
+        let report = "#!/bin/sh\necho \"$(basename \"$0\") $*\"; env | grep -E '^(AOELAB_|AOE_SOFTFAULT_|X87_|MACGAMES_|WINELOADERNOEXEC)' | sort\n"
         for name in ["x87sidecar", "wine"] {
             let url = dir.appendingPathComponent(name)
             try report.write(to: url, atomically: true, encoding: .utf8)
@@ -45,7 +45,8 @@ import BridgeKit
         return (dir, bridge, dir.appendingPathComponent("wine"), game)
     }
 
-    func run(_ s: (dir: URL, bridge: URL, loader: URL, game: URL), pin: String, composed: Bool = false) throws -> String {
+    func run(_ s: (dir: URL, bridge: URL, loader: URL, game: URL), pin: String, composed: Bool = false,
+             extra: [String: String] = [:]) throws -> String {
         let p = Process()
         p.executableURL = s.bridge
         p.arguments = ["--cooperative", s.loader.path, "C:\\game\\RelicCardinal.exe", "-dev"]
@@ -53,6 +54,7 @@ import BridgeKit
                          "AOELAB_SOFTFAULT_GAME": "1", "X87_ALWAYS_NONE": "1", "WINELOADERNOEXEC": "1",
                          Bridge.pinKey: pin]
         if composed { p.environment?["MACGAMES_AOE_COMBINED"] = "1" }
+        p.environment?.merge(extra) { $1 }
         let pipe = Pipe(); p.standardOutput = pipe; p.standardError = FileHandle.nullDevice
         try p.run(); p.waitUntilExit()
         return String(decoding: pipe.fileHandleForReading.readDataToEndOfFile(), as: UTF8.self)
@@ -75,6 +77,17 @@ import BridgeKit
         #expect(!out.contains("X87_ALWAYS_NONE="))
         let fallback = try run(s, pin: String(repeating: "0", count: 64), composed: true)
         #expect(fallback == "wine C:\\game\\RelicCardinal.exe -dev\n")
+    }
+
+    @Test func matchingBuildExportsTheProfileRangeEnd() throws {
+        let s = try stage(); defer { try? FileManager.default.removeItem(at: s.dir) }
+        // Wine sets the old build's range before it execs the bridge.
+        let out = try run(s, pin: try Bridge.sha256(ofFileAt: s.game.path),
+                          extra: ["AOE_SOFTFAULT_PC": "0x140001000", "AOE_SOFTFAULT_END": "0x1456ddadc",
+                                  Bridge.softfaultEndKey: "0x1457000f0"])
+        #expect(out.hasPrefix("x87sidecar --cooperative"))
+        #expect(out.contains("AOE_SOFTFAULT_END=0x1457000f0\n"))
+        #expect(!out.contains("AOE_SOFTFAULT_END=0x1456ddadc"))
     }
 
     @Test func otherBuildExecsThePlainLoaderWithOptimizationKeysRemoved() throws {

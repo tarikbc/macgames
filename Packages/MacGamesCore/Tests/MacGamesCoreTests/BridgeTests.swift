@@ -35,12 +35,12 @@ import Testing
         #expect(hashed == "/r/prefix/drive_c/game/RelicCardinal.exe")
         #expect(d == .exec(path: "/app/Helpers/x87sidecar",
                            argv: ["/app/Helpers/x87sidecar", "--cooperative", "/r/engine/bin/wine", "C:\\game\\RelicCardinal.exe", "-arg"],
-                           unset: []))
+                           unset: [], set: [:]))
     }
 
     @Test func otherBuildRunsThePlainLoaderWithoutOptimizationKeys() {
         let d = Bridge.decide(arguments: args, environment: env(sha: good), cwd: "/") { _ in String(repeating: "0", count: 64) }
-        guard case let .exec(path, argv, unset) = d else { Issue.record("expected exec, got \(d)"); return }
+        guard case let .exec(path, argv, unset, _) = d else { Issue.record("expected exec, got \(d)"); return }
         #expect(path == "/r/engine/bin/wine")
         #expect(argv == ["/r/engine/bin/wine", "C:\\game\\RelicCardinal.exe", "-arg"])
         #expect(Set(unset) == ["AOELAB_SOFTFAULT_GAME", "AOE_SOFTFAULT_PC", "X87_ALWAYS_NONE", "WINELOADERNOEXEC", "MACGAMES_OPTIMIZED_SHA256"])
@@ -48,20 +48,63 @@ import Testing
 
     @Test func missingPinFallsBackToThePlainLoader() {
         let d = Bridge.decide(arguments: args, environment: env(sha: nil), cwd: "/") { _ in good }
-        guard case let .exec(path, _, _) = d else { Issue.record("expected exec"); return }
+        guard case let .exec(path, _, _, _) = d else { Issue.record("expected exec"); return }
         #expect(path == "/r/engine/bin/wine")
     }
 
     @Test func unreadableGameFallsBackToThePlainLoader() {
         struct Unreadable: Error {}
         let d = Bridge.decide(arguments: args, environment: env(sha: good), cwd: "/") { _ in throw Unreadable() }
-        guard case let .exec(path, _, _) = d else { Issue.record("expected exec"); return }
+        guard case let .exec(path, _, _, _) = d else { Issue.record("expected exec"); return }
         #expect(path == "/r/engine/bin/wine")
     }
 
     @Test func nonCooperativeCallsPassThroughToTheSidecar() {
         let d = Bridge.decide(arguments: ["/app/Helpers/MacGamesBridge", "--probe"], environment: [:], cwd: "/") { _ in good }
-        #expect(d == .exec(path: "/app/Helpers/x87sidecar", argv: ["/app/Helpers/x87sidecar", "--probe"], unset: []))
+        #expect(d == .exec(path: "/app/Helpers/x87sidecar", argv: ["/app/Helpers/x87sidecar", "--probe"], unset: [], set: [:]))
+    }
+
+    func rangeEnv(end: String?) -> [String: String] {
+        var e = env(sha: good)
+        e["AOE_SOFTFAULT_PC"] = "0x140001000"
+        e["MACGAMES_SOFTFAULT_END"] = end
+        return e
+    }
+
+    func decide(end: String?) -> BridgeDecision {
+        Bridge.decide(arguments: args, environment: rangeEnv(end: end), cwd: "/", isExecutable: { _ in true }) { _ in good }
+    }
+
+    @Test func profileEndOverridesWinesRange() {
+        #expect(decide(end: "0x1457000f0") == .exec(
+            path: "/app/Helpers/x87sidecar",
+            argv: ["/app/Helpers/x87sidecar", "--cooperative", "/r/engine/bin/wine", "C:\\game\\RelicCardinal.exe", "-arg"],
+            unset: [], set: ["AOE_SOFTFAULT_END": "0x1457000f0"]))
+    }
+
+    @Test func missingEndKeepsWinesRange() {
+        guard case let .exec(path, _, _, set) = decide(end: nil) else { Issue.record("expected exec"); return }
+        #expect(path == "/app/Helpers/x87sidecar")
+        #expect(set == [:])
+    }
+
+    @Test(arguments: ["abc", "0x", "1457000f0", "0x-1", "0x+1457000f0"])
+    func malformedEndFallsBackToThePlainLoader(end: String) {
+        guard case let .exec(path, _, _, set) = decide(end: end) else { Issue.record("expected exec"); return }
+        #expect(path == "/r/engine/bin/wine")
+        #expect(set == [:])
+    }
+
+    @Test(arguments: ["0x140001000", "0x140000fff", "0x146001001"])
+    func outOfRangeEndFallsBackToThePlainLoader(end: String) {
+        guard case let .exec(path, _, _, _) = decide(end: end) else { Issue.record("expected exec"); return }
+        #expect(path == "/r/engine/bin/wine")
+    }
+
+    @Test func largestRangeTheSidecarAcceptsStillRunsIt() {
+        guard case let .exec(path, _, _, set) = decide(end: "0x146001000") else { Issue.record("expected exec"); return }
+        #expect(path == "/app/Helpers/x87sidecar")
+        #expect(set == ["AOE_SOFTFAULT_END": "0x146001000"])
     }
 
     @Test func cooperativeCallWithoutContextFails() {
