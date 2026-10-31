@@ -17,11 +17,12 @@ func fail(_ message: String) -> Never {
 switch decision {
 case .fail(let message):
     fail(message)
-case let .exec(path, argv, unset):
+case let .exec(path, argv, unset, set):
     if unset.contains("AOE_SOFTFAULT_PC") {
         FileHandle.standardError.write(Data("MacGamesBridge: this game build is not the optimized one; using the standard runtime.\n".utf8))
     }
     for key in unset { unsetenv(key) }
+    for (key, value) in set { setenv(key, value, 1) }
     let pointers = argv.map { strdup($0) } + [nil]
     _ = pointers.withUnsafeBufferPointer { execv(path, $0.baseAddress!) }
     fail("could not start \(path): \(String(cString: strerror(errno)))")

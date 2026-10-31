@@ -296,7 +296,7 @@ private struct SettingsSection: View {
                         .labelsHidden().toggleStyle(.switch)
                         .disabled(game.hiDPIRequired)
                 }
-                if game.profile.optimizedExecutableSHA256 != nil {
+                if game.profile.optimizedBuild != nil {
                     Divider().opacity(0.3)
                     row("Rosetta optimization", detail: "Accelerates x87 math, exception handling and translated-code reuse on the supported AoE IV build.", status: game.optimization.detail) {
                         Toggle("", isOn: $game.settings.optimized).labelsHidden().toggleStyle(.switch)

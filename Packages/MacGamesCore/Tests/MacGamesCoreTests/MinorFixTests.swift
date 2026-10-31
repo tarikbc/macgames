@@ -88,7 +88,7 @@ import Testing
 }
 
 @Suite struct OptimizationStatusTests {
-    let pin = GameProfile.aoe4.optimizedExecutableSHA256!
+    let pin = GameProfile.aoe4.optimizedBuild!.executableSHA256
 
     @Test func everyStateHasAClearAnswer() {
         #expect(OptimizationStatus.evaluate(.cs2, enabled: true, executableSHA256: "x", sidecarSupported: true) == .notApplicable)
@@ -105,7 +105,7 @@ import Testing
         let args = ["/app/Helpers/MacGamesBridge", "--cooperative", "/r/engine/bin/wine", "C:\\RelicCardinal.exe"]
         let env = ["WINEPREFIX": "/r/prefix", Bridge.pinKey: "abc", "AOELAB_SOFTFAULT_GAME": "1"]
         let d = Bridge.decide(arguments: args, environment: env, cwd: "/", isExecutable: { _ in false }) { _ in "abc" }
-        guard case let .exec(path, _, unset) = d else { Issue.record("expected exec"); return }
+        guard case let .exec(path, _, unset, _) = d else { Issue.record("expected exec"); return }
         #expect(path == "/r/engine/bin/wine")
         #expect(unset.contains("AOELAB_SOFTFAULT_GAME"))
     }

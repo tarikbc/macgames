@@ -72,11 +72,12 @@ public enum WineEnvironment {
 
         // The patched ntdll re-execs RelicCardinal.exe through the bridge only
         // when all of these are present; set all of them or none.
-        if optimized, let sha = profile.optimizedExecutableSHA256 {
+        if optimized, let build = profile.optimizedBuild {
             env["AOELAB_SOFTFAULT_GAME"] = "1"
             env["AOELAB_CODE_CACHE_GAME"] = "1"
             env["AOELAB_SIDECAR_PATH"] = bridge.path
-            env["MACGAMES_OPTIMIZED_SHA256"] = sha
+            env["MACGAMES_OPTIMIZED_SHA256"] = build.executableSHA256
+            env["MACGAMES_SOFTFAULT_END"] = "0x" + String(build.softfaultEnd, radix: 16)
         }
         return env
     }

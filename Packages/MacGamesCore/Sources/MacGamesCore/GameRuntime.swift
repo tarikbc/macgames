@@ -64,7 +64,7 @@ public final class GameRuntime: @unchecked Sendable {
     /// The environment Steam and the game run with, from the saved settings.
     public func launchEnvironment() throws -> [String: String] {
         let s = settings
-        var optimized = s.optimized && profile.optimizedExecutableSHA256 != nil
+        var optimized = s.optimized && profile.optimizedBuild != nil
         if optimized {
             let report = try check()
             optimized = report.optimizationAvailable
@@ -413,7 +413,7 @@ public final class GameRuntime: @unchecked Sendable {
     /// What the next launch does with the x87 optimization. The game's hash is
     /// cached until the file changes; the sidecar probe runs once per launch.
     public func optimizationStatus() -> OptimizationStatus {
-        guard profile.optimizedExecutableSHA256 != nil else { return .notApplicable }
+        guard profile.optimizedBuild != nil else { return .notApplicable }
         let enabled = settings.optimized
         statusLock.lock(); defer { statusLock.unlock() }
         var sha: String?

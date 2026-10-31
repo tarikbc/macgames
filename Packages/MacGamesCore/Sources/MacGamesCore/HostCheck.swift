@@ -33,7 +33,7 @@ public struct HostCheck: Sendable {
             throw SetupError("The Rosetta check failed: \(error)")
         }
 
-        guard profile.optimizedExecutableSHA256 != nil else { return HostReport(optimizationAvailable: false, notes: []) }
+        guard profile.optimizedBuild != nil else { return HostReport(optimizationAvailable: false, notes: []) }
         do {
             try runner.run(runtime.sidecar, ["--probe"], timeout: 25)
             return HostReport(optimizationAvailable: true, notes: [])

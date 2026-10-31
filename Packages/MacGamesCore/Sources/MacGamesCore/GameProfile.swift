@@ -27,6 +27,17 @@ public struct GameProfile: Sendable, Hashable, Identifiable {
         case cncnet
     }
 
+    /// The executable build the fixed-address x87sidecar optimization targets.
+    public struct OptimizedBuild: Sendable, Hashable {
+        public let executableSHA256: String
+        /// End of the code range x87sidecar's software-fault hook covers (`AOE_SOFTFAULT_END`).
+        public let softfaultEnd: UInt64
+
+        public init(executableSHA256: String, softfaultEnd: UInt64) {
+            self.executableSHA256 = executableSHA256; self.softfaultEnd = softfaultEnd
+        }
+    }
+
     public let id: String
     public let title: String
     /// Steam app ID; also used for artwork. Empty for games Steam does not sell.
@@ -46,21 +57,20 @@ public struct GameProfile: Sendable, Hashable, Identifiable {
     /// Lowest macOS version, as (major, minor).
     public let minimumMacOS: [Int]
     public let online: Online?
-    /// The executable build the fixed-address x87sidecar optimization targets.
-    /// `nil` means the profile never uses the sidecar.
-    public let optimizedExecutableSHA256: String?
+    /// The build the x87sidecar optimization targets. `nil` means the profile never uses the sidecar.
+    public let optimizedBuild: OptimizedBuild?
     /// Battle.net's code for the game; Play asks Battle.net to start it (`--exec="launch <code>"`).
     public let battleNetProduct: String?
 
     public init(id: String, title: String, steamAppID: String, installFolder: String, executableRelativePath: String,
                 environment: String = "steam", graphics: Graphics = .d3dmetal, launch: Launch = .steam,
                 windowsSteamPath: Bool = false, steamArgs: [String] = [], gameArgs: [String] = [],
-                minimumMacOS: [Int] = [26, 0], online: Online? = nil, optimizedExecutableSHA256: String? = nil,
+                minimumMacOS: [Int] = [26, 0], online: Online? = nil, optimizedBuild: OptimizedBuild? = nil,
                 battleNetProduct: String? = nil, presentation: Presentation = Presentation()) {
         self.id = id; self.title = title; self.steamAppID = steamAppID; self.installFolder = installFolder
         self.executableRelativePath = executableRelativePath; self.environment = environment; self.graphics = graphics
         self.launch = launch; self.windowsSteamPath = windowsSteamPath; self.steamArgs = steamArgs; self.gameArgs = gameArgs
-        self.minimumMacOS = minimumMacOS; self.online = online; self.optimizedExecutableSHA256 = optimizedExecutableSHA256
+        self.minimumMacOS = minimumMacOS; self.online = online; self.optimizedBuild = optimizedBuild
         self.battleNetProduct = battleNetProduct; self.presentation = presentation
     }
 
