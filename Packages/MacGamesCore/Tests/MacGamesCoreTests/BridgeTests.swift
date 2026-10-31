@@ -19,7 +19,7 @@ import Testing
 }
 
 @Suite struct BridgeDecisionTests {
-    let good = "5380c577805565817f528af6eac385263413fa6815553f9a31fa62561cb45e8c"
+    let good = "4c99b868cbec98b2219e135908a31d03c64c7b71f2bbcf1469dab1d7c6df2c9f"
     let args = ["/app/Helpers/MacGamesBridge", "--cooperative", "/r/engine/bin/wine", "C:\\game\\RelicCardinal.exe", "-arg"]
 
     func env(sha: String?) -> [String: String] {

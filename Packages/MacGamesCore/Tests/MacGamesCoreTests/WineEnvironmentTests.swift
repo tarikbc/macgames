@@ -49,8 +49,8 @@ import Testing
         #expect(env["AOELAB_SOFTFAULT_GAME"] == "1")
         #expect(env["AOELAB_CODE_CACHE_GAME"] == "1")
         #expect(env["AOELAB_SIDECAR_PATH"] == bridge.path)
-        #expect(env["MACGAMES_OPTIMIZED_SHA256"] == "5380c577805565817f528af6eac385263413fa6815553f9a31fa62561cb45e8c")
-        #expect(env["MACGAMES_SOFTFAULT_END"] == "0x1456ddadc")
+        #expect(env["MACGAMES_OPTIMIZED_SHA256"] == "4c99b868cbec98b2219e135908a31d03c64c7b71f2bbcf1469dab1d7c6df2c9f")
+        #expect(env["MACGAMES_SOFTFAULT_END"] == "0x14580e45c")
     }
 
     @Test func aoe4UnoptimizedSetsNoSidecarKeys() {
