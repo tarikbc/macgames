@@ -47,7 +47,8 @@ import Testing
     @Test func aoe4OptimizedSetsAllSidecarKeysTogether() {
         let env = WineEnvironment.make(profile: .aoe4, paths: paths(.aoe4), inherited: [:], optimized: true, hud: false, bridge: bridge)
         #expect(env["AOELAB_SOFTFAULT_GAME"] == "1")
-        #expect(env["AOELAB_CODE_CACHE_GAME"] == "1")
+        // Wine's code cache reads a fixed address of one old build, so no build gets it.
+        #expect(env["AOELAB_CODE_CACHE_GAME"] == nil)
         #expect(env["AOELAB_SIDECAR_PATH"] == bridge.path)
         #expect(env["MACGAMES_OPTIMIZED"] == "1")
         #expect(env["MACGAMES_OPTIMIZED_SHA256"] == nil)

@@ -36,7 +36,7 @@ import Testing
         let env = try game.launchEnvironment()
         #expect(env["MACGAMES_AOE_COMBINED"] == "1")
         #expect(env["AOELAB_SOFTFAULT_GAME"] == "1")
-        #expect(env["AOELAB_CODE_CACHE_GAME"] == "1")
+        #expect(env["AOELAB_CODE_CACHE_GAME"] == nil)
         #expect(env["AOELAB_COUNTERS_DIR"] == nil)
         #expect(env["MTL_HUD_LOG_ENABLED"] == nil)
     }

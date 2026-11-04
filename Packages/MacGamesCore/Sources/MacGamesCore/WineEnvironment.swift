@@ -71,10 +71,11 @@ public enum WineEnvironment {
         }
 
         // The patched ntdll re-execs RelicCardinal.exe through the bridge only
-        // when all of these are present; set all of them or none.
+        // when all of these are present; set all of them or none. Runtime 4's
+        // code cache (AOELAB_CODE_CACHE_GAME) stays off: it reads a fixed
+        // address of one old game build, which no current build fills.
         if optimized, profile.rosettaOptimization != nil {
             env["AOELAB_SOFTFAULT_GAME"] = "1"
-            env["AOELAB_CODE_CACHE_GAME"] = "1"
             env["AOELAB_SIDECAR_PATH"] = bridge.path
             env["MACGAMES_OPTIMIZED"] = "1"
         }
