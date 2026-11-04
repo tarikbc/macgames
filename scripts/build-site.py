@@ -33,7 +33,7 @@ GAMES = {
     "aoe4": dict(STEAM, slug="age-of-empires-iv", also="AoE4",
         lead="MacGames runs Age of Empires IV on Apple silicon Macs. It sets up Steam in a Windows environment, turns the game's DirectX 12 into Metal, and runs its x87 math through x87sidecar.",
         where="Steam, in the shared Steam library",
-        does=[("Fast x87 math", "Age of Empires IV uses old x87 math, which Rosetta 2 translates slowly. On the game build it was made for, the game runs under x87sidecar, which translates that math much faster. Any other build falls back to standard Wine on its own."),
+        does=[("Fast x87 math", "Age of Empires IV uses old x87 math, which Rosetta 2 translates slowly. The game runs under x87sidecar, which translates that math much faster. MacGames reads each game build's code layout, so the optimization keeps working after game updates. A build whose layout does not fit falls back to standard Wine on its own."),
               ("DirectX 12 through Metal", "Apple's D3DMetal turns the game's DirectX 12 calls into Metal."),
               ("Game controllers", "Controllers work through SDL, also when the game window is in the back."),
               ("Settings on its page", "Turn the x87 optimization and the Metal performance HUD on or off on the game's page in MacGames.")]),

@@ -2,6 +2,13 @@
 
 All notable changes to MacGames are listed here.
 
+## 0.1.5 - 2026-11-04
+
+- Age of Empires IV keeps the Rosetta optimization after game updates. MacGames reads the code
+  layout from the game itself, so a new game build no longer needs a MacGames update. This includes
+  today's 17.0.12260, which 0.1.4 did not support. A build that was not tested yet says so on the
+  game's page, and you can turn the optimization off there. Thanks to @GamBurGer-bit for the idea
+
 ## 0.1.4 - 2026-10-31
 
 - Age of Empires IV gets the Rosetta optimization again on its current Steam build (17.0.12182).
