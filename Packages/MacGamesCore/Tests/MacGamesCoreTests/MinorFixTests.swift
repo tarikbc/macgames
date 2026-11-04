@@ -88,15 +88,32 @@ import Testing
 }
 
 @Suite struct OptimizationStatusTests {
-    let pin = GameProfile.aoe4.optimizedBuild!.executableSHA256
+    let tested = "4c99b868cbec98b2219e135908a31d03c64c7b71f2bbcf1469dab1d7c6df2c9f"
+    let fits = GameImage(imageBase: 0x140000000, textStart: 0x140001000, textEnd: 0x14580e95c)
 
-    @Test func everyStateHasAClearAnswer() {
-        #expect(OptimizationStatus.evaluate(.cs2, enabled: true, executableSHA256: "x", sidecarSupported: true) == .notApplicable)
-        #expect(OptimizationStatus.evaluate(.aoe4, enabled: false, executableSHA256: pin, sidecarSupported: true) == .off)
-        #expect(OptimizationStatus.evaluate(.aoe4, enabled: true, executableSHA256: nil, sidecarSupported: true) == .waitingForGame)
-        #expect(OptimizationStatus.evaluate(.aoe4, enabled: true, executableSHA256: "other", sidecarSupported: true) == .otherBuild)
-        #expect(OptimizationStatus.evaluate(.aoe4, enabled: true, executableSHA256: pin, sidecarSupported: false) == .unsupportedRosetta)
-        #expect(OptimizationStatus.evaluate(.aoe4, enabled: true, executableSHA256: pin, sidecarSupported: true) == .active)
+    func status(_ profile: GameProfile = .aoe4, enabled: Bool = true, image: GameImage?, sha: String?,
+                sidecar: Bool = true) -> OptimizationStatus {
+        OptimizationStatus.evaluate(profile, enabled: enabled, image: image, executableSHA256: sha, sidecarSupported: sidecar)
+    }
+
+    @Test func optimizationStatusFollowsTheExeHeader() {
+        #expect(GameProfile.aoe4.rosettaOptimization?.testedExecutableSHA256s
+                == ["5380c577805565817f528af6eac385263413fa6815553f9a31fa62561cb45e8c", tested])
+        #expect(status(.cs2, image: fits, sha: "x") == .notApplicable)
+        #expect(status(enabled: false, image: fits, sha: tested) == .off)
+        #expect(status(image: nil, sha: nil) == .waitingForGame)
+        #expect(status(image: fits, sha: tested) == .active)
+        #expect(status(image: fits, sha: "a newer build") == .untestedBuild)
+        #expect(status(image: nil, sha: "not a PE file") == .unsupportedBuild)
+        #expect(status(image: fits, sha: tested, sidecar: false) == .unsupportedRosetta)
+    }
+
+    @Test func movedTextIsUnsupported() {
+        #expect(status(image: GameImage(imageBase: 0x140001000, textStart: 0x140002000, textEnd: 0x14580f95c), sha: "x") == .unsupportedBuild)
+    }
+
+    @Test func oversizedTextIsUnsupported() {
+        #expect(status(image: GameImage(imageBase: 0x140000000, textStart: 0x140001000, textEnd: 0x146001501), sha: "x") == .unsupportedBuild)
     }
 }
 

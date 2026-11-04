@@ -27,15 +27,12 @@ public struct GameProfile: Sendable, Hashable, Identifiable {
         case cncnet
     }
 
-    /// The executable build the fixed-address x87sidecar optimization targets.
-    public struct OptimizedBuild: Sendable, Hashable {
-        public let executableSHA256: String
-        /// End of the code range x87sidecar's software-fault hook covers (`AOE_SOFTFAULT_END`).
-        public let softfaultEnd: UInt64
+    /// The x87sidecar optimization. The bridge reads each build's code range from the exe.
+    public struct RosettaOptimization: Sendable, Hashable {
+        /// Builds played in game with the optimization. Others still run it, marked untested.
+        public let testedExecutableSHA256s: Set<String>
 
-        public init(executableSHA256: String, softfaultEnd: UInt64) {
-            self.executableSHA256 = executableSHA256; self.softfaultEnd = softfaultEnd
-        }
+        public init(testedExecutableSHA256s: Set<String>) { self.testedExecutableSHA256s = testedExecutableSHA256s }
     }
 
     /// A Windows runtime installer from Steam's shared `_CommonRedist` folder.
@@ -66,8 +63,8 @@ public struct GameProfile: Sendable, Hashable, Identifiable {
     /// Lowest macOS version, as (major, minor).
     public let minimumMacOS: [Int]
     public let online: Online?
-    /// The build the x87sidecar optimization targets. `nil` means the profile never uses the sidecar.
-    public let optimizedBuild: OptimizedBuild?
+    /// `nil` means the profile never uses the sidecar.
+    public let rosettaOptimization: RosettaOptimization?
     /// Battle.net's code for the game; Play asks Battle.net to start it (`--exec="launch <code>"`).
     public let battleNetProduct: String?
     /// Installers Steam runs on a game's first start. A game MacGames starts itself runs them once.
@@ -76,13 +73,13 @@ public struct GameProfile: Sendable, Hashable, Identifiable {
     public init(id: String, title: String, steamAppID: String, installFolder: String, executableRelativePath: String,
                 environment: String = "steam", graphics: Graphics = .d3dmetal, launch: Launch = .steam,
                 windowsSteamPath: Bool = false, steamArgs: [String] = [], gameArgs: [String] = [],
-                minimumMacOS: [Int] = [26, 0], online: Online? = nil, optimizedBuild: OptimizedBuild? = nil,
+                minimumMacOS: [Int] = [26, 0], online: Online? = nil, rosettaOptimization: RosettaOptimization? = nil,
                 battleNetProduct: String? = nil, prerequisites: [Prerequisite] = [],
                 presentation: Presentation = Presentation()) {
         self.id = id; self.title = title; self.steamAppID = steamAppID; self.installFolder = installFolder
         self.executableRelativePath = executableRelativePath; self.environment = environment; self.graphics = graphics
         self.launch = launch; self.windowsSteamPath = windowsSteamPath; self.steamArgs = steamArgs; self.gameArgs = gameArgs
-        self.minimumMacOS = minimumMacOS; self.online = online; self.optimizedBuild = optimizedBuild
+        self.minimumMacOS = minimumMacOS; self.online = online; self.rosettaOptimization = rosettaOptimization
         self.battleNetProduct = battleNetProduct; self.prerequisites = prerequisites; self.presentation = presentation
     }
 

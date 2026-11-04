@@ -8,8 +8,10 @@ extension GameProfile {
     public static let aoe4 = GameProfile(
         id: "aoe4", title: "Age of Empires IV", steamAppID: "1466860",
         installFolder: "Age of Empires IV", executableRelativePath: "RelicCardinal.exe",
-        optimizedBuild: OptimizedBuild(executableSHA256: "4c99b868cbec98b2219e135908a31d03c64c7b71f2bbcf1469dab1d7c6df2c9f",
-                                       softfaultEnd: 0x14580e45c),
+        rosettaOptimization: RosettaOptimization(testedExecutableSHA256s: [
+            "5380c577805565817f528af6eac385263413fa6815553f9a31fa62561cb45e8c", // 16.3.11308
+            "4c99b868cbec98b2219e135908a31d03c64c7b71f2bbcf1469dab1d7c6df2c9f", // 17.0.12182
+        ]),
         presentation: Presentation(accentHex: "C8403B", heroFocus: p(0.32, 0.45)))
 
     public static let cs2 = GameProfile(
