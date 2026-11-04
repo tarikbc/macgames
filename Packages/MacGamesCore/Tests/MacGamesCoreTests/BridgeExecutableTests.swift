@@ -41,28 +41,28 @@ import BridgeKit
             try FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: url.path)
         }
         let game = dir.appendingPathComponent("prefix/drive_c/game/RelicCardinal.exe")
-        try Data("fake game".utf8).write(to: game)
+        try PEFixture.aoe4(textSize: 0x580d95c).write(to: game)
         return (dir, bridge, dir.appendingPathComponent("wine"), game)
     }
 
-    func run(_ s: (dir: URL, bridge: URL, loader: URL, game: URL), pin: String, composed: Bool = false,
-             extra: [String: String] = [:]) throws -> String {
+    func run(_ s: (dir: URL, bridge: URL, loader: URL, game: URL), optedIn: Bool = true, composed: Bool = false) throws -> String {
         let p = Process()
         p.executableURL = s.bridge
         p.arguments = ["--cooperative", s.loader.path, "C:\\game\\RelicCardinal.exe", "-dev"]
         p.environment = ["WINEPREFIX": s.dir.appendingPathComponent("prefix").path, "PATH": "/usr/bin:/bin",
                          "AOELAB_SOFTFAULT_GAME": "1", "X87_ALWAYS_NONE": "1", "WINELOADERNOEXEC": "1",
-                         Bridge.pinKey: pin]
+                         // Wine sets the old build's range before it execs the bridge.
+                         "AOE_SOFTFAULT_PC": "0x140001000", "AOE_SOFTFAULT_END": "0x1456ddadc"]
+        if optedIn { p.environment?[Bridge.optedInKey] = "1" }
         if composed { p.environment?["MACGAMES_AOE_COMBINED"] = "1" }
-        p.environment?.merge(extra) { $1 }
         let pipe = Pipe(); p.standardOutput = pipe; p.standardError = FileHandle.nullDevice
         try p.run(); p.waitUntilExit()
         return String(decoding: pipe.fileHandleForReading.readDataToEndOfFile(), as: UTF8.self)
     }
 
-    @Test func matchingBuildExecsTheSidecarWithTheEnvironmentIntact() throws {
+    @Test func aFittingImageExecsTheSidecarWithTheEnvironmentIntact() throws {
         let s = try stage(); defer { try? FileManager.default.removeItem(at: s.dir) }
-        let out = try run(s, pin: try Bridge.sha256(ofFileAt: s.game.path))
+        let out = try run(s)
         #expect(out.hasPrefix("x87sidecar --cooperative \(s.loader.path) C:\\game\\RelicCardinal.exe -dev"))
         #expect(out.contains("AOELAB_SOFTFAULT_GAME=1"))
         #expect(out.contains("X87_ALWAYS_NONE=1"))
@@ -70,29 +70,27 @@ import BridgeKit
 
     @Test func composedSteamLaunchExecutesX87WithoutLegacyDisable() throws {
         let s = try stage(); defer { try? FileManager.default.removeItem(at: s.dir) }
-        let out = try run(s, pin: try Bridge.sha256(ofFileAt: s.game.path), composed: true)
+        let out = try run(s, composed: true)
         #expect(out.hasPrefix("x87sidecar --cooperative"))
         #expect(out.contains("AOELAB_SOFTFAULT_GAME=1"))
         #expect(out.contains("MACGAMES_AOE_COMBINED=1"))
         #expect(!out.contains("X87_ALWAYS_NONE="))
-        let fallback = try run(s, pin: String(repeating: "0", count: 64), composed: true)
+        let fallback = try run(s, optedIn: false, composed: true)
         #expect(fallback == "wine C:\\game\\RelicCardinal.exe -dev\n")
     }
 
-    @Test func matchingBuildExportsTheProfileRangeEnd() throws {
+    @Test func aFittingImageExportsItsRangeEnd() throws {
         let s = try stage(); defer { try? FileManager.default.removeItem(at: s.dir) }
-        // Wine sets the old build's range before it execs the bridge.
-        let out = try run(s, pin: try Bridge.sha256(ofFileAt: s.game.path),
-                          extra: ["AOE_SOFTFAULT_PC": "0x140001000", "AOE_SOFTFAULT_END": "0x1456ddadc",
-                                  Bridge.softfaultEndKey: "0x1457000f0"])
+        let out = try run(s)
         #expect(out.hasPrefix("x87sidecar --cooperative"))
-        #expect(out.contains("AOE_SOFTFAULT_END=0x1457000f0\n"))
+        #expect(out.contains("AOE_SOFTFAULT_END=0x14580e45c\n"))
         #expect(!out.contains("AOE_SOFTFAULT_END=0x1456ddadc"))
     }
 
-    @Test func otherBuildExecsThePlainLoaderWithOptimizationKeysRemoved() throws {
+    @Test func aGameThatIsNotAPEFileExecsThePlainLoaderWithOptimizationKeysRemoved() throws {
         let s = try stage(); defer { try? FileManager.default.removeItem(at: s.dir) }
-        let out = try run(s, pin: String(repeating: "0", count: 64))
+        try Data("fake game".utf8).write(to: s.game)
+        let out = try run(s)
         #expect(out == "wine C:\\game\\RelicCardinal.exe -dev\n")
     }
 }

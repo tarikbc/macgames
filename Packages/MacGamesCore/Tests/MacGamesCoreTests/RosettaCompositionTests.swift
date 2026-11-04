@@ -6,15 +6,15 @@ import Testing
 @Suite struct RosettaCompositionTests {
     @Test func matchingSteamChildKeepsSoftwareFaultsAndEnablesX87OnlyWithNewHelper() {
         let args = ["/app/Helpers/MacGamesBridge", "--cooperative", "/engine/wine", #"C:\game\RelicCardinal.exe"#, "-arg"]
-        let pin = GameProfile.aoe4.optimizedBuild!.executableSHA256
-        let env = ["WINEPREFIX": "/prefix", Bridge.pinKey: pin, "MACGAMES_AOE_COMBINED": "1",
+        let fits = GameImage(imageBase: 0x140000000, textStart: 0x140001000, textEnd: 0x14580e95c)
+        let env = ["WINEPREFIX": "/prefix", Bridge.optedInKey: "1", "AOE_SOFTFAULT_PC": "0x140001000", "MACGAMES_AOE_COMBINED": "1",
                    "AOELAB_SOFTFAULT_BRIDGE": "1", "AOELAB_CODE_CACHE_GAME": "1", "X87_ALWAYS_NONE": "1"]
-        let result = Bridge.decide(arguments: args, environment: env, cwd: "/", isExecutable: { _ in true }) { _ in pin }
+        let result = Bridge.decide(arguments: args, environment: env, cwd: "/", isExecutable: { _ in true }) { _ in fits }
         guard case let .exec(path, argv, unset, _) = result else { Issue.record("Expected sidecar"); return }
         #expect(path == "/app/Helpers/x87sidecar")
         #expect(argv.suffix(2) == args.suffix(2))
         #expect(unset == ["X87_ALWAYS_NONE"])
-        let rejected = Bridge.decide(arguments: args, environment: env, cwd: "/", isExecutable: { _ in true }) { _ in "changed" }
+        let rejected = Bridge.decide(arguments: args, environment: env, cwd: "/", isExecutable: { _ in true }) { _ in nil }
         guard case let .exec(loader, _, removed, _) = rejected else { Issue.record("Expected safe fallback"); return }
         #expect(loader == "/engine/wine")
         #expect(removed.contains("MACGAMES_AOE_COMBINED"))

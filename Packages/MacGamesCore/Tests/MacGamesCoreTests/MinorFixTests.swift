@@ -103,8 +103,10 @@ import Testing
 @Suite struct BridgeFallbackTests {
     @Test func aMissingSidecarRunsThePlainLoader() {
         let args = ["/app/Helpers/MacGamesBridge", "--cooperative", "/r/engine/bin/wine", "C:\\RelicCardinal.exe"]
-        let env = ["WINEPREFIX": "/r/prefix", Bridge.pinKey: "abc", "AOELAB_SOFTFAULT_GAME": "1"]
-        let d = Bridge.decide(arguments: args, environment: env, cwd: "/", isExecutable: { _ in false }) { _ in "abc" }
+        let env = ["WINEPREFIX": "/r/prefix", Bridge.optedInKey: "1", "AOELAB_SOFTFAULT_GAME": "1", "AOE_SOFTFAULT_PC": "0x140001000"]
+        let d = Bridge.decide(arguments: args, environment: env, cwd: "/", isExecutable: { _ in false }) { _ in
+            GameImage(imageBase: 0x140000000, textStart: 0x140001000, textEnd: 0x14580e95c)
+        }
         guard case let .exec(path, _, unset, _) = d else { Issue.record("expected exec"); return }
         #expect(path == "/r/engine/bin/wine")
         #expect(unset.contains("AOELAB_SOFTFAULT_GAME"))
