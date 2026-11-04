@@ -1,3 +1,4 @@
+import BridgeKit
 import Foundation
 
 public enum RuntimeEvent: Sendable {
@@ -64,7 +65,7 @@ public final class GameRuntime: @unchecked Sendable {
     /// The environment Steam and the game run with, from the saved settings.
     public func launchEnvironment() throws -> [String: String] {
         let s = settings
-        var optimized = s.optimized && profile.optimizedBuild != nil
+        var optimized = s.optimized && profile.rosettaOptimization != nil
         if optimized {
             let report = try check()
             optimized = report.optimizationAvailable
@@ -408,27 +409,29 @@ public final class GameRuntime: @unchecked Sendable {
 
     private let statusLock = NSLock()
     private var cachedSidecarSupport: Bool?
-    private var cachedExecutable: (size: UInt64, modified: Date, sha: String)?
+    private var cachedExecutable: (size: UInt64, modified: Date, sha: String, image: GameImage?)?
 
     /// What the next launch does with the x87 optimization. The game's hash is
     /// cached until the file changes; the sidecar probe runs once per launch.
     public func optimizationStatus() -> OptimizationStatus {
-        guard profile.optimizedBuild != nil else { return .notApplicable }
+        guard profile.rosettaOptimization != nil else { return .notApplicable }
         let enabled = settings.optimized
         statusLock.lock(); defer { statusLock.unlock() }
         var sha: String?
+        var image: GameImage?
         if let attributes = try? fm.attributesOfItem(atPath: paths.gameExe.path),
            let size = attributes[.size] as? UInt64, let modified = attributes[.modificationDate] as? Date {
             if let cached = cachedExecutable, cached.size == size, cached.modified == modified {
-                sha = cached.sha
+                sha = cached.sha; image = cached.image
             } else if let hash = try? sha256Hex(ofFileAt: paths.gameExe) {
-                cachedExecutable = (size, modified, hash); sha = hash
+                image = try? GameImage.read(atPath: paths.gameExe.path)
+                cachedExecutable = (size, modified, hash, image); sha = hash
             }
         }
         if cachedSidecarSupport == nil {
             cachedSidecarSupport = (try? runner.run(runtime.sidecar, ["--probe"], timeout: 25)) != nil
         }
-        return OptimizationStatus.evaluate(profile, enabled: enabled, executableSHA256: sha,
+        return OptimizationStatus.evaluate(profile, enabled: enabled, image: image, executableSHA256: sha,
                                            sidecarSupported: cachedSidecarSupport ?? false)
     }
 

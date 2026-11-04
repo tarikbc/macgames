@@ -95,8 +95,9 @@ extension OptimizationStatus {
         case .notApplicable: "Not available for this game."
         case .off: "Off. The game will run without optimization."
         case .waitingForGame: "Waiting for the game files."
-        case .otherBuild: "Unavailable: this game build is not supported. Optimization will not be used."
+        case .unsupportedBuild: "Unavailable: this game build's code layout is not supported. Optimization will not be used."
         case .unsupportedRosetta: "Unavailable: this Mac's Rosetta version is not supported. Optimization will not be used."
+        case .untestedBuild: "Ready. This game build is not tested yet. If the game is unstable, turn this off."
         case .active: "Ready. Optimization will be used for this game build."
         }
     }

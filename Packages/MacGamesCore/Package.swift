@@ -11,7 +11,7 @@ let package = Package(
     ],
     targets: [
         .target(name: "BridgeKit"),
-        .target(name: "MacGamesCore"),
+        .target(name: "MacGamesCore", dependencies: ["BridgeKit"]),
         .executableTarget(name: "MacGamesBridge", dependencies: ["BridgeKit"]),
         .testTarget(name: "MacGamesCoreTests", dependencies: ["MacGamesCore", "BridgeKit", "MacGamesBridge"]),
     ]

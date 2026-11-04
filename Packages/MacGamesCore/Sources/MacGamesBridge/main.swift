@@ -7,7 +7,7 @@ import Foundation
 let decision = Bridge.decide(arguments: CommandLine.arguments,
                              environment: ProcessInfo.processInfo.environment,
                              cwd: FileManager.default.currentDirectoryPath,
-                             hash: Bridge.sha256(ofFileAt:))
+                             image: GameImage.read(atPath:))
 
 func fail(_ message: String) -> Never {
     FileHandle.standardError.write(Data("MacGamesBridge: \(message)\n".utf8))
@@ -19,7 +19,7 @@ case .fail(let message):
     fail(message)
 case let .exec(path, argv, unset, set):
     if unset.contains("AOE_SOFTFAULT_PC") {
-        FileHandle.standardError.write(Data("MacGamesBridge: this game build is not the optimized one; using the standard runtime.\n".utf8))
+        FileHandle.standardError.write(Data("MacGamesBridge: the optimization does not fit this game build; using the standard runtime.\n".utf8))
     }
     for key in unset { unsetenv(key) }
     for (key, value) in set { setenv(key, value, 1) }

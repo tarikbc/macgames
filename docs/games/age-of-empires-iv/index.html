@@ -74,7 +74,7 @@
         </div>
         <div class="game-split">
           <ul class="loadout pair">
-            <li><h3>Fast x87 math</h3><p>Age of Empires IV uses old x87 math, which Rosetta 2 translates slowly. On the game build it was made for, the game runs under x87sidecar, which translates that math much faster. Any other build falls back to standard Wine on its own.</p></li>
+            <li><h3>Fast x87 math</h3><p>Age of Empires IV uses old x87 math, which Rosetta 2 translates slowly. The game runs under x87sidecar, which translates that math much faster. MacGames reads each game build&#x27;s code layout, so the optimization keeps working after game updates. A build whose layout does not fit falls back to standard Wine on its own.</p></li>
             <li><h3>DirectX 12 through Metal</h3><p>Apple&#x27;s D3DMetal turns the game&#x27;s DirectX 12 calls into Metal.</p></li>
             <li><h3>Game controllers</h3><p>Controllers work through SDL, also when the game window is in the back.</p></li>
             <li><h3>Settings on its page</h3><p>Turn the x87 optimization and the Metal performance HUD on or off on the game&#x27;s page in MacGames.</p></li>

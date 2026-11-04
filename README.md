@@ -35,9 +35,10 @@
 - **Overwatch on Recall's engine.** Overwatch runs on the Wine and DXMT build of
   [Recall](https://github.com/AsherJN/recall), with its fullscreen canvas, raw mouse input, macOS Game
   Mode and graphics pipelines prepared before each session. Battle.net starts the game when you choose Play.
-- **Faster x87 math for Age of Empires IV.** On the exact game build it was made for, the game runs
-  under [x87sidecar](https://github.com/athei/x87sidecar), a JIT that replaces Rosetta's slow x87
-  translation. Any other build falls back to standard Wine on its own.
+- **Faster x87 math for Age of Empires IV.** The game runs under
+  [x87sidecar](https://github.com/athei/x87sidecar), a JIT that replaces Rosetta's slow x87
+  translation. MacGames reads each game build's code layout, so the optimization keeps working after
+  game updates. A build whose layout does not fit falls back to standard Wine on its own.
 - **Kept apart from your Mac.** The Windows environment has no links into your home folder.
 - **Made for more games.** Adding a game is one profile in code. The library, artwork and setup follow.
 

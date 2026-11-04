@@ -47,16 +47,17 @@ import Testing
     @Test func aoe4OptimizedSetsAllSidecarKeysTogether() {
         let env = WineEnvironment.make(profile: .aoe4, paths: paths(.aoe4), inherited: [:], optimized: true, hud: false, bridge: bridge)
         #expect(env["AOELAB_SOFTFAULT_GAME"] == "1")
-        #expect(env["AOELAB_CODE_CACHE_GAME"] == "1")
+        // Wine's code cache reads a fixed address of one old build, so no build gets it.
+        #expect(env["AOELAB_CODE_CACHE_GAME"] == nil)
         #expect(env["AOELAB_SIDECAR_PATH"] == bridge.path)
-        #expect(env["MACGAMES_OPTIMIZED_SHA256"] == "4c99b868cbec98b2219e135908a31d03c64c7b71f2bbcf1469dab1d7c6df2c9f")
-        #expect(env["MACGAMES_SOFTFAULT_END"] == "0x14580e45c")
+        #expect(env["MACGAMES_OPTIMIZED"] == "1")
+        #expect(env["MACGAMES_OPTIMIZED_SHA256"] == nil)
+        #expect(env["MACGAMES_SOFTFAULT_END"] == nil)
     }
 
     @Test func aoe4UnoptimizedSetsNoSidecarKeys() {
         let env = WineEnvironment.make(profile: .aoe4, paths: paths(.aoe4), inherited: [:], optimized: false, hud: false, bridge: bridge)
-        for key in ["AOELAB_SOFTFAULT_GAME", "AOELAB_CODE_CACHE_GAME", "AOELAB_SIDECAR_PATH", "MACGAMES_OPTIMIZED_SHA256",
-                    "MACGAMES_SOFTFAULT_END"] {
+        for key in ["AOELAB_SOFTFAULT_GAME", "AOELAB_CODE_CACHE_GAME", "AOELAB_SIDECAR_PATH", "MACGAMES_OPTIMIZED"] {
             #expect(env[key] == nil, "\(key) must be unset")
         }
     }
