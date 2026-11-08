@@ -82,7 +82,9 @@ struct FakeEnvironment {
         try write("{}", to: res.appendingPathComponent("dependency-links.json"))
         try write("test", to: res.appendingPathComponent("VERSION"))
         let log = events
-        runtime = GameRuntime(profile: profile, root: dir.appendingPathComponent("root"),
+        let root = dir.appendingPathComponent("root")
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: false)
+        runtime = GameRuntime(profile: profile, root: root,
                               runtime: RuntimeLayout(resources: res, helpers: dir.appendingPathComponent("Helpers")),
                               downloadCache: dir.appendingPathComponent("downloads"),
                               events: { if case .progress(let line) = $0 { log.add(line) } })
@@ -134,6 +136,35 @@ struct FakeEnvironment {
 }
 
 @Suite(.serialized) struct RuntimeFlowTests {
+    @Test func diablo2InstallsAndPlaysInDiablo4sSteamSession() throws {
+        let env = try FakeEnvironment(.diablo2ResurrectedSteam); defer { env.cleanUp() }
+        let runtime = env.runtime, paths = runtime.paths
+        try env.installSteam()
+        try EnvironmentSettings(hiDPI: true).save(to: paths)
+        let diablo4 = GameRuntime(profile: .diablo4, root: paths.root, runtime: runtime.runtime)
+        let steamEnvironment = try diablo4.launchEnvironment()
+        try SteamSession.begin(fingerprint: SteamLaunch.fingerprint(steamEnvironment), paths: paths, environment: steamEnvironment)
+        env.live(["steam.exe"])
+
+        #expect(runtime.state() == .needsGame)
+        try runtime.openForInstall()
+        #expect(env.waitForCall(containing: "steam://install/2536520"))
+
+        try write("""
+        "AppState"
+        {
+            "appid" "2536520"
+            "installdir" "Diablo II Resurrected"
+            "StateFlags" "4"
+        }
+        """, to: paths.appManifest)
+        try write("game", to: paths.steamapps.appendingPathComponent("common/Diablo II Resurrected/D2R.exe"))
+        #expect(runtime.state() == .ready)
+        try runtime.play(LaunchContext(width: 1920, height: 1080))
+        #expect(env.calls.contains { $0.hasSuffix("-applaunch 2536520") })
+        #expect(!env.calls.contains("wineserver -k"))
+    }
+
     @Test func steamDoesNotRestartWhileAnotherGameOfItsEnvironmentRuns() throws {
         let env = try FakeEnvironment(.cs2); defer { env.cleanUp() }
         try env.installSteam()
