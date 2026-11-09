@@ -44,7 +44,7 @@ public enum GameRecipes {
                                     sandbox: .full, libd3dshared: true)
         case "poe2":
             return EnvironmentEdits(set: ["WINEMSYNC": "0"], sandbox: .xdg, libd3dshared: true)
-        case "diablo4":
+        case "diablo4", "diablo2-resurrected-steam":
             return EnvironmentEdits(libd3dshared: true)
         case "witcher3":
             return EnvironmentEdits(appendOverrides: ";amd_fidelityfx_loader_dx12=n",

@@ -45,11 +45,6 @@ import Testing
         #expect(GameProfile.aoe4.artwork(resolved: resolved) == GameProfile.aoe4.artwork)
     }
 
-    @Test func diablo2UsesItsSteamArtButStaysOnBattleNet() {
-        #expect(GameProfile.diablo2Resurrected.artwork != nil)
-        #expect(GameProfile.diablo2Resurrected.launch == .battleNet)
-    }
-
     @Test func gamesWithoutASteamPageHaveNoArtwork() {
         let profile = GameProfile(id: "x", title: "X", steamAppID: "", installFolder: "X", executableRelativePath: "x.exe")
         #expect(profile.artwork == nil)
@@ -58,6 +53,21 @@ import Testing
 }
 
 @Suite struct SidebarGroupTests {
+    @Test func diablo2EditionsShareArtworkAndHaveSeparateCards() throws {
+        let steam = GameProfile.diablo2ResurrectedSteam
+        let battleNet = GameProfile.diablo2Resurrected
+        #expect(GameProfile.named(steam.id) == steam)
+        #expect(GameProfile.named(battleNet.id) == battleNet)
+        #expect(steam.artwork != nil)
+        #expect(steam.artwork == battleNet.artwork)
+        #expect(battleNet.launch == .battleNet)
+        let games = GameEnvironment.steam.games
+        let diablo4 = try #require(games.firstIndex(of: .diablo4))
+        #expect(games.dropFirst(diablo4 + 1).first == steam)
+        #expect(!games.contains(battleNet))
+        #expect(GameEnvironment.battlenet.games.contains(battleNet))
+    }
+
     @Test func gtaVSitsWithTheOtherRockstarGames() throws {
         let rockstar = try #require(GameEnvironment.groups.first { $0.title == "Rockstar" })
         #expect(rockstar.games.map(\.id) == ["rdr2", "san-andreas-de", "gta5-enhanced"])

@@ -50,6 +50,11 @@ extension GameProfile {
         installFolder: "Diablo IV", executableRelativePath: "Diablo IV.exe", minimumMacOS: [26, 5],
         presentation: Presentation(accentHex: "B3261E", heroFocus: p(0.6, 0.4)))
 
+    public static let diablo2ResurrectedSteam = GameProfile(
+        id: "diablo2-resurrected-steam", title: "Diablo II: Resurrected – Infernal Edition", steamAppID: "2536520",
+        installFolder: "Diablo II Resurrected", executableRelativePath: "D2R.exe", minimumMacOS: [26, 5],
+        presentation: Presentation(accentHex: "8E1B12"))
+
     public static let witcher3 = GameProfile(
         id: "witcher3", title: "The Witcher 3: Wild Hunt", steamAppID: "292030",
         installFolder: "The Witcher 3", executableRelativePath: "bin/x64_dx12/witcher3.exe",
@@ -130,7 +135,7 @@ extension GameProfile {
 
     public static let all: [GameProfile] = [
         .aoe4, .cs2, .aoe3, .aomRetold, .coh3, .zeroHour, .redAlert2, .heroes3,
-        .diablo4, .poe2, .hogwarts, .witcher3, .eldenRing, .aow4,
+        .diablo4, .diablo2ResurrectedSteam, .poe2, .hogwarts, .witcher3, .eldenRing, .aow4,
         .skyrim, .overwatch, .diablo4BattleNet, .diablo2Resurrected, .rdr2, .sanAndreas, .gta5,
     ]
 }
