@@ -11,6 +11,9 @@ public struct EngineInstaller: Sendable {
     /// In the marker of an engine built for `GameEnvironment.mixesRenderers`, so engines built
     /// before that layout existed are replaced.
     static let separateRenderersMarker = "separate-renderers"
+    /// In the marker of an engine whose D3DMetal links point into the environment's D3DMetal
+    /// pack, so engines that linked the template's D3DMetal are replaced.
+    static let ownD3DMetalMarker = "own-d3dmetal"
 
     public init(runtime: RuntimeLayout) { self.runtime = runtime }
 
@@ -20,7 +23,8 @@ public struct EngineInstaller: Sendable {
         }
         // An engine pack brings the whole engine, so the app's runtime version does not matter.
         let base = paths.environment.enginePack == nil ? try runtime.version() : "pack"
-        let layout = paths.environment.mixesRenderers ? [Self.separateRenderersMarker] : []
+        let layout = (paths.environment.mixesRenderers ? [Self.separateRenderersMarker] : [])
+            + (paths.environment.d3dmetalPack != nil ? [Self.ownD3DMetalMarker] : [])
         return ([base] + paths.environment.engineOverlays + layout + packs).joined(separator: "+")
     }
 
@@ -74,7 +78,8 @@ public struct EngineInstaller: Sendable {
             // An overlay that ships the file itself owns that path.
             if overlayOwnsIt { continue }
             try fm.createDirectory(at: link.deletingLastPathComponent(), withIntermediateDirectories: true)
-            try fm.createSymbolicLink(atPath: link.path, withDestinationPath: paths.frameworks.appendingPathComponent(target).path)
+            let destination = Self.ownD3DMetal(target, for: paths) ?? paths.frameworks.appendingPathComponent(target)
+            try fm.createSymbolicLink(atPath: link.path, withDestinationPath: destination.path)
         }
         try marker.write(to: stage.appendingPathComponent(Self.markerName), atomically: true, encoding: .utf8)
         try Self.swap(stage: stage, into: paths.engine)
@@ -116,6 +121,16 @@ public struct EngineInstaller: Sendable {
     func overlay(_ name: String, for paths: GamePaths) -> URL? {
         let candidates = [runtime.overlay(name)] + paths.environment.packs.map { paths.pack($0).appendingPathComponent("Overlays/\(name)") }
         return candidates.first { FileManager.default.fileExists(atPath: $0.path) }
+    }
+
+    /// Where an environment that pins its own D3DMetal finds a template D3DMetal file in its pack.
+    /// The Windows DLLs and libd3dshared must come from one D3DMetal: an older libd3dshared
+    /// writes into a newer dxgi.dll's code, which crashes any process that loads it.
+    static func ownD3DMetal(_ target: String, for paths: GamePaths) -> URL? {
+        let prefix = "renderer/d3dmetal/"
+        guard paths.environment.d3dmetalPack != nil, target.hasPrefix(prefix) else { return nil }
+        let own = paths.d3dmetal.appendingPathComponent(String(target.dropFirst(prefix.count)))
+        return FileManager.default.fileExists(atPath: own.path) ? own : nil
     }
 
     /// A dependency link to one of D3DMetal's Windows DLLs, which share their names with DXMT's.

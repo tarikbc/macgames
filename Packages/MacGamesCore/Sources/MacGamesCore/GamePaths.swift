@@ -45,6 +45,8 @@ public struct GamePaths: Sendable {
     public var wine: URL { engine.appendingPathComponent("bin/wine") }
     public var wineserver: URL { engine.appendingPathComponent("bin/wineserver") }
     public var prefix: URL { root.appendingPathComponent("prefix") }
+    /// Written once `wineboot --init` has finished; it lives and dies with the prefix.
+    public var prefixCreated: URL { prefix.appendingPathComponent(".macgames-prefix") }
     public var logs: URL { root.appendingPathComponent("logs") }
     /// This game's own settings and caches.
     public var gameData: URL { root.appendingPathComponent("games/\(profile.id)") }
