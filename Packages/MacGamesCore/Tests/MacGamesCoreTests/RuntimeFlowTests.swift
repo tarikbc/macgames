@@ -288,4 +288,52 @@ struct FakeEnvironment {
         #expect(env.calls.allSatisfy { !$0.contains("_CommonRedist") })
         #expect(!FileManager.default.fileExists(atPath: env.runtime.paths.gameData.appendingPathComponent("prerequisites-done").path))
     }
+
+    /// An Overwatch environment whose setup must run again, with a prefix left from an earlier one.
+    func unfinishedSetup(systemReg: Bool = true) throws -> FakeEnvironment {
+        let env = try FakeEnvironment(.overwatch)
+        let probe = env.runtime.runtime.rosettaProbe
+        try write("#!/bin/sh\nexit 0\n", to: probe)
+        try FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: probe.path)
+        try FileManager.default.removeItem(at: env.runtime.paths.runtimeReady)
+        if systemReg { try write("", to: env.runtime.paths.prefix.appendingPathComponent("system.reg")) }
+        try FileManager.default.createDirectory(at: env.runtime.paths.prefix.appendingPathComponent("drive_c/windows/system32"),
+                                                withIntermediateDirectories: true)
+        try write("left", to: env.runtime.paths.prefix.appendingPathComponent("leftover"))
+        env.runtime.mainDisplay = { OverwatchDisplay.Size(width: 1512, height: 982) }
+        return env
+    }
+
+    @Test func aPrefixThatWinebootDidNotFinishIsCreatedAgain() throws {
+        let env = try unfinishedSetup(); defer { env.cleanUp() }
+        try env.runtime.prepare()
+        #expect(env.calls.contains { $0.hasPrefix("wine wineboot --init") })
+        #expect(!FileManager.default.fileExists(atPath: env.runtime.paths.prefix.appendingPathComponent("leftover").path))
+        #expect(FileManager.default.fileExists(atPath: env.runtime.paths.prefixCreated.path))
+    }
+
+    @Test func aPrefixThatWinebootFinishedIsKept() throws {
+        let env = try unfinishedSetup(); defer { env.cleanUp() }
+        try write("", to: env.runtime.paths.prefixCreated)
+        try env.runtime.prepare()
+        #expect(!env.calls.contains { $0.hasPrefix("wine wineboot") })
+        #expect(FileManager.default.fileExists(atPath: env.runtime.paths.prefix.appendingPathComponent("leftover").path))
+    }
+
+    @Test func aPrefixFromAFinishedSetupIsKept() throws {
+        let env = try unfinishedSetup(); defer { env.cleanUp() }
+        // Setups from before the marker existed only have runtime-ready.
+        try write("runtime-v1", to: env.runtime.paths.runtimeReady)
+        try env.runtime.prepare()
+        #expect(!env.calls.contains { $0.hasPrefix("wine wineboot") })
+        #expect(FileManager.default.fileExists(atPath: env.runtime.paths.prefix.appendingPathComponent("leftover").path))
+        #expect(FileManager.default.fileExists(atPath: env.runtime.paths.prefixCreated.path))
+    }
+
+    @Test func aPrefixWithoutRegistryGetsWinebootInPlace() throws {
+        let env = try unfinishedSetup(systemReg: false); defer { env.cleanUp() }
+        try env.runtime.prepare()
+        #expect(env.calls.contains { $0.hasPrefix("wine wineboot --init") })
+        #expect(FileManager.default.fileExists(atPath: env.runtime.paths.prefix.appendingPathComponent("leftover").path))
+    }
 }

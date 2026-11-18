@@ -131,6 +131,14 @@ public final class GameRuntime: @unchecked Sendable {
 
         stepChanged(.windows)
         let systemReg = paths.prefix.appendingPathComponent("system.reg")
+        // A setup stopped during wineboot leaves a registry but not every DLL, and Wine
+        // cannot start any program there again (kernel32.dll, c0000135). No game can be
+        // installed in such a prefix, so it is made again.
+        if fm.fileExists(atPath: systemReg.path), !fm.fileExists(atPath: paths.prefixCreated.path),
+           !fm.fileExists(atPath: paths.runtimeReady.path) {
+            progress("Removing the Windows environment that an earlier setup did not finish…")
+            try fm.removeItem(at: paths.prefix)
+        }
         if !fm.fileExists(atPath: systemReg.path) {
             progress("Creating a new Windows environment…")
             try runWine(["wineboot", "--init"], environment: plain, timeout: 300)
@@ -142,6 +150,7 @@ public final class GameRuntime: @unchecked Sendable {
               fm.fileExists(atPath: paths.prefix.appendingPathComponent("drive_c/windows/system32").path) else {
             throw SetupError("Wine did not finish creating the Windows environment. Logs: \(paths.logs.path)")
         }
+        try Data().write(to: paths.prefixCreated, options: .atomic)
         stepChanged(.configure)
         progress("Configuring Windows 10, graphics and controllers…")
         try runWine(["winecfg", "-v", "win10"], environment: plain, timeout: 120)
