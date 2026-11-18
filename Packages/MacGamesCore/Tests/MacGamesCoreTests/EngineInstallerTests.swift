@@ -90,6 +90,36 @@ import Testing
         #expect(read(dll) == "skyrim d3d11 64")
     }
 
+    /// D3DMetal's Windows DLLs and its libd3dshared must be one version: an older libd3dshared
+    /// writes into a newer dxgi.dll's code, and Steam's web helper crashes (issue #18).
+    @Test func ownD3DMetalTakesItsLinksFromItsPack() throws {
+        let dir = try makeTempDir(); defer { try? FileManager.default.removeItem(at: dir) }
+        let paths = GamePaths(profile: .gta5, root: dir.appendingPathComponent("gta5"))
+        try write("gta5 d3d12", to: paths.pack("gta5").appendingPathComponent("Overlays/gta5/lib/wine/x86_64-windows/d3d12.dll"))
+        try write("4.0b2 shared", to: paths.d3dmetal.appendingPathComponent("external/libd3dshared.dylib"))
+        try write("4.0b2 d3d11", to: paths.d3dmetal.appendingPathComponent("wine/x86_64-windows/d3d11.dll"))
+        try EngineInstaller(runtime: try fakeRuntime(in: dir)).install(for: paths)
+        let fm = FileManager.default
+        #expect(try fm.destinationOfSymbolicLink(atPath: paths.engineDLLs.appendingPathComponent("x86_64-unix/d3d11.so").path)
+                == paths.d3dmetal.appendingPathComponent("external/libd3dshared.dylib").path)
+        #expect(try fm.destinationOfSymbolicLink(atPath: paths.engineDLLs.appendingPathComponent("x86_64-windows/d3d11.dll").path)
+                == paths.d3dmetal.appendingPathComponent("wine/x86_64-windows/d3d11.dll").path)
+        #expect(read(paths.engineDLLs.appendingPathComponent("x86_64-windows/d3d12.dll")) == "gta5 d3d12")
+        #expect(try fm.destinationOfSymbolicLink(atPath: paths.engine.appendingPathComponent("lib/libfreetype.6.dylib").path)
+                == paths.frameworks.appendingPathComponent("libfreetype.6.dylib").path)
+    }
+
+    @Test func ownD3DMetalEngineBuiltWithTemplateLinksIsReplaced() throws {
+        let dir = try makeTempDir(); defer { try? FileManager.default.removeItem(at: dir) }
+        let installer = EngineInstaller(runtime: try fakeRuntime(in: dir))
+        let paths = GamePaths(profile: .gta5, root: dir.appendingPathComponent("gta5"))
+        try write("gta5", to: paths.pack("gta5").appendingPathComponent("Overlays/gta5/marker"))
+        try installer.install(for: paths)
+        #expect(installer.isCurrent(for: paths))
+        try write("v1+gta5+gta5+rockstar+apple-d3dmetal-4.0b2", to: paths.engine.appendingPathComponent(EngineInstaller.markerName))
+        #expect(!installer.isCurrent(for: paths))
+    }
+
     @Test func mixedEngineBuiltWithTheOldLayoutIsReplaced() throws {
         let dir = try makeTempDir(); defer { try? FileManager.default.removeItem(at: dir) }
         let installer = EngineInstaller(runtime: try fakeRuntime(in: dir))
