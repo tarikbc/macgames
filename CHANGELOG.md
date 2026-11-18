@@ -2,6 +2,16 @@
 
 All notable changes to MacGames are listed here.
 
+## 0.1.6 - 2026-11-18
+
+- Setup recovers when an earlier setup stopped while Windows was being created. Each new try
+  failed at "Configure graphics and controllers" with "could not load kernel32.dll", and Remove
+  setup could not clean it up. MacGames now makes the unfinished Windows environment again.
+  Thanks to @Raghad24-a for the report
+- Steam opens again for GTA V Enhanced. Its web helper crashed at once, because the GTA V setup
+  paired two versions of D3DMetal. The GTA V setup now uses one D3DMetal throughout and updates
+  itself the next time Steam opens. Thanks to @kwondongha0219-dev for the report
+
 ## 0.1.5 - 2026-11-04
 
 - Age of Empires IV keeps the Rosetta optimization after game updates. MacGames reads the code
